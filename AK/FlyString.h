@@ -26,7 +26,7 @@ public:
     static ErrorOr<FlyString> from_utf8(StringView);
     static FlyString from_utf8_without_validation(ReadonlyBytes);
     template<typename T>
-    requires(IsOneOf<RemoveCVReference<T>, ByteString, DeprecatedFlyString, FlyString, String>)
+    requires(IsOneOf<RemoveCVReference<T>, RefString, FlyString, String>)
     static ErrorOr<String> from_utf8(T&&) = delete;
 
     FlyString(String const&);
