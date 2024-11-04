@@ -104,6 +104,7 @@ enum class SearchDirection {
 };
 Optional<size_t> find_any_of(StringView haystack, StringView needles, SearchDirection);
 
+// FIXME: Remove these
 ByteString to_snakecase(StringView);
 ByteString to_titlecase(StringView);
 ByteString invert_case(StringView);

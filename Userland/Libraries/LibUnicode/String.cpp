@@ -123,6 +123,47 @@ ErrorOr<String> String::to_casefold() const
     return builder.to_string_without_validation();
 }
 
+ErrorOr<String> String::to_snakecase() const
+{
+    UErrorCode status = U_ZERO_ERROR;
+
+    StringBuilder builder { bytes_as_string_view().length() };
+    icu::StringByteSink sink { &builder };
+
+    auto resolved_locale = resolve_locale(locale);
+
+    // FIXME: Implement snakecase
+    // u_isUUppercase
+    // u_isULowercase()
+
+    /*
+    auto should_insert_underscore = [&](auto i, auto current_char) {
+        if (i == 0)
+            return false;
+        auto previous_ch = str[i - 1];
+        if (is_ascii_lower_alpha(previous_ch) && is_ascii_upper_alpha(current_char))
+            return true;
+        if (i >= str.length() - 1)
+            return false;
+        auto next_ch = str[i + 1];
+        if (is_ascii_upper_alpha(current_char) && is_ascii_lower_alpha(next_ch))
+            return true;
+        return false;
+    };
+
+    StringBuilder builder;
+    for (size_t i = 0; i < str.length(); ++i) {
+        auto ch = str[i];
+        if (should_insert_underscore(i, ch))
+            builder.append('_');
+        builder.append_as_lowercase(ch);
+    }
+    return builder.to_byte_string();
+    */
+
+    return "FIXME: Implement snakecase"_string;
+}
+
 bool String::equals_ignoring_case(String const& other) const
 {
     StringBuilder lhs_builder { bytes_as_string_view().length() };
