@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Endian.h>
 #include <AK/Format.h>
 #include <AK/Optional.h>
@@ -49,24 +48,6 @@ public:
     {
         VERIFY(i >= 0 && i < 4);
         return octet(SubnetClass(i));
-    }
-
-    ByteString to_byte_string() const
-    {
-        return ByteString::formatted("{}.{}.{}.{}",
-            octet(SubnetClass::A),
-            octet(SubnetClass::B),
-            octet(SubnetClass::C),
-            octet(SubnetClass::D));
-    }
-
-    ByteString to_byte_string_reversed() const
-    {
-        return ByteString::formatted("{}.{}.{}.{}",
-            octet(SubnetClass::D),
-            octet(SubnetClass::C),
-            octet(SubnetClass::B),
-            octet(SubnetClass::A));
     }
 
     ErrorOr<String> to_string() const
@@ -153,7 +134,7 @@ template<>
 struct Formatter<IPv4Address> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, IPv4Address value)
     {
-        return Formatter<StringView>::format(builder, value.to_byte_string());
+        return Formatter<StringView>::format(builder, value.to_string());
     }
 };
 
