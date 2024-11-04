@@ -49,6 +49,7 @@ public:
 
     StringView(ByteBuffer const&);
     StringView(String const&);
+    StringView(RefString const&);
     StringView(FlyString const&);
     StringView(ByteString const&);
     StringView(DeprecatedFlyString const&);

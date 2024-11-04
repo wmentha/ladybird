@@ -9,6 +9,7 @@
 #include <AK/ByteString.h>
 #include <AK/Checked.h>
 #include <AK/FlyString.h>
+#include <AK/RefString.h>
 #include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringData.h>
@@ -154,6 +155,16 @@ String StringBuilder::to_string_without_validation()
     if (m_buffer.is_inline())
         return String::from_utf8_without_validation(string_view().bytes());
     return String::from_string_builder_without_validation({}, *this);
+}
+
+ErrorOr<RefString> StringBuilder::to_ref_string()
+{
+    return to_string();
+}
+
+RefString StringBuilder::to_string_without_validation()
+{
+    return to_string_without_validation();
 }
 
 FlyString StringBuilder::to_fly_string_without_validation() const

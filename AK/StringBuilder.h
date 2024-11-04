@@ -65,6 +65,9 @@ public:
     [[nodiscard]] String to_string_without_validation();
     ErrorOr<String> to_string();
 
+    [[nodiscard]] RefString to_ref_string_without_validation();
+    ErrorOr<RefString> to_ref_string();
+
     [[nodiscard]] FlyString to_fly_string_without_validation() const;
     ErrorOr<FlyString> to_fly_string() const;
 

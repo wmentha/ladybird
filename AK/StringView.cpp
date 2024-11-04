@@ -11,6 +11,7 @@
 #include <AK/Find.h>
 #include <AK/FlyString.h>
 #include <AK/Function.h>
+#include <AK/RefString.h>
 #include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringView.h>
@@ -21,6 +22,12 @@ namespace AK {
 StringView::StringView(String const& string)
     : m_characters(reinterpret_cast<char const*>(string.bytes().data()))
     , m_length(string.bytes().size())
+{
+}
+
+StringView::StringView(RefString const& string)
+    : m_characters(reinterpret_cast<char const*>(string->bytes().data()))
+    , m_length(string->bytes().size())
 {
 }
 
