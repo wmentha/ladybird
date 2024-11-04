@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/GenericLexer.h>
 #include <AK/HashMap.h>
 #include <AK/String.h>
@@ -129,17 +128,6 @@ public:
     void appendln(char const (&pattern)[N])
     {
         appendln(StringView { pattern, N - 1 });
-    }
-
-    // FIXME: These are deprecated.
-    void set(StringView key, ByteString value)
-    {
-        set(key, MUST(String::from_byte_string(value)));
-    }
-    template<size_t N>
-    void set(char const (&key)[N], ByteString value)
-    {
-        set(StringView { key, N - 1 }, value);
     }
 
 private:
