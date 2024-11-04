@@ -5,10 +5,10 @@
  */
 
 #include <AK/Assertions.h>
-#include <AK/ByteString.h>
 #include <AK/HashMap.h>
 #include <AK/LexicalPath.h>
 #include <AK/Span.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 #include <LibArchive/TarStream.h>
 #include <LibCompress/Gzip.h>
@@ -40,7 +40,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     StringView archive_file;
     bool dereference = false;
     StringView directory;
-    Vector<ByteString> paths;
+    Vector<String> paths;
 
     Core::ArgsParser args_parser;
     args_parser.add_option(create, "Create archive", "create", 'c');
@@ -88,16 +88,16 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
         auto tar_stream = TRY(Archive::TarInputStream::construct(move(input_stream)));
 
-        HashMap<ByteString, ByteString> global_overrides;
-        HashMap<ByteString, ByteString> local_overrides;
+        HashMap<String, String> global_overrides;
+        HashMap<String, String> local_overrides;
 
-        auto get_override = [&](StringView key) -> Optional<ByteString> {
-            Optional<ByteString> maybe_local = local_overrides.get(key);
+        auto get_override = [&](StringView key) -> Optional<String> {
+            Optional<String> maybe_local = local_overrides.get(key);
 
             if (maybe_local.has_value())
                 return maybe_local;
 
-            Optional<ByteString> maybe_global = global_overrides.get(key);
+            Optional<String> maybe_global = global_overrides.get(key);
 
             if (maybe_global.has_value())
                 return maybe_global;
@@ -149,7 +149,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
                     long_name.append(reinterpret_cast<char*>(slice.data()), slice.size());
                 }
 
-                local_overrides.set("path", long_name.to_byte_string());
+                local_overrides.set("path", MUST(long_name.to_string()));
                 TRY(tar_stream->advance());
                 continue;
             }
@@ -161,7 +161,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
             LexicalPath path = LexicalPath(header.filename());
             if (!header.prefix().is_empty())
                 path = path.prepend(header.prefix());
-            ByteString filename = get_override("path"sv).value_or(path.string());
+            String filename = get_override("path"sv).value_or(path.string());
 
             if (list || verbose)
                 outln("{}", filename);
@@ -242,7 +242,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
         Archive::TarOutputStream tar_stream(move(output_stream));
 
-        auto add_file = [&](ByteString path) -> ErrorOr<void> {
+        auto add_file = [&](String path) -> ErrorOr<void> {
             auto file_or_error = Core::File::open(path, Core::File::OpenMode::Read);
             if (file_or_error.is_error()) {
                 warnln("Failed to open {}: {}", path, file_or_error.error());
@@ -261,7 +261,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
             return {};
         };
 
-        auto add_link = [&](ByteString path) -> ErrorOr<void> {
+        auto add_link = [&](String path) -> ErrorOr<void> {
             auto statbuf = TRY(Core::System::lstat(path));
 
             auto canonicalized_path = LexicalPath::canonicalized_path(path);
@@ -272,7 +272,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
             return {};
         };
 
-        auto add_directory = [&](ByteString path, auto handle_directory) -> ErrorOr<void> {
+        auto add_directory = [&](String path, auto handle_directory) -> ErrorOr<void> {
             auto statbuf = TRY(Core::System::lstat(path));
 
             auto canonicalized_path = LexicalPath::canonicalized_path(path);

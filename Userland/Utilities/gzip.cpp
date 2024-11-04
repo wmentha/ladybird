@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/LexicalPath.h>
+#include <AK/String.h>
 #include <LibCompress/Gzip.h>
 #include <LibCore/ArgsParser.h>
 #include <LibCore/File.h>
@@ -60,7 +60,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
             auto output_filename = input_filename.substring_view(0, input_filename.length() - ".gz"sv.length());
             output_stream = TRY(Core::File::open(output_filename, Core::File::OpenMode::Write));
         } else {
-            auto output_filename = ByteString::formatted("{}.gz", input_filename);
+            auto output_filename = String::formatted("{}.gz", input_filename);
             output_stream = TRY(Core::File::open(output_filename, Core::File::OpenMode::Write));
         }
 

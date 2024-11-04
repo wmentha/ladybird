@@ -289,7 +289,7 @@ static void dump(XML::Document& document)
                                     color(ColorRole::Tag);
                                     out("{} ", declaration.name);
                                     declaration.definition.visit(
-                                        [](ByteString const& value) {
+                                        [](String const& value) {
                                             color(ColorRole::AttributeValue);
                                             out("\"{}\"", value);
                                         },
@@ -320,7 +320,7 @@ static void dump(XML::Document& document)
                                     color(ColorRole::Tag);
                                     out("{} ", declaration.name);
                                     declaration.definition.visit(
-                                        [](ByteString const& value) {
+                                        [](String const& value) {
                                             color(ColorRole::AttributeValue);
                                             out("\"{}\"", value);
                                         },
@@ -355,14 +355,14 @@ static void dump(XML::Document& document)
     dump(document.root());
 }
 
-static ByteString s_path;
+static String s_path;
 static auto parse(StringView contents)
 {
     return XML::Parser {
         contents,
         {
             .preserve_comments = true,
-            .resolve_external_resource = [&](XML::SystemID const& system_id, Optional<XML::PublicID> const&) -> ErrorOr<Variant<ByteString, Vector<XML::MarkupDeclaration>>> {
+            .resolve_external_resource = [&](XML::SystemID const& system_id, Optional<XML::PublicID> const&) -> ErrorOr<Variant<String, Vector<XML::MarkupDeclaration>>> {
                 auto base = URL::create_with_file_scheme(s_path);
                 auto url = URL::Parser::basic_parse(system_id.system_literal, base);
                 if (!url.is_valid())
@@ -372,7 +372,7 @@ static auto parse(StringView contents)
                     return Error::from_string_literal("NYI: Nonlocal entity");
 
                 auto file = TRY(Core::File::open(URL::percent_decode(url.serialize_path()), Core::File::OpenMode::Read));
-                return ByteString::copy(TRY(file->read_until_eof()));
+                return String::from_utf8_without_validation(TRY(file->read_until_eof().span()));
             },
         },
     };
@@ -383,7 +383,7 @@ enum class TestResult {
     Failed,
     RunnerFailed,
 };
-static HashMap<ByteString, TestResult> s_test_results {};
+static HashMap<String, TestResult> s_test_results {};
 static void do_run_tests(XML::Document& document)
 {
     auto& root = document.root().content.get<XML::Node::Element>();
@@ -430,7 +430,7 @@ static void do_run_tests(XML::Document& document)
                 path_builder.append(entry);
                 path_builder.append('/');
             }
-            auto test_base_path = path_builder.to_byte_string();
+            auto test_base_path = MUST(path_builder.to_string());
 
             path_builder.append(suite.attributes.find("URI")->value);
             auto url = URL::create_with_file_scheme(path_builder.string_view());
