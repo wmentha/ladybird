@@ -108,11 +108,11 @@ Optional<bool> JsonObject::get_bool(StringView key) const
     return {};
 }
 
-Optional<ByteString> JsonObject::get_byte_string(StringView key) const
+Optional<RefString> JsonObject::get_ref_string(StringView key) const
 {
     auto maybe_value = get(key);
     if (maybe_value.has_value() && maybe_value->is_string())
-        return maybe_value->as_string();
+        return maybe_value;
     return {};
 }
 
@@ -237,7 +237,7 @@ bool JsonObject::has_object(StringView key) const
     return value.has_value() && value->is_object();
 }
 
-void JsonObject::set(ByteString const& key, JsonValue value)
+void JsonObject::set(RefString const& key, JsonValue value)
 {
     m_members.set(key, move(value));
 }
@@ -247,7 +247,7 @@ bool JsonObject::remove(StringView key)
     return m_members.remove(key);
 }
 
-ByteString JsonObject::to_byte_string() const
+String JsonObject::to_string() const
 {
     return serialized<StringBuilder>();
 }
