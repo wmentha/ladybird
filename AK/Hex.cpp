@@ -34,14 +34,14 @@ ErrorOr<ByteBuffer> decode_hex(StringView input)
     return { move(output) };
 }
 
-ByteString encode_hex(ReadonlyBytes const input)
+RefString encode_hex(ReadonlyBytes const input)
 {
     StringBuilder output(input.size() * 2);
 
     for (auto ch : input)
         output.appendff("{:02x}", ch);
 
-    return output.to_byte_string();
+    return output.to_ref_string();
 }
 
 }
