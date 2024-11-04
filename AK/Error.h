@@ -47,8 +47,9 @@ public:
     template<OneOf<String, RefString, FlyString> T>
     static Error from_string_view(T)
     {
-        // `Error::from_string_view(ByteString::formatted(...))` is a somewhat common mistake, which leads to a UAF situation.
-        // If your string outlives this error and _isn't_ a temporary being passed to this function, explicitly call .view() on it to resolve to the StringView overload.
+        // `Error::from_string_view(String::formatted(...))` is a somewhat common mistake, which leads to a UAF situation.
+        // If your string outlives this error and _isn't_ a temporary being passed to this function,
+        // explicitly call .bytes_as_string_view() on it to resolve to the StringView overload.
         static_assert(DependentFalse<T>, "Error::from_string_view(String) is almost always a use-after-free");
         VERIFY_NOT_REACHED();
     }
