@@ -62,7 +62,7 @@ public:
         return {};
     }
 
-    ErrorOr<void> add(ByteString const& value)
+    ErrorOr<void> add(String const& value)
     {
         TRY(begin_item());
         if constexpr (IsLegacyBuilder<Builder>) {
