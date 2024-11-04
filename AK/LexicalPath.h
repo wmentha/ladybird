@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 
 // On Linux distros that use mlibc `basename` is defined as a macro that expands to `__mlibc_gnu_basename` or `__mlibc_gnu_basename_c`, so we undefine it.
@@ -24,10 +24,10 @@ public:
         Yes
     };
 
-    explicit LexicalPath(ByteString);
+    explicit LexicalPath(String);
 
-    bool is_absolute() const { return !m_string.is_empty() && m_string[0] == '/'; }
-    ByteString const& string() const { return m_string; }
+    bool is_absolute() const { return !m_string.is_empty() && m_string.starts_with('/'); }
+    String const& string() const { return m_string; }
 
     StringView dirname() const { return m_dirname; }
     StringView basename(StripExtension s = StripExtension::No) const { return s == StripExtension::No ? m_basename : m_basename.substring_view(0, m_basename.length() - m_extension.length() - 1); }
@@ -35,7 +35,7 @@ public:
     StringView extension() const { return m_extension; }
 
     Vector<StringView> const& parts_view() const { return m_parts; }
-    [[nodiscard]] Vector<ByteString> parts() const;
+    [[nodiscard]] Vector<String> parts() const;
 
     bool has_extension(StringView) const;
     bool is_child_of(LexicalPath const& possible_parent) const;
@@ -44,9 +44,9 @@ public:
     [[nodiscard]] LexicalPath prepend(StringView) const;
     [[nodiscard]] LexicalPath parent() const;
 
-    [[nodiscard]] static ByteString canonicalized_path(ByteString);
-    [[nodiscard]] static ByteString absolute_path(ByteString dir_path, ByteString target);
-    [[nodiscard]] static ByteString relative_path(StringView absolute_path, StringView prefix);
+    [[nodiscard]] static String canonicalized_path(String);
+    [[nodiscard]] static String absolute_path(String dir_path, String target);
+    [[nodiscard]] static String relative_path(StringView absolute_path, StringView prefix);
 
     template<typename... S>
     [[nodiscard]] static LexicalPath join(StringView first, S&&... rest)
@@ -55,28 +55,28 @@ public:
         builder.append(first);
         ((builder.append('/'), builder.append(forward<S>(rest))), ...);
 
-        return LexicalPath { builder.to_byte_string() };
+        return LexicalPath { builder.to_string() };
     }
 
-    [[nodiscard]] static ByteString dirname(ByteString path)
+    [[nodiscard]] static String dirname(String path)
     {
         auto lexical_path = LexicalPath(move(path));
         return lexical_path.dirname();
     }
 
-    [[nodiscard]] static ByteString basename(ByteString path, StripExtension s = StripExtension::No)
+    [[nodiscard]] static String basename(String path, StripExtension s = StripExtension::No)
     {
         auto lexical_path = LexicalPath(move(path));
         return lexical_path.basename(s);
     }
 
-    [[nodiscard]] static ByteString title(ByteString path)
+    [[nodiscard]] static String title(String path)
     {
         auto lexical_path = LexicalPath(move(path));
         return lexical_path.title();
     }
 
-    [[nodiscard]] static ByteString extension(ByteString path)
+    [[nodiscard]] static String extension(String path)
     {
         auto lexical_path = LexicalPath(move(path));
         return lexical_path.extension();
@@ -84,7 +84,7 @@ public:
 
 private:
     Vector<StringView> m_parts;
-    ByteString m_string;
+    String m_string;
     StringView m_dirname;
     StringView m_basename;
     StringView m_title;
