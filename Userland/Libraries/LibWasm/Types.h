@@ -7,7 +7,6 @@
 #pragma once
 
 #include <AK/Badge.h>
-#include <AK/ByteString.h>
 #include <AK/DistinctNumeric.h>
 #include <AK/LEB128.h>
 #include <AK/Result.h>
@@ -182,23 +181,23 @@ public:
 
     static ParseResult<ValueType> parse(Stream& stream);
 
-    static ByteString kind_name(Kind kind)
+    static String kind_name(Kind kind)
     {
         switch (kind) {
         case I32:
-            return "i32";
+            return "i32"_string;
         case I64:
-            return "i64";
+            return "i64"_string;
         case F32:
-            return "f32";
+            return "f32"_string;
         case F64:
-            return "f64";
+            return "f64"_string;
         case V128:
-            return "v128";
+            return "v128"_string;
         case FunctionReference:
-            return "funcref";
+            return "funcref"_string;
         case ExternReference:
-            return "externref";
+            return "externref"_string;
         }
         VERIFY_NOT_REACHED();
     }
@@ -534,7 +533,7 @@ private:
 
 class CustomSection {
 public:
-    CustomSection(ByteString name, ByteBuffer contents)
+    CustomSection(String name, ByteBuffer contents)
         : m_name(move(name))
         , m_contents(move(contents))
     {
@@ -546,7 +545,7 @@ public:
     static ParseResult<CustomSection> parse(Stream& stream);
 
 private:
-    ByteString m_name;
+    String m_name;
     ByteBuffer m_contents;
 };
 
@@ -572,7 +571,7 @@ public:
     class Import {
     public:
         using ImportDesc = Variant<TypeIndex, TableType, MemoryType, GlobalType, FunctionType>;
-        Import(ByteString module, ByteString name, ImportDesc description)
+        Import(String module, String name, ImportDesc description)
             : m_module(move(module))
             , m_name(move(name))
             , m_description(move(description))
@@ -593,8 +592,8 @@ public:
             return Import { module, name, result };
         }
 
-        ByteString m_module;
-        ByteString m_name;
+        String m_module;
+        String m_name;
         ImportDesc m_description;
     };
 
@@ -755,7 +754,7 @@ private:
 public:
     class Export {
     public:
-        explicit Export(ByteString name, ExportDesc description)
+        explicit Export(String name, ExportDesc description)
             : m_name(move(name))
             , m_description(move(description))
         {
@@ -767,7 +766,7 @@ public:
         static ParseResult<Export> parse(Stream& stream);
 
     private:
-        ByteString m_name;
+        String m_name;
         ExportDesc m_description;
     };
 
@@ -1027,7 +1026,7 @@ public:
     void set_validation_status(ValidationStatus status, Badge<Validator>) { set_validation_status(status); }
     ValidationStatus validation_status() const { return m_validation_status; }
     StringView validation_error() const { return *m_validation_error; }
-    void set_validation_error(ByteString error) { m_validation_error = move(error); }
+    void set_validation_error(String error) { m_validation_error = move(error); }
 
     static ParseResult<NonnullRefPtr<Module>> parse(Stream& stream);
 
@@ -1049,6 +1048,6 @@ private:
     DataCountSection m_data_count_section;
 
     ValidationStatus m_validation_status { ValidationStatus::Unchecked };
-    Optional<ByteString> m_validation_error;
+    Optional<String> m_validation_error;
 };
 }
