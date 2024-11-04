@@ -98,9 +98,14 @@ public:
         return m_data->to_titlecase(locale, trailing_code_point_transformation);
     }
 
-    ALWAYS_INLINE ErrorOr<String> to_casefold()
+    ALWAYS_INLINE ErrorOr<String> to_casefold() const
     {
         return m_data->to_casefold();
+    }
+
+    ALWAYS_INLINE ErrorOr<String> to_fullwidth() const
+    {
+        return m_data->to_fullwidth();
     }
 
     ALWAYS_INLINE [[nodiscard]] String to_ascii_lowercase() const
@@ -216,6 +221,11 @@ public:
     ALWAYS_INLINE ErrorOr<String> trim(StringView code_points_to_trim, TrimMode mode = TrimMode::Both) const
     {
         return m_data->trim(code_points_to_trim, mode);
+    }
+
+    ALWAYS_INLINE ErrorOr<String> trim_whitespace(TrimMode mode = TrimMode::Both) const
+    {
+        return m_data->trims_whitespace(mode);
     }
 
     ALWAYS_INLINE ErrorOr<String> trim_ascii_whitespace(TrimMode mode = TrimMode::Both) const
