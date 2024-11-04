@@ -57,7 +57,7 @@ public:
         return {};
     }
 
-    ErrorOr<void> add(StringView key, ByteString const& value)
+    ErrorOr<void> add(StringView key, RefString const& value)
     {
         TRY(begin_item(key));
         if constexpr (IsLegacyBuilder<Builder>) {
