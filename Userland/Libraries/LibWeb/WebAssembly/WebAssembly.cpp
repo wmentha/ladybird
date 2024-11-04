@@ -310,7 +310,7 @@ JS::ThrowCompletionOr<NonnullRefPtr<CompiledWebAssemblyModule>> compile_a_webass
     auto module_result = Wasm::Module::parse(stream);
     if (module_result.is_error()) {
         // FIXME: Throw CompileError instead.
-        return vm.throw_completion<JS::TypeError>(Wasm::parse_error_to_byte_string(module_result.error()));
+        return vm.throw_completion<JS::TypeError>(Wasm::parse_error_to_string(module_result.error()));
     }
 
     auto& cache = get_cache(*vm.current_realm());

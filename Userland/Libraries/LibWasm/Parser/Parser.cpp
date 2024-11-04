@@ -89,11 +89,11 @@ static auto parse_vector(Stream& stream)
     }
 }
 
-static ParseResult<ByteString> parse_name(Stream& stream)
+static ParseResult<String> parse_name(Stream& stream)
 {
     ScopeLogger<WASM_BINPARSER_DEBUG> logger;
     auto data = TRY(parse_vector<u8>(stream));
-    auto string = ByteString::copy(data);
+    auto string = String::from_utf8_without_validation(data.span());
     if (!Utf8View(string).validate(Utf8View::AllowSurrogates::No))
         return ParseError::InvalidUtf8;
     return string;
@@ -1329,54 +1329,54 @@ ParseResult<NonnullRefPtr<Module>> Module::parse(Stream& stream)
     return module_ptr;
 }
 
-ByteString parse_error_to_byte_string(ParseError error)
+String parse_error_to_string(ParseError error)
 {
     switch (error) {
     case ParseError::UnexpectedEof:
-        return "Unexpected end-of-file";
+        return "Unexpected end-of-file"_string;
     case ParseError::ExpectedIndex:
-        return "Expected a valid index value";
+        return "Expected a valid index value"_string;
     case ParseError::ExpectedKindTag:
-        return "Expected a valid kind tag";
+        return "Expected a valid kind tag"_string;
     case ParseError::ExpectedSize:
-        return "Expected a valid LEB128-encoded size";
+        return "Expected a valid LEB128-encoded size"_string;
     case ParseError::ExpectedValueOrTerminator:
-        return "Expected either a terminator or a value";
+        return "Expected either a terminator or a value"_string;
     case ParseError::InvalidIndex:
-        return "An index parsed was semantically invalid";
+        return "An index parsed was semantically invalid"_string;
     case ParseError::InvalidInput:
-        return "Input data contained invalid bytes";
+        return "Input data contained invalid bytes"_string;
     case ParseError::InvalidModuleMagic:
-        return "Incorrect module magic (did not match \\0asm)";
+        return "Incorrect module magic (did not match \\0asm)"_string;
     case ParseError::InvalidModuleVersion:
-        return "Incorrect module version";
+        return "Incorrect module version"_string;
     case ParseError::InvalidSize:
-        return "A parsed size did not make sense in context";
+        return "A parsed size did not make sense in context"_string;
     case ParseError::InvalidTag:
-        return "A parsed tag did not make sense in context";
+        return "A parsed tag did not make sense in context"_string;
     case ParseError::InvalidType:
-        return "A parsed type did not make sense in context";
+        return "A parsed type did not make sense in context"_string;
     case ParseError::HugeAllocationRequested:
-        return "Parsing caused an attempt to allocate a very big chunk of memory, likely malformed data";
+        return "Parsing caused an attempt to allocate a very big chunk of memory, likely malformed data"_string;
     case ParseError::OutOfMemory:
-        return "The parser hit an OOM condition";
+        return "The parser hit an OOM condition"_string;
     case ParseError::ExpectedFloatingImmediate:
-        return "Expected a floating point immediate";
+        return "Expected a floating point immediate"_string;
     case ParseError::ExpectedSignedImmediate:
-        return "Expected a signed integer immediate";
+        return "Expected a signed integer immediate"_string;
     case ParseError::InvalidImmediate:
-        return "A parsed instruction immediate was invalid for the instruction it was used for";
+        return "A parsed instruction immediate was invalid for the instruction it was used for"_string;
     case ParseError::SectionSizeMismatch:
-        return "A parsed section did not fulfill its expected size";
+        return "A parsed section did not fulfill its expected size"_string;
     case ParseError::InvalidUtf8:
-        return "A parsed string was not valid UTF-8";
+        return "A parsed string was not valid UTF-8"_string;
     case ParseError::UnknownInstruction:
-        return "A parsed instruction was not known to this parser";
+        return "A parsed instruction was not known to this parser"_string;
     case ParseError::DuplicateSection:
-        return "Two sections of the same type were encountered";
+        return "Two sections of the same type were encountered"_string;
     case ParseError::SectionOutOfOrder:
-        return "A section encountered was not in the correct ordering";
+        return "A section encountered was not in the correct ordering"_string;
     }
-    return "Unknown error";
+    return "Unknown error"_string;
 }
 }

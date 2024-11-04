@@ -165,7 +165,7 @@ TESTJS_GLOBAL_FUNCTION(parse_webassembly_module, parseWebAssemblyModule)
     FixedMemoryStream stream { array.data() };
     auto result = Wasm::Module::parse(stream);
     if (result.is_error())
-        return vm.throw_completion<JS::SyntaxError>(Wasm::parse_error_to_byte_string(result.error()));
+        return vm.throw_completion<JS::SyntaxError>(Wasm::parse_error_to_string(result.error()));
 
     HashMap<Wasm::Linker::Name, Wasm::ExternValue> imports;
     auto import_value = vm.argument(1);

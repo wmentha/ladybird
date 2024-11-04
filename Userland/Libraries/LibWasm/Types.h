@@ -61,7 +61,7 @@ enum class ParseError {
     SectionOutOfOrder,
 };
 
-ByteString parse_error_to_byte_string(ParseError);
+String parse_error_to_string(ParseError);
 
 template<typename T>
 using ParseResult = ErrorOr<T, ParseError>;
