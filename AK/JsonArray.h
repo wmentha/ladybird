@@ -78,7 +78,7 @@ public:
     template<typename Builder>
     void serialize(Builder&) const;
 
-    [[nodiscard]] ByteString to_byte_string() const { return serialized<StringBuilder>(); }
+    [[nodiscard]] String to_string() const { return serialized<StringBuilder>(); }
 
     template<typename Callback>
     void for_each(Callback callback) const
@@ -117,7 +117,7 @@ inline typename Builder::OutputType JsonArray::serialized() const
 {
     Builder builder;
     serialize(builder);
-    return builder.to_byte_string();
+    return builder.to_string();
 }
 
 }
