@@ -20,7 +20,7 @@ using JsonValueStorage = Variant<
     i64,
     u64,
     double,
-    ByteString,
+    RefString,
     NonnullOwnPtr<JsonArray>,
     NonnullOwnPtr<JsonObject>>;
 
@@ -164,23 +164,18 @@ JsonValue::JsonValue(long long unsigned value)
 {
 }
 
-JsonValue::JsonValue(char const* cstring)
-    : m_value(ByteString { cstring })
-{
-}
-
 JsonValue::JsonValue(double value)
     : m_value(double { value })
 {
 }
 
-JsonValue::JsonValue(ByteString const& value)
+JsonValue::JsonValue(RefString const& value)
     : m_value(value)
 {
 }
 
 JsonValue::JsonValue(StringView value)
-    : m_value(ByteString { value })
+    : m_value(String::from_utf8_without_validation(value.bytes()))
 {
 }
 

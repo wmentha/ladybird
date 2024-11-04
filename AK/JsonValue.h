@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Forward.h>
 #include <AK/Optional.h>
 #include <AK/OwnPtr.h>
+#include <AK/RefString.h>
 #include <AK/StringBuilder.h>
 
 namespace AK {
@@ -45,8 +45,7 @@ public:
     JsonValue(long long unsigned);
 
     JsonValue(double);
-    JsonValue(char const*);
-    JsonValue(ByteString const&);
+    JsonValue(RefString const&);
     JsonValue(StringView);
 
     template<typename T>
@@ -72,20 +71,6 @@ public:
     typename Builder::OutputType serialized() const;
     template<typename Builder>
     void serialize(Builder&) const;
-
-    ByteString as_string_or(ByteString const& alternative) const
-    {
-        if (is_string())
-            return as_string();
-        return alternative;
-    }
-
-    ByteString deprecated_to_byte_string() const
-    {
-        if (is_string())
-            return as_string();
-        return serialized<StringBuilder>();
-    }
 
     Optional<int> get_int() const { return get_integer<int>(); }
     Optional<i32> get_i32() const { return get_integer<i32>(); }
@@ -124,9 +109,9 @@ public:
         return m_value.get<bool>();
     }
 
-    ByteString const& as_string() const
+    RefString const& as_string() const
     {
-        return m_value.get<ByteString>();
+        return m_value.get<RefString>();
     }
 
     JsonObject& as_object()
@@ -160,14 +145,14 @@ public:
             [](Empty const&) { return Type::Null; },
             [](bool const&) { return Type::Bool; },
             [](Arithmetic auto const&) { return Type::Number; },
-            [](ByteString const&) { return Type::String; },
+            [](RefStr const&) { return Type::String; },
             [](NonnullOwnPtr<JsonArray> const&) { return Type::Array; },
             [](NonnullOwnPtr<JsonObject> const&) { return Type::Object; });
     }
 
     bool is_null() const { return m_value.has<Empty>(); }
     bool is_bool() const { return m_value.has<bool>(); }
-    bool is_string() const { return m_value.has<ByteString>(); }
+    bool is_string() const { return m_value.has<RefString>(); }
     bool is_array() const { return m_value.has<NonnullOwnPtr<JsonArray>>(); }
     bool is_object() const { return m_value.has<NonnullOwnPtr<JsonObject>>(); }
     bool is_number() const
@@ -228,7 +213,7 @@ private:
         i64,
         u64,
         double,
-        ByteString,
+        RefString,
         NonnullOwnPtr<JsonArray>,
         NonnullOwnPtr<JsonObject>>
         m_value;
