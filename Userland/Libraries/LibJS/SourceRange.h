@@ -8,6 +8,7 @@
 #pragma once
 
 #include <AK/NonnullRefPtr.h>
+#include <AK/RefString.h>
 #include <AK/StringView.h>
 #include <AK/Types.h>
 #include <LibJS/Position.h>
@@ -22,7 +23,7 @@ struct SourceRange {
     Position start;
     Position end;
 
-    ByteString filename() const;
+    RefString filename() const;
 };
 
 struct UnrealizedSourceRange {

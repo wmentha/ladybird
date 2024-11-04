@@ -52,7 +52,7 @@ SourceRange ASTNode::source_range() const
     return m_source_code->range_from_offsets(m_start_offset, m_end_offset);
 }
 
-ByteString ASTNode::class_name() const
+RefString ASTNode::class_name() const
 {
     // NOTE: We strip the "JS::" prefix.
     auto const* typename_ptr = typeid(*this).name();
@@ -61,7 +61,7 @@ ByteString ASTNode::class_name() const
 
 static void print_indent(int indent)
 {
-    out("{}", ByteString::repeated(' ', indent * 2));
+    out("{}", String::repeated(' ', indent * 2));
 }
 
 static void update_function_name(Value value, DeprecatedFlyString const& name)
@@ -118,7 +118,7 @@ Value FunctionExpression::instantiate_ordinary_function_expression(VM& vm, Depre
     return closure;
 }
 
-Optional<ByteString> CallExpression::expression_string() const
+Optional<RefString> CallExpression::expression_string() const
 {
     if (is<Identifier>(*m_callee))
         return static_cast<Identifier const&>(*m_callee).string();
@@ -158,23 +158,23 @@ ThrowCompletionOr<ClassElement::ClassValue> ClassMethod::class_element_evaluatio
     auto method_value = Value(&method_function);
     method_function.make_method(target);
 
-    auto set_function_name = [&](ByteString prefix = "") {
+    auto set_function_name = [&](String prefix = "") {
         auto name = property_key_or_private_name.visit(
-            [&](PropertyKey const& property_key) -> ByteString {
+            [&](PropertyKey const& property_key) -> RefString {
                 if (property_key.is_symbol()) {
                     auto description = property_key.as_symbol()->description();
                     if (!description.has_value() || description->is_empty())
                         return "";
-                    return ByteString::formatted("[{}]", *description);
+                    return String::formatted("[{}]", *description);
                 } else {
                     return property_key.to_string();
                 }
             },
-            [&](PrivateName const& private_name) -> ByteString {
+            [&](PrivateName const& private_name) -> RefString {
                 return private_name.description;
             });
 
-        update_function_name(method_value, ByteString::formatted("{}{}{}", prefix, prefix.is_empty() ? "" : " ", name));
+        update_function_name(method_value, String::formatted("{}{}{}", prefix, prefix.is_empty() ? "" : " ", name));
     };
 
     if (property_key_or_private_name.has<PropertyKey>()) {
@@ -231,10 +231,10 @@ ThrowCompletionOr<ClassElement::ClassValue> ClassField::class_element_evaluation
     if (m_initializer) {
         auto copy_initializer = m_initializer;
         auto name = property_key_or_private_name.visit(
-            [&](PropertyKey const& property_key) -> ByteString {
+            [&](PropertyKey const& property_key) -> RefString {
                 return property_key.is_number() ? property_key.to_string() : property_key.to_string_or_symbol().to_display_string();
             },
-            [&](PrivateName const& private_name) -> ByteString {
+            [&](PrivateName const& private_name) -> RefString {
                 return private_name.description;
             });
 
@@ -243,7 +243,7 @@ ThrowCompletionOr<ClassElement::ClassValue> ClassField::class_element_evaluation
         FunctionParsingInsights parsing_insights;
         parsing_insights.uses_this_from_environment = true;
         parsing_insights.uses_this = true;
-        initializer = make_handle(*ECMAScriptFunctionObject::create(realm, "field", ByteString::empty(), *function_code, {}, 0, {}, vm.lexical_environment(), vm.running_execution_context().private_environment, FunctionKind::Normal, true, parsing_insights, false, property_key_or_private_name));
+        initializer = make_handle(*ECMAScriptFunctionObject::create(realm, "field", ""_ref_string, *function_code, {}, 0, {}, vm.lexical_environment(), vm.running_execution_context().private_environment, FunctionKind::Normal, true, parsing_insights, false, property_key_or_private_name));
         initializer->make_method(target);
     }
 
@@ -290,7 +290,7 @@ ThrowCompletionOr<ClassElement::ClassValue> StaticInitializer::class_element_eva
     FunctionParsingInsights parsing_insights;
     parsing_insights.uses_this_from_environment = true;
     parsing_insights.uses_this = true;
-    auto body_function = ECMAScriptFunctionObject::create(realm, ByteString::empty(), ByteString::empty(), *m_function_body, {}, 0, m_function_body->local_variables_names(), lexical_environment, private_environment, FunctionKind::Normal, true, parsing_insights, false);
+    auto body_function = ECMAScriptFunctionObject::create(realm, ""_ref_string, ""_ref_string, *m_function_body, {}, 0, m_function_body->local_variables_names(), lexical_environment, private_environment, FunctionKind::Normal, true, parsing_insights, false);
 
     // 6. Perform MakeMethod(bodyFunction, homeObject).
     body_function->make_method(home_object);
@@ -825,7 +825,7 @@ void BindingPattern::dump(int indent) const
     }
 }
 
-void FunctionNode::dump(int indent, ByteString const& class_name) const
+void FunctionNode::dump(int indent, RefString const& class_name) const
 {
     print_indent(indent);
     auto is_async = m_kind == FunctionKind::Async || m_kind == FunctionKind::AsyncGenerator;
@@ -1210,16 +1210,16 @@ void MemberExpression::dump(int indent) const
     m_property->dump(indent + 1);
 }
 
-ByteString MemberExpression::to_string_approximation() const
+RefString MemberExpression::to_string_approximation() const
 {
-    ByteString object_string = "<object>";
+    auto object_string; = "<object>"_string;
     if (is<Identifier>(*m_object))
         object_string = static_cast<Identifier const&>(*m_object).string();
     if (is_computed())
-        return ByteString::formatted("{}[<computed>]", object_string);
+        return String::formatted("{}[<computed>]", object_string);
     if (is<PrivateIdentifier>(*m_property))
-        return ByteString::formatted("{}.{}", object_string, verify_cast<PrivateIdentifier>(*m_property).string());
-    return ByteString::formatted("{}.{}", object_string, verify_cast<Identifier>(*m_property).string());
+        return String::formatted("{}.{}", object_string, verify_cast<PrivateIdentifier>(*m_property).string());
+    return String::formatted("{}.{}", object_string, verify_cast<Identifier>(*m_property).string());
 }
 
 bool MemberExpression::ends_in_private_name() const
@@ -1266,11 +1266,11 @@ void OptionalChain::dump(int indent) const
 
 void MetaProperty::dump(int indent) const
 {
-    ByteString name;
+    RefString name;
     if (m_type == MetaProperty::Type::NewTarget)
-        name = "new.target";
+        name = "new.target"_ref_string;
     else if (m_type == MetaProperty::Type::ImportMeta)
-        name = "import.meta";
+        name = "import.meta"_ref_string;
     else
         VERIFY_NOT_REACHED();
     print_indent(indent);
@@ -1517,11 +1517,11 @@ void ExportStatement::dump(int indent) const
     print_indent(indent + 1);
     outln("(ExportEntries)");
 
-    auto string_or_null = [](Optional<DeprecatedFlyString> const& string) -> ByteString {
+    auto string_or_null = [](Optional<DeprecatedFlyString> const& string) -> RefString {
         if (!string.has_value()) {
             return "null";
         }
-        return ByteString::formatted("\"{}\"", string);
+        return String::formatted("\"{}\"", string);
     };
 
     for (auto& entry : m_entries) {
@@ -1867,9 +1867,9 @@ ModuleRequest::ModuleRequest(DeprecatedFlyString module_specifier_, Vector<Impor
     });
 }
 
-ByteString SourceRange::filename() const
+RefString SourceRange::filename() const
 {
-    return code->filename().to_byte_string();
+    return code->filename();
 }
 
 NonnullRefPtr<CallExpression> CallExpression::create(SourceRange source_range, NonnullRefPtr<Expression const> callee, ReadonlySpan<Argument> arguments, InvocationStyleEnum invocation_style, InsideParenthesesEnum inside_parens)
