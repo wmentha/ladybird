@@ -5,7 +5,6 @@
  */
 
 #include <AK/Assertions.h>
-#include <AK/ByteString.h>
 #include <AK/CharacterTypes.h>
 #include <AK/GenericLexer.h>
 #include <AK/ScopeGuard.h>
@@ -212,7 +211,7 @@ template ErrorOr<i32> GenericLexer::consume_decimal_integer<i32>();
 template ErrorOr<u64> GenericLexer::consume_decimal_integer<u64>();
 template ErrorOr<i64> GenericLexer::consume_decimal_integer<i64>();
 
-Optional<ByteString> GenericLexer::consume_and_unescape_string(char escape_char)
+Optional<RefString> GenericLexer::consume_and_unescape_string(char escape_char)
 {
     auto view = consume_quoted_string(escape_char);
     if (view.is_null())
@@ -221,7 +220,7 @@ Optional<ByteString> GenericLexer::consume_and_unescape_string(char escape_char)
     StringBuilder builder;
     for (size_t i = 0; i < view.length(); ++i)
         builder.append(consume_escaped_character(escape_char));
-    return builder.to_byte_string();
+    return builder.to_ref_string();
 }
 
 auto GenericLexer::consume_escaped_code_point(bool combine_surrogate_pairs) -> Result<u32, UnicodeEscapeError>

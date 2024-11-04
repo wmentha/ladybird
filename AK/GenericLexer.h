@@ -8,8 +8,8 @@
 
 #include <AK/NonnullOwnPtr.h>
 #include <AK/RedBlackTree.h>
+#include <AK/RefString.h>
 #include <AK/Result.h>
-#include <AK/String.h>
 #include <AK/StringView.h>
 
 namespace AK {
@@ -94,7 +94,7 @@ public:
         return true;
     }
 
-    bool consume_specific(ByteString next) = delete;
+    bool consume_specific(RefString next) = delete;
 
     bool consume_specific(String const& next)
     {
@@ -128,7 +128,7 @@ public:
     StringView consume_until(char const*);
     StringView consume_until(StringView);
     StringView consume_quoted_string(char escape_char = 0);
-    Optional<ByteString> consume_and_unescape_string(char escape_char = '\\');
+    Optional<RefString> consume_and_unescape_string(char escape_char = '\\');
     template<Integral T>
     ErrorOr<T> consume_decimal_integer();
 
