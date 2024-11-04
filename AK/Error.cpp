@@ -8,8 +8,8 @@
 
 #include <AK/Error.h>
 #ifdef AK_OS_WINDOWS
-#    include <AK/ByteString.h>
 #    include <AK/HashMap.h>
+#    include <AK/RefString.h>
 #    include <windows.h>
 #endif
 
@@ -23,7 +23,7 @@ Error Error::from_string_view_or_print_error_and_return_errno(StringView string_
 #ifdef AK_OS_WINDOWS
 Error Error::from_windows_error(DWORD code)
 {
-    static HashMap<DWORD, ByteString> windows_errors;
+    static HashMap<DWORD, RefString> windows_errors;
 
     auto string = windows_errors.get(code);
     if (string.has_value()) {
