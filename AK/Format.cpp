@@ -1121,22 +1121,22 @@ void vout(LogLevel log_level, StringView fmtstr, TypeErasedFormatParams& params,
 #endif
 
 // FIXME: Deduplicate with Core::Process:get_name()
-[[gnu::used]] static ByteString process_name_helper()
+[[gnu::used]] static String process_name_helper()
 {
 #if defined(AK_OS_SERENITY)
     char buffer[BUFSIZ] = {};
     int rc = get_process_name(buffer, BUFSIZ);
     if (rc != 0)
-        return ByteString {};
-    return StringView { buffer, strlen(buffer) };
+        return ""_string;
+    return MUST(String::from_utf8({ buffer, strlen(buffer) }));
 #elif defined(AK_LIBC_GLIBC) || (defined(AK_OS_LINUX) && !defined(AK_OS_ANDROID))
-    return StringView { program_invocation_name, strlen(program_invocation_name) };
+    return MUST(String::from_utf8({ program_invocation_name, strlen(program_invocation_name) }));
 #elif defined(AK_OS_BSD_GENERIC) || defined(AK_OS_HAIKU)
     auto const* progname = getprogname();
-    return StringView { progname, strlen(progname) };
+    return MUST(String::from_utf8({ progname, strlen(progname) }));
 #else
     // FIXME: Implement process_name_helper() for other platforms.
-    return StringView {};
+    return ""_string;
 #endif
 }
 
