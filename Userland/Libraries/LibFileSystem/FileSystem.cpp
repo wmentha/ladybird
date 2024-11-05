@@ -54,7 +54,7 @@ ErrorOr<String> real_path(StringView path)
     if (!real_path)
         return Error::from_syscall("realpath"sv, -errno);
 
-    return String::from_utf8_without_validation(AK::to_read_only_bytes({ real_path, strlen(real_path) }));
+    return String::from_utf8_without_validation(AK::to_readonly_bytes({ real_path, strlen(real_path) }));
 }
 
 bool exists(StringView path)
