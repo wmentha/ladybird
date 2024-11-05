@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/StringView.h>
 #ifdef AK_OS_WINDOWS
 using WIN32_FIND_DATA = struct _WIN32_FIND_DATAA;
@@ -30,7 +30,7 @@ struct DirectoryEntry {
     };
     Type type;
     // FIXME: Once we have a special Path string class, use that.
-    ByteString name;
+    String name;
 #if !defined(AK_OS_WINDOWS)
     ino_t inode_number;
 

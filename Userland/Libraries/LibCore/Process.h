@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Forward.h>
 #include <AK/Span.h>
+#include <AK/String.h>
 #include <LibCore/File.h>
 
 namespace Core {
@@ -19,7 +19,7 @@ namespace Core {
 namespace FileAction {
 
 struct OpenFile {
-    ByteString path;
+    String path;
     File::OpenMode mode = File::OpenMode::NotOpen;
     int fd = -1;
     mode_t permissions = 0600;
@@ -35,10 +35,10 @@ struct CloseFile {
 
 struct ProcessSpawnOptions {
     StringView name {};
-    ByteString executable {};
+    String executable {};
     bool search_for_executable_in_path { false };
-    Vector<ByteString> const& arguments {};
-    Optional<ByteString> working_directory {};
+    Vector<String> const& arguments {};
+    Optional<String> working_directory {};
 
     using FileActionType = Variant<FileAction::OpenFile, FileAction::CloseFile>;
     Vector<FileActionType> file_actions {};
@@ -75,11 +75,11 @@ public:
     static Process current();
 
     // FIXME: Make the following 2 functions return Process instance or delete them.
-    static ErrorOr<pid_t> spawn(StringView path, ReadonlySpan<ByteString> arguments, ByteString working_directory = {}, KeepAsChild keep_as_child = KeepAsChild::No);
-    static ErrorOr<pid_t> spawn(StringView path, ReadonlySpan<StringView> arguments, ByteString working_directory = {}, KeepAsChild keep_as_child = KeepAsChild::No);
+    static ErrorOr<pid_t> spawn(StringView path, ReadonlySpan<String> arguments, String working_directory = {}, KeepAsChild keep_as_child = KeepAsChild::No);
+    static ErrorOr<pid_t> spawn(StringView path, ReadonlySpan<StringView> arguments, String working_directory = {}, KeepAsChild keep_as_child = KeepAsChild::No);
 
     // FIXME: Remove this. char const* should not exist on this level of abstraction.
-    static ErrorOr<pid_t> spawn(StringView path, ReadonlySpan<char const*> arguments = {}, ByteString working_directory = {}, KeepAsChild keep_as_child = KeepAsChild::No);
+    static ErrorOr<pid_t> spawn(StringView path, ReadonlySpan<char const*> arguments = {}, String working_directory = {}, KeepAsChild keep_as_child = KeepAsChild::No);
 
     static ErrorOr<String> get_name();
     enum class SetThreadName {

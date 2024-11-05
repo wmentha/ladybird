@@ -9,7 +9,7 @@
  */
 
 #include "Environment.h"
-#include <AK/ByteString.h>
+#include <AK/String.h>
 
 #if defined(AK_OS_MACOS) || defined(AK_OS_IOS)
 #    include <crt_externs.h>
@@ -155,8 +155,8 @@ ErrorOr<void> put(StringView env)
 #if defined(AK_OS_SERENITY)
     auto rc = ::serenity_putenv(env.characters_without_null_termination(), env.length());
 #elif defined(AK_OS_WINDOWS)
-    ByteString str = env;
-    auto rc = ::putenv(str.characters());
+    auto bytes = env.bytes();
+    auto rc = ::putenv(bytes.data());
 #else
     // Leak somewhat unavoidable here due to the putenv API.
     auto leaked_new_env = strndup(env.characters_without_null_termination(), env.length());

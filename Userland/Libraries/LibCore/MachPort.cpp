@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/Format.h>
+#include <AK/String.h>
 #include <LibCore/MachPort.h>
 
 #if defined(AK_OS_GNU_HURD)
@@ -147,7 +147,7 @@ ErrorOr<MachPort> MachPort::insert_right(MessageRight right)
 #    pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 // bootstrap_register has been deprecated since macOS 10.5, but rules are more 'guidelines' than actual rules
 
-ErrorOr<void> MachPort::register_with_bootstrap_server(ByteString const& service_name)
+ErrorOr<void> MachPort::register_with_bootstrap_server(String const& service_name)
 {
     if (service_name.length() > sizeof(name_t) - 1)
         return Error::from_errno(E2BIG);
@@ -162,7 +162,7 @@ ErrorOr<void> MachPort::register_with_bootstrap_server(ByteString const& service
 
 #    pragma GCC diagnostic pop
 
-ErrorOr<MachPort> MachPort::look_up_from_bootstrap_server(ByteString const& service_name)
+ErrorOr<MachPort> MachPort::look_up_from_bootstrap_server(String const& service_name)
 {
     if (service_name.length() > sizeof(name_t) - 1)
         return Error::from_errno(E2BIG);

@@ -53,7 +53,7 @@ public:
     {
     }
 
-    static SocketAddress local(ByteString const& address)
+    static SocketAddress local(String const& address)
     {
         SocketAddress addr;
         addr.m_type = Type::Local;
@@ -68,13 +68,13 @@ public:
     IPv6Address ipv6_address() const { return m_ip_address.get<IPv6Address>(); }
     u16 port() const { return m_port; }
 
-    ByteString to_byte_string() const
+    String to_string() const
     {
         switch (m_type) {
         case Type::IPv4:
-            return ByteString::formatted("{}:{}", m_ip_address.get<IPv4Address>(), m_port);
+            return String::formatted("{}:{}", m_ip_address.get<IPv4Address>(), m_port);
         case Type::IPv6:
-            return ByteString::formatted("[{}]:{}", m_ip_address.get<IPv6Address>(), m_port);
+            return String::formatted("[{}]:{}", m_ip_address.get<IPv6Address>(), m_port);
         case Type::Local:
             return m_local_address;
         default:
@@ -124,16 +124,16 @@ private:
     Variant<IPv4Address, IPv6Address> m_ip_address = IPv4Address();
 
     u16 m_port { 0 };
-    ByteString m_local_address;
+    String m_local_address;
 };
 
 }
 
 template<>
-struct AK::Formatter<Core::SocketAddress> : Formatter<ByteString> {
+struct AK::Formatter<Core::SocketAddress> : Formatter<String> {
     ErrorOr<void> format(FormatBuilder& builder, Core::SocketAddress const& value)
     {
-        return Formatter<ByteString>::format(builder, value.to_byte_string());
+        return Formatter<String>::format(builder, value.to_string());
     }
 };
 

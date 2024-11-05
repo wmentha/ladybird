@@ -24,7 +24,7 @@ static_assert(false, "This file must only be used for macOS");
 namespace Core {
 
 struct MonitoredPath {
-    ByteString path;
+    String path;
     FileWatcherEvent::Type event_mask { FileWatcherEvent::Type::Invalid };
     bool is_directory { false };
 };
@@ -58,7 +58,7 @@ public:
     {
         auto context = TRY(try_make<FSEventStreamContext>());
 
-        auto queue_name = ByteString::formatted("Serenity.FileWatcher.{:p}", context.ptr());
+        auto queue_name = String::formatted("Serenity.FileWatcher.{:p}", context.ptr());
         auto dispatch_queue = dispatch_queue_create(queue_name.characters(), DISPATCH_QUEUE_SERIAL);
         if (dispatch_queue == nullptr)
             return Error::from_errno(errno);
@@ -70,7 +70,7 @@ public:
         return adopt_nonnull_ref_or_enomem(new (nothrow) FileWatcherMacOS(move(context), dispatch_queue, move(notifier)));
     }
 
-    ErrorOr<bool> add_watch(ByteString path, FileWatcherEvent::Type event_mask)
+    ErrorOr<bool> add_watch(String path, FileWatcherEvent::Type event_mask)
     {
         auto path_is_directory = TRY(is_directory(path));
         if (!path_is_directory)
@@ -91,7 +91,7 @@ public:
         return true;
     }
 
-    ErrorOr<bool> remove_watch(ByteString path)
+    ErrorOr<bool> remove_watch(String path)
     {
         if (!TRY(is_directory(path)))
             path = LexicalPath { move(path) }.parent().string();
@@ -111,7 +111,7 @@ public:
         return true;
     }
 
-    ErrorOr<MonitoredPath> canonicalize_path(ByteString path)
+    ErrorOr<MonitoredPath> canonicalize_path(String path)
     {
         LexicalPath lexical_path { move(path) };
         auto parent_path = lexical_path.parent();
@@ -211,7 +211,7 @@ private:
     dispatch_queue_t m_dispatch_queue { nullptr };
     FSEventStreamRef m_stream { nullptr };
 
-    HashMap<ByteString, ino_t> m_path_to_inode_id;
+    HashMap<String, ino_t> m_path_to_inode_id;
     HashMap<ino_t, MonitoredPath> m_inode_id_to_path;
 };
 
@@ -230,7 +230,7 @@ void on_file_system_event(ConstFSEventStreamRef, void* user_data, size_t event_s
             continue;
         }
 
-        auto maybe_monitored_path = file_watcher.canonicalize_path(ByteString { file_path_buffer });
+        auto maybe_monitored_path = file_watcher.canonicalize_path(String { file_path_buffer });
         if (maybe_monitored_path.is_error()) {
             dbgln_if(FILE_WATCHER_DEBUG, "Could not canonicalize path {}: {}", file_path_buffer, maybe_monitored_path.error());
             continue;
@@ -282,13 +282,13 @@ FileWatcher::FileWatcher(int watcher_fd, NonnullRefPtr<Notifier> notifier)
 
 FileWatcher::~FileWatcher() = default;
 
-ErrorOr<bool> FileWatcherBase::add_watch(ByteString path, FileWatcherEvent::Type event_mask)
+ErrorOr<bool> FileWatcherBase::add_watch(String path, FileWatcherEvent::Type event_mask)
 {
     auto& file_watcher = verify_cast<FileWatcherMacOS>(*this);
     return file_watcher.add_watch(move(path), event_mask);
 }
 
-ErrorOr<bool> FileWatcherBase::remove_watch(ByteString path)
+ErrorOr<bool> FileWatcherBase::remove_watch(String path)
 {
     auto& file_watcher = verify_cast<FileWatcherMacOS>(*this);
     return file_watcher.remove_watch(move(path));

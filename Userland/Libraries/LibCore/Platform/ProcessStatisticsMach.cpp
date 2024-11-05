@@ -10,7 +10,7 @@
 #    error "This file is only available on Mach platforms"
 #endif
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/Time.h>
 #include <LibCore/MachPort.h>
 #include <LibCore/Platform/MachMessageTypes.h>
@@ -76,7 +76,7 @@ ErrorOr<void> update_process_statistics(ProcessStatistics& statistics)
     return {};
 }
 
-MachPort register_with_mach_server(ByteString const& server_name)
+MachPort register_with_mach_server(String const& server_name)
 {
     auto server_port_or_error = Core::MachPort::look_up_from_bootstrap_server(server_name);
     if (server_port_or_error.is_error()) {

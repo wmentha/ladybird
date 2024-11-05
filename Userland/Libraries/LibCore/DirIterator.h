@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/OwnPtr.h>
+#include <AK/String.h>
 #include <LibCore/DirectoryEntry.h>
 
 namespace Core {
@@ -22,7 +22,7 @@ public:
         NoStat = 0x4,
     };
 
-    explicit DirIterator(ByteString path, Flags = Flags::NoFlags);
+    explicit DirIterator(String path, Flags = Flags::NoFlags);
     ~DirIterator();
 
     DirIterator(DirIterator&&);
@@ -32,8 +32,8 @@ public:
     Error error() const { return Error::copy(m_error.value()); }
     bool has_next();
     Optional<DirectoryEntry> next();
-    ByteString next_path();
-    ByteString next_full_path();
+    String next_path();
+    String next_full_path();
     int fd() const;
 
 private:
@@ -41,7 +41,7 @@ private:
     OwnPtr<Impl> m_impl;
     Optional<Error> m_error;
     Optional<DirectoryEntry> m_next;
-    ByteString m_path;
+    String m_path;
     int m_flags;
 
     bool advance_next();

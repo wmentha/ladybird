@@ -80,7 +80,7 @@ ErrorOr<ssize_t> read(int fd, Bytes buffer);
 ErrorOr<ssize_t> write(int fd, ReadonlyBytes buffer);
 ErrorOr<int> dup(int source_fd);
 ErrorOr<int> dup2(int source_fd, int destination_fd);
-ErrorOr<ByteString> getcwd();
+ErrorOr<String> getcwd();
 ErrorOr<void> ioctl(int fd, unsigned request, ...);
 ErrorOr<struct termios> tcgetattr(int fd);
 ErrorOr<void> tcsetattr(int fd, int optional_actions, struct termios const&);
@@ -119,7 +119,7 @@ ErrorOr<void> getpeername(int sockfd, struct sockaddr*, socklen_t*);
 ErrorOr<void> socketpair(int domain, int type, int protocol, int sv[2]);
 
 ErrorOr<void> access(StringView pathname, int mode, int flags = 0);
-ErrorOr<ByteString> readlink(StringView pathname);
+ErrorOr<String> readlink(StringView pathname);
 ErrorOr<int> poll(Span<struct pollfd>, int timeout);
 
 #if !defined(AK_OS_WINDOWS)
@@ -172,7 +172,7 @@ ErrorOr<AddressInfoVector> getaddrinfo(char const* nodename, char const* servnam
 unsigned hardware_concurrency();
 u64 physical_memory_bytes();
 
-ErrorOr<ByteString> current_executable_path();
+ErrorOr<String> current_executable_path();
 
 #if !defined(AK_OS_WINDOWS)
 ErrorOr<rlimit> get_resource_limits(int resource);

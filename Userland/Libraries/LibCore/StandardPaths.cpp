@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/LexicalPath.h>
 #include <AK/Platform.h>
 #include <AK/String.h>
@@ -37,22 +36,22 @@ static Optional<StringView> get_environment_if_not_empty(StringView name)
     return maybe_value;
 }
 
-ByteString StandardPaths::home_directory()
+String StandardPaths::home_directory()
 {
 #if defined(AK_OS_WINDOWS)
-    ByteString path = getenv("USERPROFILE");
+    String path = getenv("USERPROFILE");
 #else
     if (auto* home_env = getenv("HOME"))
         return LexicalPath::canonicalized_path(home_env);
 
     auto* pwd = getpwuid(getuid());
-    ByteString path = pwd ? pwd->pw_dir : "/";
+    String path = pwd ? pwd->pw_dir : "/"_string;
     endpwent();
 #endif
     return LexicalPath::canonicalized_path(path);
 }
 
-ByteString StandardPaths::desktop_directory()
+String StandardPaths::desktop_directory()
 {
 #if !defined(AK_OS_WINDOWS)
     if (auto desktop_directory = get_environment_if_not_empty("XDG_DESKTOP_DIR"sv); desktop_directory.has_value())
@@ -62,10 +61,10 @@ ByteString StandardPaths::desktop_directory()
     StringBuilder builder;
     builder.append(home_directory());
     builder.append("/Desktop"sv);
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-ByteString StandardPaths::documents_directory()
+String StandardPaths::documents_directory()
 {
 #if !defined(AK_OS_WINDOWS)
     if (auto documents_directory = get_environment_if_not_empty("XDG_DOCUMENTS_DIR"sv); documents_directory.has_value())
@@ -75,10 +74,10 @@ ByteString StandardPaths::documents_directory()
     StringBuilder builder;
     builder.append(home_directory());
     builder.append("/Documents"sv);
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-ByteString StandardPaths::downloads_directory()
+String StandardPaths::downloads_directory()
 {
 #if !defined(AK_OS_WINDOWS)
     if (auto downloads_directory = get_environment_if_not_empty("XDG_DOWNLOAD_DIR"sv); downloads_directory.has_value())
@@ -88,10 +87,10 @@ ByteString StandardPaths::downloads_directory()
     StringBuilder builder;
     builder.append(home_directory());
     builder.append("/Downloads"sv);
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-ByteString StandardPaths::music_directory()
+String StandardPaths::music_directory()
 {
 #if !defined(AK_OS_WINDOWS)
     if (auto music_directory = get_environment_if_not_empty("XDG_MUSIC_DIR"sv); music_directory.has_value())
@@ -101,10 +100,10 @@ ByteString StandardPaths::music_directory()
     StringBuilder builder;
     builder.append(home_directory());
     builder.append("/Music"sv);
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-ByteString StandardPaths::pictures_directory()
+String StandardPaths::pictures_directory()
 {
 #if !defined(AK_OS_WINDOWS)
     if (auto pictures_directory = get_environment_if_not_empty("XDG_PICTURES_DIR"sv); pictures_directory.has_value())
@@ -114,10 +113,10 @@ ByteString StandardPaths::pictures_directory()
     StringBuilder builder;
     builder.append(home_directory());
     builder.append("/Pictures"sv);
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-ByteString StandardPaths::videos_directory()
+String StandardPaths::videos_directory()
 {
 #if !defined(AK_OS_WINDOWS)
     if (auto videos_directory = get_environment_if_not_empty("XDG_VIDEOS_DIR"sv); videos_directory.has_value())
@@ -131,10 +130,10 @@ ByteString StandardPaths::videos_directory()
 #else
     builder.append("/Videos"sv);
 #endif
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-ByteString StandardPaths::config_directory()
+String StandardPaths::config_directory()
 {
 #ifdef AK_OS_WINDOWS
     dbgln("Core::StandardPaths::config_directory() is not implemented");
@@ -152,10 +151,10 @@ ByteString StandardPaths::config_directory()
 #else
     builder.append("/.config"sv);
 #endif
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-ByteString StandardPaths::user_data_directory()
+String StandardPaths::user_data_directory()
 {
 #ifdef AK_OS_WINDOWS
     dbgln("Core::StandardPaths::user_data_directory() is not implemented");
@@ -176,24 +175,24 @@ ByteString StandardPaths::user_data_directory()
     builder.append("/.local/share"sv);
 #endif
 
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-Vector<ByteString> StandardPaths::system_data_directories()
+Vector<String> StandardPaths::system_data_directories()
 {
 #ifdef AK_OS_WINDOWS
     dbgln("Core::StandardPaths::system_data_directories() is not implemented");
     VERIFY_NOT_REACHED();
 #endif
     auto data_directories = get_environment_if_not_empty("XDG_DATA_DIRS"sv).value_or("/usr/local/share:/usr/share"sv);
-    Vector<ByteString> paths;
+    Vector<String> paths;
     data_directories.for_each_split_view(':', SplitBehavior::Nothing, [&paths](auto data_directory) {
         paths.append(LexicalPath::canonicalized_path(data_directory));
     });
     return paths;
 }
 
-ErrorOr<ByteString> StandardPaths::runtime_directory()
+ErrorOr<String> StandardPaths::runtime_directory()
 {
 #if !defined(AK_OS_WINDOWS)
     if (auto data_directory = get_environment_if_not_empty("XDG_RUNTIME_DIR"sv); data_directory.has_value())
@@ -230,15 +229,15 @@ ErrorOr<ByteString> StandardPaths::runtime_directory()
     }
 #endif
 
-    return LexicalPath::canonicalized_path(builder.to_byte_string());
+    return LexicalPath::canonicalized_path(builder.to_string());
 }
 
-ByteString StandardPaths::tempfile_directory()
+String StandardPaths::tempfile_directory()
 {
 #if defined(AK_OS_WINDOWS)
     return getenv("TEMP");
 #else
-    return "/tmp";
+    return "/tmp"_string;
 #endif
 }
 

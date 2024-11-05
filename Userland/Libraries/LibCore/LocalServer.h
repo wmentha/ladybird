@@ -16,10 +16,10 @@ class LocalServer : public EventReceiver {
 public:
     virtual ~LocalServer() override;
 
-    ErrorOr<void> take_over_from_system_server(ByteString const& path = ByteString());
+    ErrorOr<void> take_over_from_system_server(String const& path = ""_string);
     ErrorOr<void> take_over_fd(int socket_fd);
     bool is_listening() const { return m_listening; }
-    bool listen(ByteString const& address);
+    bool listen(String const& address);
 
     ErrorOr<NonnullOwnPtr<LocalSocket>> accept();
 

@@ -7,7 +7,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/ScopeGuard.h>
 #include <AK/String.h>
 #include <AK/Vector.h>
@@ -38,10 +37,10 @@ extern "C" {
 namespace Core {
 
 struct ArgvList {
-    ByteString m_path;
+    String m_path;
     Vector<char const*, 10> m_argv;
 
-    ArgvList(ByteString path, size_t size)
+    ArgvList(String path, size_t size)
         : m_path { path }
     {
         m_argv.ensure_capacity(size + 2);
@@ -121,12 +120,12 @@ ErrorOr<Process> Process::spawn(ProcessSpawnOptions const& options)
     return Process { pid };
 }
 
-ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<ByteString> arguments, ByteString working_directory, KeepAsChild keep_as_child)
+ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<String> arguments, String working_directory, KeepAsChild keep_as_child)
 {
     auto process = TRY(spawn({
         .executable = path,
-        .arguments = Vector<ByteString> { arguments },
-        .working_directory = working_directory.is_empty() ? Optional<ByteString> {} : Optional<ByteString> { working_directory },
+        .arguments = Vector<String> { arguments },
+        .working_directory = working_directory.is_empty() ? Optional<String> {} : Optional<String> { working_directory },
     }));
 
     if (keep_as_child == KeepAsChild::No)
@@ -138,9 +137,9 @@ ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<ByteString> argument
     return process.pid();
 }
 
-ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<StringView> arguments, ByteString working_directory, KeepAsChild keep_as_child)
+ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<StringView> arguments, String working_directory, KeepAsChild keep_as_child)
 {
-    Vector<ByteString> backing_strings;
+    Vector<String> backing_strings;
     backing_strings.ensure_capacity(arguments.size());
     for (auto const& argument : arguments)
         backing_strings.append(argument);
@@ -148,7 +147,7 @@ ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<StringView> argument
     auto process = TRY(spawn({
         .executable = path,
         .arguments = backing_strings,
-        .working_directory = working_directory.is_empty() ? Optional<ByteString> {} : Optional<ByteString> { working_directory },
+        .working_directory = working_directory.is_empty() ? Optional<String> {} : Optional<String> { working_directory },
     }));
 
     if (keep_as_child == KeepAsChild::No)
@@ -158,9 +157,9 @@ ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<StringView> argument
     return process.pid();
 }
 
-ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<char const*> arguments, ByteString working_directory, KeepAsChild keep_as_child)
+ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<char const*> arguments, String working_directory, KeepAsChild keep_as_child)
 {
-    Vector<ByteString> backing_strings;
+    Vector<String> backing_strings;
     backing_strings.ensure_capacity(arguments.size());
     for (auto const& argument : arguments)
         backing_strings.append(argument);
@@ -168,7 +167,7 @@ ErrorOr<pid_t> Process::spawn(StringView path, ReadonlySpan<char const*> argumen
     auto process = TRY(spawn({
         .executable = path,
         .arguments = backing_strings,
-        .working_directory = working_directory.is_empty() ? Optional<ByteString> {} : Optional<ByteString> { working_directory },
+        .working_directory = working_directory.is_empty() ? Optional<String> {} : Optional<String> { working_directory },
     }));
 
     if (keep_as_child == KeepAsChild::No)

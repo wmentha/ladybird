@@ -73,9 +73,9 @@ Vector<String> ResourceImplementation::child_names(Resource const& resource)
     VERIFY(resource.m_scheme == Resource::Scheme::File);
 
     Vector<String> children;
-    Core::DirIterator it(resource.filesystem_path().to_byte_string(), Core::DirIterator::SkipParentAndBaseDir);
+    Core::DirIterator it(resource.filesystem_path().to_string(), Core::DirIterator::SkipParentAndBaseDir);
     while (it.has_next())
-        children.append(MUST(String::from_byte_string(it.next_path())));
+        children.append(it.next_path());
 
     return children;
 }

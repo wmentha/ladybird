@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Forward.h>
 #include <AK/Function.h>
 #include <AK/HashMap.h>
 #include <AK/Noncopyable.h>
 #include <AK/OwnPtr.h>
+#include <AK/String.h>
 #include <AK/StringView.h>
 #include <AK/TypeCasts.h>
 #include <AK/Weakable.h>
@@ -67,8 +67,8 @@ public:
 
     virtual bool is_widget() const { return false; }
 
-    ByteString const& name() const { return m_name; }
-    void set_name(ByteString name) { m_name = move(name); }
+    String const& name() const { return m_name; }
+    void set_name(String name) { m_name = move(name); }
 
     Vector<NonnullRefPtr<EventReceiver>>& children() { return m_children; }
     Vector<NonnullRefPtr<EventReceiver>> const& children() const { return m_children; }
@@ -170,7 +170,7 @@ protected:
 
 private:
     EventReceiver* m_parent { nullptr };
-    ByteString m_name;
+    String m_name;
     intptr_t m_timer_id { 0 };
     Vector<NonnullRefPtr<EventReceiver>> m_children;
     Function<bool(Core::Event&)> m_event_filter;

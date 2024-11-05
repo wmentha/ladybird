@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/ScopeGuard.h>
+#include <AK/String.h>
 #include <LibCore/System.h>
 #include <WinSock2.h>
 #include <io.h>
@@ -19,7 +19,8 @@ namespace Core::System {
 
 ErrorOr<int> open(StringView path, int options, mode_t mode)
 {
-    ByteString string_path = path;
+    auto bytes = path.bytes();
+    auto string_path = String::from_utf8_without_validation(bytes.data());
     int rc = _open(string_path.characters(), options, mode);
     if (rc < 0)
         return Error::from_syscall("open"sv, -errno);

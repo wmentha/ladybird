@@ -16,7 +16,7 @@ struct DirIterator::Impl {
     DIR* dir { nullptr };
 };
 
-DirIterator::DirIterator(ByteString path, Flags flags)
+DirIterator::DirIterator(String path, Flags flags)
     : m_impl(make<Impl>())
     , m_path(move(path))
     , m_flags(flags)
@@ -120,22 +120,22 @@ Optional<DirectoryEntry> DirIterator::next()
     return result;
 }
 
-ByteString DirIterator::next_path()
+String DirIterator::next_path()
 {
     auto entry = next();
     if (entry.has_value())
         return entry->name;
-    return "";
+    return ""_string;
 }
 
-ByteString DirIterator::next_full_path()
+String DirIterator::next_full_path()
 {
     StringBuilder builder;
     builder.append(m_path);
     if (!m_path.ends_with('/'))
         builder.append('/');
     builder.append(next_path());
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 int DirIterator::fd() const

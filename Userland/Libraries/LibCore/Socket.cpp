@@ -51,7 +51,7 @@ ErrorOr<int> Socket::create_fd(SocketDomain domain, SocketType type)
 #endif
 }
 
-ErrorOr<Variant<IPv4Address, IPv6Address>> Socket::resolve_host(ByteString const& host, SocketType type)
+ErrorOr<Variant<IPv4Address, IPv6Address>> Socket::resolve_host(String const& host, SocketType type)
 {
     int socket_type;
     switch (type) {
@@ -91,7 +91,7 @@ ErrorOr<Variant<IPv4Address, IPv6Address>> Socket::resolve_host(ByteString const
     return Error::from_string_literal("Could not resolve to IPv4 or IPv6 address");
 }
 
-ErrorOr<void> Socket::connect_local(int fd, ByteString const& path)
+ErrorOr<void> Socket::connect_local(int fd, String const& path)
 {
     auto address = SocketAddress::local(path);
     auto maybe_sockaddr = address.to_sockaddr_un();
@@ -212,7 +212,7 @@ void PosixSocketHelper::setup_notifier()
         m_notifier = Core::Notifier::construct(m_fd, Core::Notifier::Type::Read);
 }
 
-ErrorOr<NonnullOwnPtr<TCPSocket>> TCPSocket::connect(ByteString const& host, u16 port)
+ErrorOr<NonnullOwnPtr<TCPSocket>> TCPSocket::connect(String const& host, u16 port)
 {
     auto ip_address = TRY(resolve_host(host, SocketType::Stream));
 
@@ -259,7 +259,7 @@ ErrorOr<size_t> PosixSocketHelper::pending_bytes() const
     return static_cast<size_t>(value);
 }
 
-ErrorOr<NonnullOwnPtr<UDPSocket>> UDPSocket::connect(ByteString const& host, u16 port, Optional<AK::Duration> timeout)
+ErrorOr<NonnullOwnPtr<UDPSocket>> UDPSocket::connect(String const& host, u16 port, Optional<AK::Duration> timeout)
 {
     auto ip_address = TRY(resolve_host(host, SocketType::Datagram));
 
@@ -287,7 +287,7 @@ ErrorOr<NonnullOwnPtr<UDPSocket>> UDPSocket::connect(SocketAddress const& addres
     return socket;
 }
 
-ErrorOr<NonnullOwnPtr<LocalSocket>> LocalSocket::connect(ByteString const& path, PreventSIGPIPE prevent_sigpipe)
+ErrorOr<NonnullOwnPtr<LocalSocket>> LocalSocket::connect(String const& path, PreventSIGPIPE prevent_sigpipe)
 {
     auto socket = TRY(adopt_nonnull_own_or_enomem(new (nothrow) LocalSocket(prevent_sigpipe)));
 

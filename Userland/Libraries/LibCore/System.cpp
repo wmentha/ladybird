@@ -7,7 +7,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/FixedArray.h>
 #include <AK/ScopeGuard.h>
 #include <AK/ScopedValueRollback.h>
@@ -122,8 +121,8 @@ ErrorOr<struct stat> fstatat(int fd, StringView path, int flags)
     Syscall::SC_stat_params params { { path.characters_without_null_termination(), path.length() }, &st, fd, !(flags & AT_SYMLINK_NOFOLLOW) };
     int rc = syscall(SC_stat, &params);
 #else
-    ByteString path_string = path;
-    int rc = ::fstatat(fd, path_string.characters(), &st, flags);
+    auto bytes = path.bytes();
+    int rc = ::fstatat(fd, bytes.data(), &st, flags);
 #endif
     HANDLE_SYSCALL_RETURN_VALUE("fstatat", rc, st);
 }
@@ -193,7 +192,7 @@ ErrorOr<int> anon_create([[maybe_unused]] size_t size, [[maybe_unused]] int opti
 #elif defined(AK_OS_BSD_GENERIC) || defined(AK_OS_EMSCRIPTEN) || defined(AK_OS_HAIKU)
     static size_t shared_memory_id = 0;
 
-    auto name = ByteString::formatted("/shm-{}-{}", getpid(), shared_memory_id++);
+    auto name = String::formatted("/shm-{}-{}", getpid(), shared_memory_id++);
     fd = shm_open(name.characters(), O_RDWR | O_CREAT | options, 0600);
 
     if (shm_unlink(name.characters()) == -1) {
@@ -238,8 +237,8 @@ ErrorOr<int> openat(int fd, StringView path, int options, mode_t mode)
     HANDLE_SYSCALL_RETURN_VALUE("open", rc, rc);
 #else
     // NOTE: We have to ensure that the path is null-terminated.
-    ByteString path_string = path;
-    int rc = ::openat(fd, path_string.characters(), options, mode);
+    auto bytes = path.bytes();
+    int rc = ::openat(fd, bytes.data(), options, mode);
     if (rc < 0)
         return Error::from_syscall("open"sv, -errno);
     return rc;
@@ -271,8 +270,8 @@ ErrorOr<struct stat> stat(StringView path)
     int rc = syscall(SC_stat, &params);
     HANDLE_SYSCALL_RETURN_VALUE("stat", rc, st);
 #else
-    ByteString path_string = path;
-    if (::stat(path_string.characters(), &st) < 0)
+    auto bytes = path.bytes();
+    if (::stat(bytes.data(), &st) < 0)
         return Error::from_syscall("stat"sv, -errno);
     return st;
 #endif
@@ -289,8 +288,8 @@ ErrorOr<struct stat> lstat(StringView path)
     int rc = syscall(SC_stat, &params);
     HANDLE_SYSCALL_RETURN_VALUE("lstat", rc, st);
 #else
-    ByteString path_string = path;
-    if (::lstat(path_string.characters(), &st) < 0)
+    auto bytes = path.bytes();
+    if (::lstat(bytes.data(), &st) < 0)
         return Error::from_syscall("lstat"sv, -errno);
     return st;
 #endif
@@ -335,13 +334,13 @@ ErrorOr<int> dup2(int source_fd, int destination_fd)
     return fd;
 }
 
-ErrorOr<ByteString> getcwd()
+ErrorOr<String> getcwd()
 {
     auto* cwd = ::getcwd(nullptr, 0);
     if (!cwd)
         return Error::from_syscall("getcwd"sv, -errno);
 
-    ByteString string_cwd(cwd);
+    String string_cwd(cwd);
     free(cwd);
     return string_cwd;
 }
@@ -391,8 +390,8 @@ ErrorOr<void> chmod(StringView pathname, mode_t mode)
     int rc = syscall(SC_chmod, &params);
     HANDLE_SYSCALL_RETURN_VALUE("chmod", rc, {});
 #else
-    ByteString path = pathname;
-    if (::chmod(path.characters(), mode) < 0)
+    auto bytes = pathname.bytes();
+    if (::chmod(bytes.data(), mode) < 0)
         return Error::from_syscall("chmod"sv, -errno);
     return {};
 #endif
@@ -422,8 +421,8 @@ ErrorOr<void> chown(StringView pathname, uid_t uid, gid_t gid)
     int rc = syscall(SC_chown, &params);
     HANDLE_SYSCALL_RETURN_VALUE("chown", rc, {});
 #else
-    ByteString path = pathname;
-    if (::lchown(path.characters(), uid, gid) < 0)
+    auto bytes = pathname.bytes();
+    if (::lchown(bytes.data(), uid, gid) < 0)
         return Error::from_syscall("lchown"sv, -errno);
     return {};
 #endif
@@ -432,7 +431,8 @@ ErrorOr<void> chown(StringView pathname, uid_t uid, gid_t gid)
 static ALWAYS_INLINE ErrorOr<pid_t> posix_spawn_wrapper(StringView path, posix_spawn_file_actions_t const* file_actions, posix_spawnattr_t const* attr, char* const arguments[], char* const envp[], StringView function_name, decltype(::posix_spawn) spawn_function)
 {
     pid_t child_pid;
-    if ((errno = spawn_function(&child_pid, path.to_byte_string().characters(), file_actions, attr, arguments, envp)))
+    auto bytes = path.bytes();
+    if ((errno = spawn_function(&child_pid, bytes.data(), file_actions, attr, arguments, envp)))
         return Error::from_syscall(function_name, -errno);
     return child_pid;
 }
@@ -482,9 +482,9 @@ ErrorOr<void> link(StringView old_path, StringView new_path)
     int rc = syscall(SC_link, &params);
     HANDLE_SYSCALL_RETURN_VALUE("link", rc, {});
 #else
-    ByteString old_path_string = old_path;
-    ByteString new_path_string = new_path;
-    if (::link(old_path_string.characters(), new_path_string.characters()) < 0)
+    auto old_path_bytes = old_path.bytes();
+    auto new_path_bytes = new_path.bytes();
+    if (::link(old_path_bytes.data(), new_path_bytes.data()) < 0)
         return Error::from_syscall("link"sv, -errno);
     return {};
 #endif
@@ -501,9 +501,9 @@ ErrorOr<void> symlink(StringView target, StringView link_path)
     int rc = syscall(SC_symlink, &params);
     HANDLE_SYSCALL_RETURN_VALUE("symlink", rc, {});
 #else
-    ByteString target_string = target;
-    ByteString link_path_string = link_path;
-    if (::symlink(target_string.characters(), link_path_string.characters()) < 0)
+    auto target_bytes = target.bytes();
+    auto link_path_bytes = link_path.bytes();
+    if (::symlink(target_bytes.data(), link_path_bytes.data()) < 0)
         return Error::from_syscall("symlink"sv, -errno);
     return {};
 #endif
@@ -517,8 +517,8 @@ ErrorOr<void> mkdir(StringView path, mode_t mode)
     int rc = syscall(SC_mkdir, AT_FDCWD, path.characters_without_null_termination(), path.length(), mode);
     HANDLE_SYSCALL_RETURN_VALUE("mkdir", rc, {});
 #else
-    ByteString path_string = path;
-    if (::mkdir(path_string.characters(), mode) < 0)
+    auto bytes = path.bytes();
+    if (::mkdir(bytes.data(), mode) < 0)
         return Error::from_syscall("mkdir"sv, -errno);
     return {};
 #endif
@@ -532,8 +532,8 @@ ErrorOr<void> chdir(StringView path)
     int rc = syscall(SC_chdir, path.characters_without_null_termination(), path.length());
     HANDLE_SYSCALL_RETURN_VALUE("chdir", rc, {});
 #else
-    ByteString path_string = path;
-    if (::chdir(path_string.characters()) < 0)
+    auto path_bytes = path.bytes();
+    if (::chdir(path_bytes.data()) < 0)
         return Error::from_syscall("chdir"sv, -errno);
     return {};
 #endif
@@ -547,8 +547,8 @@ ErrorOr<void> rmdir(StringView path)
     int rc = syscall(SC_rmdir, path.characters_without_null_termination(), path.length());
     HANDLE_SYSCALL_RETURN_VALUE("rmdir", rc, {});
 #else
-    ByteString path_string = path;
-    if (::rmdir(path_string.characters()) < 0)
+    auto path_bytes = path.bytes();
+    if (::rmdir(path_bytes.data()) < 0)
         return Error::from_syscall("rmdir"sv, -errno);
     return {};
 #endif
@@ -587,9 +587,9 @@ ErrorOr<void> rename(StringView old_path, StringView new_path)
     int rc = syscall(SC_rename, &params);
     HANDLE_SYSCALL_RETURN_VALUE("rename", rc, {});
 #else
-    ByteString old_path_string = old_path;
-    ByteString new_path_string = new_path;
-    if (::rename(old_path_string.characters(), new_path_string.characters()) < 0)
+    auto old_path_bytes = old_path.bytes();
+    auto new_path_bytes = new_path.bytes();
+    if (::rename(old_path_bytes.data(), new_path_bytes.data()) < 0)
         return Error::from_syscall("rename"sv, -errno);
     return {};
 #endif
@@ -604,8 +604,8 @@ ErrorOr<void> unlink(StringView path)
     int rc = syscall(SC_unlink, AT_FDCWD, path.characters_without_null_termination(), path.length(), 0);
     HANDLE_SYSCALL_RETURN_VALUE("unlink", rc, {});
 #else
-    ByteString path_string = path;
-    if (::unlink(path_string.characters()) < 0)
+    auto path_bytes = path;
+    if (::unlink(path_bytes.data()) < 0)
         return Error::from_syscall("unlink"sv, -errno);
     return {};
 #endif
@@ -863,15 +863,15 @@ ErrorOr<void> access(StringView pathname, int mode, int flags)
     int rc = ::syscall(Syscall::SC_faccessat, &params);
     HANDLE_SYSCALL_RETURN_VALUE("access", rc, {});
 #else
-    ByteString path_string = pathname;
+    auto path_bytes = pathname.bytes();
     (void)flags;
-    if (::access(path_string.characters(), mode) < 0)
+    if (::access(path_bytes.data(), mode) < 0)
         return Error::from_syscall("access"sv, -errno);
     return {};
 #endif
 }
 
-ErrorOr<ByteString> readlink(StringView pathname)
+ErrorOr<String> readlink(StringView pathname)
 {
     // FIXME: Try again with a larger buffer.
 #ifdef AK_OS_SERENITY
@@ -882,7 +882,7 @@ ErrorOr<ByteString> readlink(StringView pathname)
         .dirfd = AT_FDCWD,
     };
     int rc = syscall(SC_readlink, &small_params);
-    HANDLE_SYSCALL_RETURN_VALUE("readlink", rc, ByteString(data, rc));
+    HANDLE_SYSCALL_RETURN_VALUE("readlink", rc, String(data, rc));
 #elif defined(AK_OS_GNU_HURD)
     // PATH_MAX is not defined, nor is there an upper limit on path lengths.
     // Let's do this the right way.
@@ -890,15 +890,15 @@ ErrorOr<ByteString> readlink(StringView pathname)
     auto file = TRY(File::adopt_fd(fd, File::OpenMode::Read));
     auto buffer = TRY(file->read_until_eof());
     // TODO: Get rid of this copy here.
-    return ByteString::copy(buffer);
+    return String::from_utf8_without_validation(buffer.span());
 #else
     char data[PATH_MAX];
-    ByteString path_string = pathname;
-    int rc = ::readlink(path_string.characters(), data, sizeof(data));
+    auto path_bytes = pathname.bytes();
+    int rc = ::readlink(path_bytes.data(), data, sizeof(data));
     if (rc == -1)
         return Error::from_syscall("readlink"sv, -errno);
 
-    return ByteString(data, rc);
+    return String(AK::to_readonly_bytes(path_bytes));
 #endif
 }
 
@@ -920,7 +920,7 @@ u64 physical_memory_bytes()
     return sysconf(_SC_PHYS_PAGES) * PAGE_SIZE;
 }
 
-ErrorOr<ByteString> current_executable_path()
+ErrorOr<String> current_executable_path()
 {
     char path[4096] = {};
 #if defined(AK_OS_LINUX) || defined(AK_OS_ANDROID) || defined(AK_OS_SERENITY)
@@ -976,7 +976,8 @@ ErrorOr<ByteString> current_executable_path()
     return Error::from_string_literal("current_executable_path unknown");
 #endif
     path[sizeof(path) - 1] = '\0';
-    return ByteString { path, strlen(path) };
+    ReadonlyBytes bytes = { path, strlen(path) };
+    return String { bytes };
 }
 
 ErrorOr<rlimit> get_resource_limits(int resource)

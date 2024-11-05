@@ -332,11 +332,6 @@ ErrorOr<String> DateTime::to_string(StringView format, LocalTime local_time) con
     return builder.to_string();
 }
 
-ByteString DateTime::to_byte_string(StringView format, LocalTime local_time) const
-{
-    return MUST(to_string(format, local_time)).to_byte_string();
-}
-
 Optional<DateTime> DateTime::parse(StringView format, StringView string)
 {
     unsigned format_pos = 0;

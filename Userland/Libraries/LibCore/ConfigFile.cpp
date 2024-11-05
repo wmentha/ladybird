@@ -17,28 +17,28 @@
 
 namespace Core {
 
-ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open_for_lib(ByteString const& lib_name, AllowWriting allow_altering)
+ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open_for_lib(String const& lib_name, AllowWriting allow_altering)
 {
-    ByteString directory_name = ByteString::formatted("{}/lib", StandardPaths::config_directory());
+    String directory_name = String::formatted("{}/lib", StandardPaths::config_directory());
     auto directory = TRY(Directory::create(directory_name, Directory::CreateDirectories::Yes));
-    auto path = ByteString::formatted("{}/{}.ini", directory, lib_name);
+    auto path = String::formatted("{}/{}.ini", directory, lib_name);
     return ConfigFile::open(path, allow_altering);
 }
 
-ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open_for_app(ByteString const& app_name, AllowWriting allow_altering)
+ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open_for_app(String const& app_name, AllowWriting allow_altering)
 {
     auto directory = TRY(Directory::create(StandardPaths::config_directory(), Directory::CreateDirectories::Yes));
-    auto path = ByteString::formatted("{}/{}.ini", directory, app_name);
+    auto path = String::formatted("{}/{}.ini", directory, app_name);
     return ConfigFile::open(path, allow_altering);
 }
 
-ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open_for_system(ByteString const& app_name, AllowWriting allow_altering)
+ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open_for_system(String const& app_name, AllowWriting allow_altering)
 {
-    auto path = ByteString::formatted("/etc/{}.ini", app_name);
+    auto path = String::formatted("/etc/{}.ini", app_name);
     return ConfigFile::open(path, allow_altering);
 }
 
-ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open(ByteString const& filename, AllowWriting allow_altering)
+ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open(String const& filename, AllowWriting allow_altering)
 {
     auto maybe_file = File::open(filename, allow_altering == AllowWriting::Yes ? File::OpenMode::ReadWrite : File::OpenMode::Read);
     OwnPtr<InputBufferedFile> buffered_file;
@@ -57,13 +57,13 @@ ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open(ByteString const& filename, 
     return config_file;
 }
 
-ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open(ByteString const& filename, int fd)
+ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open(String const& filename, int fd)
 {
     auto file = TRY(File::adopt_fd(fd, File::OpenMode::ReadWrite));
     return open(filename, move(file));
 }
 
-ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open(ByteString const& filename, NonnullOwnPtr<Core::File> file)
+ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open(String const& filename, NonnullOwnPtr<Core::File> file)
 {
     auto buffered_file = TRY(InputBufferedFile::create(move(file)));
 
@@ -72,7 +72,7 @@ ErrorOr<NonnullRefPtr<ConfigFile>> ConfigFile::open(ByteString const& filename, 
     return config_file;
 }
 
-ConfigFile::ConfigFile(ByteString const& filename, OwnPtr<InputBufferedFile> open_file)
+ConfigFile::ConfigFile(String const& filename, OwnPtr<InputBufferedFile> open_file)
     : m_filename(filename)
     , m_file(move(open_file))
 {
@@ -89,7 +89,7 @@ ErrorOr<void> ConfigFile::reparse()
     if (!m_file)
         return {};
 
-    HashMap<ByteString, ByteString>* current_group = nullptr;
+    HashMap<String, String>* current_group = nullptr;
 
     auto buffer = TRY(ByteBuffer::create_uninitialized(4096));
     while (TRY(m_file->can_read_line())) {
@@ -113,7 +113,7 @@ ErrorOr<void> ConfigFile::reparse()
                 builder.append(line[i]);
                 ++i;
             }
-            current_group = &m_groups.ensure(builder.to_byte_string());
+            current_group = &m_groups.ensure(builder.to_string());
             break;
         }
         default: { // Start of key
@@ -132,15 +132,15 @@ ErrorOr<void> ConfigFile::reparse()
                 // We're not in a group yet, create one with the name ""...
                 current_group = &m_groups.ensure("");
             }
-            auto value_string = value_builder.to_byte_string();
-            current_group->set(key_builder.to_byte_string(), value_string.trim_whitespace(TrimMode::Right));
+            auto value_string = value_builder.to_string();
+            current_group->set(key_builder.to_string(), value_string.trim_whitespace(TrimMode::Right));
         }
         }
     }
     return {};
 }
 
-Optional<ByteString> ConfigFile::read_entry_optional(const AK::ByteString& group, const AK::ByteString& key) const
+Optional<String> ConfigFile::read_entry_optional(const AK::String& group, const AK::String& key) const
 {
     if (!has_key(group, key))
         return {};
@@ -149,19 +149,19 @@ Optional<ByteString> ConfigFile::read_entry_optional(const AK::ByteString& group
     return jt->value;
 }
 
-bool ConfigFile::read_bool_entry(ByteString const& group, ByteString const& key, bool default_value) const
+bool ConfigFile::read_bool_entry(String const& group, String const& key, bool default_value) const
 {
     auto value = read_entry(group, key, default_value ? "true" : "false");
     return value == "1" || value.equals_ignoring_ascii_case("true"sv);
 }
 
-void ConfigFile::write_entry(ByteString const& group, ByteString const& key, ByteString const& value)
+void ConfigFile::write_entry(String const& group, String const& key, String const& value)
 {
     m_groups.ensure(group).ensure(key) = value;
     m_dirty = true;
 }
 
-void ConfigFile::write_bool_entry(ByteString const& group, ByteString const& key, bool value)
+void ConfigFile::write_bool_entry(String const& group, String const& key, bool value)
 {
     write_entry(group, key, value ? "true" : "false");
 }
@@ -178,9 +178,9 @@ ErrorOr<void> ConfigFile::sync()
     TRY(m_file->seek(0, SeekMode::SetPosition));
 
     for (auto& it : m_groups) {
-        TRY(m_file->write_until_depleted(ByteString::formatted("[{}]\n", it.key)));
+        TRY(m_file->write_until_depleted(String::formatted("[{}]\n", it.key)));
         for (auto& jt : it.value)
-            TRY(m_file->write_until_depleted(ByteString::formatted("{}={}\n", jt.key, jt.value)));
+            TRY(m_file->write_until_depleted(String::formatted("{}={}\n", jt.key, jt.value)));
         TRY(m_file->write_until_depleted("\n"sv));
     }
 
@@ -198,12 +198,12 @@ void ConfigFile::dump() const
     }
 }
 
-Vector<ByteString> ConfigFile::groups() const
+Vector<String> ConfigFile::groups() const
 {
     return m_groups.keys();
 }
 
-Vector<ByteString> ConfigFile::keys(ByteString const& group) const
+Vector<String> ConfigFile::keys(String const& group) const
 {
     auto it = m_groups.find(group);
     if (it == m_groups.end())
@@ -211,7 +211,7 @@ Vector<ByteString> ConfigFile::keys(ByteString const& group) const
     return it->value.keys();
 }
 
-bool ConfigFile::has_key(ByteString const& group, ByteString const& key) const
+bool ConfigFile::has_key(String const& group, String const& key) const
 {
     auto it = m_groups.find(group);
     if (it == m_groups.end())
@@ -219,24 +219,24 @@ bool ConfigFile::has_key(ByteString const& group, ByteString const& key) const
     return it->value.contains(key);
 }
 
-bool ConfigFile::has_group(ByteString const& group) const
+bool ConfigFile::has_group(String const& group) const
 {
     return m_groups.contains(group);
 }
 
-void ConfigFile::add_group(ByteString const& group)
+void ConfigFile::add_group(String const& group)
 {
     m_groups.ensure(group);
     m_dirty = true;
 }
 
-void ConfigFile::remove_group(ByteString const& group)
+void ConfigFile::remove_group(String const& group)
 {
     m_groups.remove(group);
     m_dirty = true;
 }
 
-void ConfigFile::remove_entry(ByteString const& group, ByteString const& key)
+void ConfigFile::remove_entry(String const& group, String const& key)
 {
     auto it = m_groups.find(group);
     if (it == m_groups.end())

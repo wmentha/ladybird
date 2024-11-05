@@ -9,7 +9,6 @@
 #include <AK/Assertions.h>
 #include <AK/Atomic.h>
 #include <AK/BuiltinWrappers.h>
-#include <AK/ByteString.h>
 #include <AK/Debug.h>
 #include <AK/Error.h>
 #include <AK/Format.h>
@@ -19,6 +18,7 @@
 #include <AK/Platform.h>
 #include <AK/RefCounted.h>
 #include <AK/RefPtr.h>
+#include <AK/String.h>
 #include <AK/Types.h>
 #include <AK/Variant.h>
 #include <AK/Weakable.h>
@@ -200,7 +200,7 @@ private:
 
     static ErrorOr<SharedSingleProducerCircularQueue<T, Size>> create_internal(int fd, bool is_new)
     {
-        auto name = ByteString::formatted("SharedSingleProducerCircularQueue@{:x}", fd);
+        auto name = String::formatted("SharedSingleProducerCircularQueue@{:x}", fd);
         auto* raw_mapping = TRY(System::mmap(nullptr, sizeof(SharedMemorySPCQ), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0, 0, name));
         dbgln_if(SHARED_QUEUE_DEBUG, "successfully mmapped {} at {:p}", name, raw_mapping);
 
@@ -212,7 +212,7 @@ private:
         return SharedSingleProducerCircularQueue<T, Size> { move(name), adopt_ref(*new (nothrow) RefCountedSharedMemorySPCQ(shared_queue, fd)) };
     }
 
-    SharedSingleProducerCircularQueue(ByteString name, RefPtr<RefCountedSharedMemorySPCQ> queue)
+    SharedSingleProducerCircularQueue(String name, RefPtr<RefCountedSharedMemorySPCQ> queue)
         : m_queue(queue)
         , m_name(move(name))
     {
@@ -220,7 +220,7 @@ private:
 
     RefPtr<RefCountedSharedMemorySPCQ> m_queue;
 
-    ByteString m_name {};
+    String m_name {};
 };
 
 }

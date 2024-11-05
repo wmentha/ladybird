@@ -17,6 +17,6 @@
 
 namespace Core::Platform {
 
-MachPort register_with_mach_server(ByteString const& server_name);
+MachPort register_with_mach_server(String const& server_name);
 
 }

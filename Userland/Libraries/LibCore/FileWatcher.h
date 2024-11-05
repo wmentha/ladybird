@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/EnumBits.h>
 #include <AK/Function.h>
 #include <AK/Noncopyable.h>
 #include <AK/NonnullRefPtr.h>
 #include <AK/RefCounted.h>
+#include <AK/String.h>
 #include <LibCore/Notifier.h>
 
 namespace Core {
@@ -28,7 +28,7 @@ struct FileWatcherEvent {
         DoNotFollowLink = 1 << 5,
     };
     Type type { Type::Invalid };
-    ByteString event_path;
+    String event_path;
 };
 
 AK_ENUM_BITWISE_OPERATORS(FileWatcherEvent::Type);
@@ -45,9 +45,9 @@ class FileWatcherBase {
 public:
     virtual ~FileWatcherBase() = default;
 
-    ErrorOr<bool> add_watch(ByteString path, FileWatcherEvent::Type event_mask);
-    ErrorOr<bool> remove_watch(ByteString path);
-    bool is_watching(ByteString const& path) const { return m_path_to_wd.find(path) != m_path_to_wd.end(); }
+    ErrorOr<bool> add_watch(String path, FileWatcherEvent::Type event_mask);
+    ErrorOr<bool> remove_watch(String path);
+    bool is_watching(String const& path) const { return m_path_to_wd.find(path) != m_path_to_wd.end(); }
 
 protected:
     FileWatcherBase(int watcher_fd)
@@ -56,8 +56,8 @@ protected:
     }
 
     int m_watcher_fd { -1 };
-    HashMap<ByteString, unsigned> m_path_to_wd;
-    HashMap<unsigned, ByteString> m_wd_to_path;
+    HashMap<String, unsigned> m_path_to_wd;
+    HashMap<unsigned, String> m_wd_to_path;
 };
 
 class BlockingFileWatcher final : public FileWatcherBase {

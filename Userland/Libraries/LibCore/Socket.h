@@ -58,7 +58,7 @@ public:
 
     // FIXME: This will need to be updated when IPv6 socket arrives. Perhaps a
     //        base class for all address types is appropriate.
-    static ErrorOr<Variant<IPv4Address, IPv6Address>> resolve_host(ByteString const&, SocketType);
+    static ErrorOr<Variant<IPv4Address, IPv6Address>> resolve_host(String const&, SocketType);
 
     Function<void()> on_ready_to_read;
 
@@ -76,7 +76,7 @@ protected:
 
     static ErrorOr<int> create_fd(SocketDomain, SocketType);
 
-    static ErrorOr<void> connect_local(int fd, ByteString const& path);
+    static ErrorOr<void> connect_local(int fd, String const& path);
     static ErrorOr<void> connect_inet(int fd, SocketAddress const&);
 
     int default_flags() const
@@ -99,7 +99,7 @@ public:
     virtual bool is_connected() = 0;
     /// Reconnects the socket to the given host and port. Returns EALREADY if
     /// is_connected() is true.
-    virtual ErrorOr<void> reconnect(ByteString const& host, u16 port) = 0;
+    virtual ErrorOr<void> reconnect(String const& host, u16 port) = 0;
     /// Connects the socket to the given socket address (IP address + port).
     /// Returns EALREADY is_connected() is true.
     virtual ErrorOr<void> reconnect(SocketAddress const&) = 0;
@@ -157,7 +157,7 @@ private:
 
 class TCPSocket final : public Socket {
 public:
-    static ErrorOr<NonnullOwnPtr<TCPSocket>> connect(ByteString const& host, u16 port);
+    static ErrorOr<NonnullOwnPtr<TCPSocket>> connect(String const& host, u16 port);
     static ErrorOr<NonnullOwnPtr<TCPSocket>> connect(SocketAddress const& address);
     static ErrorOr<NonnullOwnPtr<TCPSocket>> adopt_fd(int fd);
 
@@ -218,7 +218,7 @@ private:
 
 class UDPSocket final : public Socket {
 public:
-    static ErrorOr<NonnullOwnPtr<UDPSocket>> connect(ByteString const& host, u16 port, Optional<AK::Duration> timeout = {});
+    static ErrorOr<NonnullOwnPtr<UDPSocket>> connect(String const& host, u16 port, Optional<AK::Duration> timeout = {});
     static ErrorOr<NonnullOwnPtr<UDPSocket>> connect(SocketAddress const& address, Optional<AK::Duration> timeout = {});
 
     UDPSocket(UDPSocket&& other)
@@ -292,7 +292,7 @@ private:
 
 class LocalSocket final : public Socket {
 public:
-    static ErrorOr<NonnullOwnPtr<LocalSocket>> connect(ByteString const& path, PreventSIGPIPE = PreventSIGPIPE::Yes);
+    static ErrorOr<NonnullOwnPtr<LocalSocket>> connect(String const& path, PreventSIGPIPE = PreventSIGPIPE::Yes);
     static ErrorOr<NonnullOwnPtr<LocalSocket>> adopt_fd(int fd, PreventSIGPIPE = PreventSIGPIPE::Yes);
 
     LocalSocket(LocalSocket&& other)
@@ -462,7 +462,7 @@ using BufferedLocalSocket = BufferedSocket<LocalSocket>;
 template<SocketLike T>
 class BasicReusableSocket final : public ReusableSocket {
 public:
-    static ErrorOr<NonnullOwnPtr<BasicReusableSocket<T>>> connect(ByteString const& host, u16 port)
+    static ErrorOr<NonnullOwnPtr<BasicReusableSocket<T>>> connect(String const& host, u16 port)
     {
         return make<BasicReusableSocket<T>>(TRY(T::connect(host, port)));
     }
@@ -477,7 +477,7 @@ public:
         return m_socket.is_open();
     }
 
-    virtual ErrorOr<void> reconnect(ByteString const& host, u16 port) override
+    virtual ErrorOr<void> reconnect(String const& host, u16 port) override
     {
         if (is_connected())
             return Error::from_errno(EALREADY);

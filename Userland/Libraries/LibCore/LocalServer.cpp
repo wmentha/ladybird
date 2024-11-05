@@ -33,7 +33,7 @@ LocalServer::~LocalServer()
         ::close(m_fd);
 }
 
-ErrorOr<void> LocalServer::take_over_from_system_server(ByteString const& socket_path)
+ErrorOr<void> LocalServer::take_over_from_system_server(String const& socket_path)
 {
     if (m_listening)
         return Error::from_string_literal("Core::LocalServer: Can't perform socket takeover when already listening");
@@ -76,7 +76,7 @@ void LocalServer::setup_notifier()
     };
 }
 
-bool LocalServer::listen(ByteString const& address)
+bool LocalServer::listen(String const& address)
 {
     if (m_listening)
         return false;

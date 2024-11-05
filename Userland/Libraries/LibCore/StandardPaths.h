@@ -14,18 +14,18 @@ namespace Core {
 
 class StandardPaths {
 public:
-    static ByteString home_directory();
-    static ByteString desktop_directory();
-    static ByteString documents_directory();
-    static ByteString downloads_directory();
-    static ByteString music_directory();
-    static ByteString pictures_directory();
-    static ByteString videos_directory();
-    static ByteString tempfile_directory();
-    static ByteString config_directory();
-    static ByteString user_data_directory();
-    static Vector<ByteString> system_data_directories();
-    static ErrorOr<ByteString> runtime_directory();
+    static String home_directory();
+    static String desktop_directory();
+    static String documents_directory();
+    static String downloads_directory();
+    static String music_directory();
+    static String pictures_directory();
+    static String videos_directory();
+    static String tempfile_directory();
+    static String config_directory();
+    static String user_data_directory();
+    static Vector<String> system_data_directories();
+    static ErrorOr<String> runtime_directory();
     static ErrorOr<Vector<String>> font_directories();
 };
 

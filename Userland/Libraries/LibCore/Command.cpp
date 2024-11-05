@@ -64,7 +64,7 @@ ErrorOr<void> Command::write(StringView input)
     return {};
 }
 
-ErrorOr<void> Command::write_lines(Span<ByteString> lines)
+ErrorOr<void> Command::write_lines(Span<String> lines)
 {
     // It's possible the process dies before we can write everything to the
     // stdin. So make sure that we don't crash but just stop writing.
@@ -84,8 +84,8 @@ ErrorOr<void> Command::write_lines(Span<ByteString> lines)
             perror("sigaction");
     });
 
-    for (ByteString const& line : lines)
-        TRY(m_stdin->write_until_depleted(ByteString::formatted("{}\n", line)));
+    for (String const& line : lines)
+        TRY(m_stdin->write_until_depleted(String::formatted("{}\n", line)));
 
     return {};
 }
@@ -121,7 +121,7 @@ ErrorOr<Command::ProcessResult> Command::status(int options)
 // Only supported in serenity mode because we use `posix_spawn_file_actions_addchdir`
 #ifdef AK_OS_SERENITY
 
-ErrorOr<CommandResult> command(ByteString const& command_string, Optional<LexicalPath> chdir)
+ErrorOr<CommandResult> command(String const& command_string, Optional<LexicalPath> chdir)
 {
     auto parts = command_string.split(' ');
     if (parts.is_empty())
@@ -131,7 +131,7 @@ ErrorOr<CommandResult> command(ByteString const& command_string, Optional<Lexica
     return command(program, parts, chdir);
 }
 
-ErrorOr<CommandResult> command(ByteString const& program, Vector<ByteString> const& arguments, Optional<LexicalPath> chdir)
+ErrorOr<CommandResult> command(String const& program, Vector<String> const& arguments, Optional<LexicalPath> chdir)
 {
     int stdout_pipe[2] = {};
     int stderr_pipe[2] = {};
