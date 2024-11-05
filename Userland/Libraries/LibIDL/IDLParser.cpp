@@ -51,7 +51,7 @@
     exit(EXIT_FAILURE);
 }
 
-static ByteString convert_enumeration_value_to_cpp_enum_member(ByteString const& value, HashTable<ByteString>& names_already_seen)
+static String convert_enumeration_value_to_cpp_enum_member(String const& value, HashTable<String>& names_already_seen)
 {
     StringBuilder builder;
     GenericLexer lexer { value };
@@ -75,7 +75,7 @@ static ByteString convert_enumeration_value_to_cpp_enum_member(ByteString const&
         builder.append('_');
 
     names_already_seen.set(builder.string_view());
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 namespace IDL {
@@ -83,7 +83,7 @@ namespace IDL {
 void Parser::assert_specific(char ch)
 {
     if (!lexer.consume_specific(ch))
-        report_parsing_error(ByteString::formatted("expected '{}'", ch), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("expected '{}'", ch), filename, input, lexer.tell());
 }
 
 void Parser::consume_whitespace()
@@ -103,33 +103,33 @@ void Parser::consume_whitespace()
 void Parser::assert_string(StringView expected)
 {
     if (!lexer.consume_specific(expected))
-        report_parsing_error(ByteString::formatted("expected '{}'", expected), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("expected '{}'", expected), filename, input, lexer.tell());
 }
 
-ByteString Parser::parse_identifier_until(AK::Function<bool(char)> predicate)
+String Parser::parse_identifier_until(AK::Function<bool(char)> predicate)
 {
     auto identifier = lexer.consume_until(move(predicate));
     return identifier.trim("_"sv, TrimMode::Left);
 }
 
-ByteString Parser::parse_identifier_ending_with_space_or(auto... possible_terminating_characters)
+String Parser::parse_identifier_ending_with_space_or(auto... possible_terminating_characters)
 {
     return parse_identifier_until([&](auto ch) { return (is_ascii_space(ch) || ... || (ch == possible_terminating_characters)); });
 }
 
-ByteString Parser::parse_identifier_ending_with(auto... possible_terminating_characters)
+String Parser::parse_identifier_ending_with(auto... possible_terminating_characters)
 {
     return parse_identifier_until([&](auto ch) { return (... || (ch == possible_terminating_characters)); });
 }
 
-ByteString Parser::parse_identifier_ending_with_space()
+String Parser::parse_identifier_ending_with_space()
 {
     return parse_identifier_ending_with_space_or();
 }
 
-HashMap<ByteString, ByteString> Parser::parse_extended_attributes()
+HashMap<String, String> Parser::parse_extended_attributes()
 {
-    HashMap<ByteString, ByteString> extended_attributes;
+    HashMap<String, String> extended_attributes;
     for (;;) {
         consume_whitespace();
         if (lexer.consume_specific(']'))
@@ -157,32 +157,32 @@ HashMap<ByteString, ByteString> Parser::parse_extended_attributes()
     return extended_attributes;
 }
 
-static HashTable<ByteString> import_stack;
+static HashTable<String> import_stack;
 Optional<Interface&> Parser::resolve_import(auto path)
 {
     auto include_path = LexicalPath::join(import_base_path, path).string();
     if (!FileSystem::exists(include_path))
-        report_parsing_error(ByteString::formatted("{}: No such file or directory", include_path), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("{}: No such file or directory", include_path), filename, input, lexer.tell());
 
     auto real_path_error_or = FileSystem::real_path(include_path);
     if (real_path_error_or.is_error())
-        report_parsing_error(ByteString::formatted("Failed to resolve path {}: {}", include_path, real_path_error_or.error()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Failed to resolve path {}: {}", include_path, real_path_error_or.error()), filename, input, lexer.tell());
     auto real_path = real_path_error_or.release_value();
 
     if (top_level_resolved_imports().contains(real_path))
         return *top_level_resolved_imports().find(real_path)->value;
 
     if (import_stack.contains(real_path))
-        report_parsing_error(ByteString::formatted("Circular import detected: {}", include_path), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Circular import detected: {}", include_path), filename, input, lexer.tell());
     import_stack.set(real_path);
 
     auto file_or_error = Core::File::open(real_path, Core::File::OpenMode::Read);
     if (file_or_error.is_error())
-        report_parsing_error(ByteString::formatted("Failed to open {}: {}", real_path, file_or_error.error()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Failed to open {}: {}", real_path, file_or_error.error()), filename, input, lexer.tell());
 
     auto data_or_error = file_or_error.value()->read_until_eof();
     if (data_or_error.is_error())
-        report_parsing_error(ByteString::formatted("Failed to read {}: {}", real_path, data_or_error.error()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Failed to read {}: {}", real_path, data_or_error.error()), filename, input, lexer.tell());
     auto& result = Parser(this, real_path, data_or_error.value(), import_base_path).parse();
     import_stack.remove(real_path);
 
@@ -283,12 +283,12 @@ NonnullRefPtr<Type const> Parser::parse_type()
     }
 
     if (is_parameterized_type)
-        return adopt_ref(*new ParameterizedType(builder.to_byte_string(), nullable, move(parameters)));
+        return adopt_ref(*new ParameterizedType(MUST(builder.to_string()), nullable, move(parameters)));
 
-    return adopt_ref(*new Type(builder.to_byte_string(), nullable));
+    return adopt_ref(*new Type(MUST(builder.to_string()), nullable));
 }
 
-void Parser::parse_attribute(HashMap<ByteString, ByteString>& extended_attributes, Interface& interface, IsStatic is_static)
+void Parser::parse_attribute(HashMap<String, String>& extended_attributes, Interface& interface, IsStatic is_static)
 {
     bool inherit = lexer.consume_specific("inherit"sv);
     if (inherit)
@@ -313,8 +313,8 @@ void Parser::parse_attribute(HashMap<ByteString, ByteString>& extended_attribute
 
     assert_specific(';');
 
-    auto getter_callback_name = ByteString::formatted("{}_getter", name.to_snakecase());
-    auto setter_callback_name = ByteString::formatted("{}_setter", name.to_snakecase());
+    auto getter_callback_name = String::formatted("{}_getter", name.to_snakecase());
+    auto setter_callback_name = String::formatted("{}_setter", name.to_snakecase());
 
     Attribute attribute {
         inherit,
@@ -361,7 +361,7 @@ Vector<Parameter> Parser::parse_parameters()
     for (;;) {
         if (lexer.next_is(')'))
             break;
-        HashMap<ByteString, ByteString> extended_attributes;
+        HashMap<String, String> extended_attributes;
         if (lexer.consume_specific('['))
             extended_attributes = parse_extended_attributes();
         bool optional = lexer.consume_specific("optional"sv);
@@ -403,7 +403,7 @@ Vector<Parameter> Parser::parse_parameters()
     return parameters;
 }
 
-Function Parser::parse_function(HashMap<ByteString, ByteString>& extended_attributes, Interface& interface, IsStatic is_static, IsSpecialOperation is_special_operation)
+Function Parser::parse_function(HashMap<String, String>& extended_attributes, Interface& interface, IsStatic is_static, IsSpecialOperation is_special_operation)
 {
     auto position = lexer.current_position();
 
@@ -430,7 +430,7 @@ Function Parser::parse_function(HashMap<ByteString, ByteString>& extended_attrib
     return function;
 }
 
-void Parser::parse_constructor(HashMap<ByteString, ByteString>& extended_attributes, Interface& interface)
+void Parser::parse_constructor(HashMap<String, String>& extended_attributes, Interface& interface)
 {
     assert_string("constructor"sv);
     consume_whitespace();
@@ -443,7 +443,7 @@ void Parser::parse_constructor(HashMap<ByteString, ByteString>& extended_attribu
     interface.constructors.append(Constructor { interface.name, move(parameters), move(extended_attributes) });
 }
 
-void Parser::parse_stringifier(HashMap<ByteString, ByteString>& extended_attributes, Interface& interface)
+void Parser::parse_stringifier(HashMap<String, String>& extended_attributes, Interface& interface)
 {
     assert_string("stringifier"sv);
     consume_whitespace();
@@ -501,14 +501,14 @@ void Parser::parse_setlike(Interface& interface, bool is_readonly)
     assert_specific(';');
 }
 
-void Parser::parse_getter(HashMap<ByteString, ByteString>& extended_attributes, Interface& interface)
+void Parser::parse_getter(HashMap<String, String>& extended_attributes, Interface& interface)
 {
     assert_string("getter"sv);
     consume_whitespace();
     auto function = parse_function(extended_attributes, interface, IsStatic::No, IsSpecialOperation::Yes);
 
     if (function.parameters.size() != 1)
-        report_parsing_error(ByteString::formatted("Named/indexed property getters must have only 1 parameter, got {} parameters.", function.parameters.size()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Named/indexed property getters must have only 1 parameter, got {} parameters.", function.parameters.size()), filename, input, lexer.tell());
 
     auto& identifier = function.parameters.first();
 
@@ -531,18 +531,18 @@ void Parser::parse_getter(HashMap<ByteString, ByteString>& extended_attributes, 
 
         interface.indexed_property_getter = move(function);
     } else {
-        report_parsing_error(ByteString::formatted("Named/indexed property getter's identifier's type must be either 'DOMString' or 'unsigned long', got '{}'.", identifier.type->name()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Named/indexed property getter's identifier's type must be either 'DOMString' or 'unsigned long', got '{}'.", identifier.type->name()), filename, input, lexer.tell());
     }
 }
 
-void Parser::parse_setter(HashMap<ByteString, ByteString>& extended_attributes, Interface& interface)
+void Parser::parse_setter(HashMap<String, String>& extended_attributes, Interface& interface)
 {
     assert_string("setter"sv);
     consume_whitespace();
     auto function = parse_function(extended_attributes, interface, IsStatic::No, IsSpecialOperation::Yes);
 
     if (function.parameters.size() != 2)
-        report_parsing_error(ByteString::formatted("Named/indexed property setters must have only 2 parameters, got {} parameter(s).", function.parameters.size()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Named/indexed property setters must have only 2 parameters, got {} parameter(s).", function.parameters.size()), filename, input, lexer.tell());
 
     auto& identifier = function.parameters.first();
 
@@ -571,18 +571,18 @@ void Parser::parse_setter(HashMap<ByteString, ByteString>& extended_attributes, 
 
         interface.indexed_property_setter = move(function);
     } else {
-        report_parsing_error(ByteString::formatted("Named/indexed property setter's identifier's type must be either 'DOMString' or 'unsigned long', got '{}'.", identifier.type->name()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Named/indexed property setter's identifier's type must be either 'DOMString' or 'unsigned long', got '{}'.", identifier.type->name()), filename, input, lexer.tell());
     }
 }
 
-void Parser::parse_deleter(HashMap<ByteString, ByteString>& extended_attributes, Interface& interface)
+void Parser::parse_deleter(HashMap<String, String>& extended_attributes, Interface& interface)
 {
     assert_string("deleter"sv);
     consume_whitespace();
     auto function = parse_function(extended_attributes, interface, IsStatic::No, IsSpecialOperation::Yes);
 
     if (function.parameters.size() != 1)
-        report_parsing_error(ByteString::formatted("Named property deleter must have only 1 parameter, got {} parameters.", function.parameters.size()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Named property deleter must have only 1 parameter, got {} parameters.", function.parameters.size()), filename, input, lexer.tell());
 
     auto& identifier = function.parameters.first();
 
@@ -603,7 +603,7 @@ void Parser::parse_deleter(HashMap<ByteString, ByteString>& extended_attributes,
 
         interface.named_property_deleter = move(function);
     } else {
-        report_parsing_error(ByteString::formatted("Named property deleter's identifier's type must be 'DOMString', got '{}'.", identifier.type->name()), filename, input, lexer.tell());
+        report_parsing_error(String::formatted("Named property deleter's identifier's type must be 'DOMString', got '{}'.", identifier.type->name()), filename, input, lexer.tell());
     }
 }
 
@@ -620,7 +620,7 @@ void Parser::parse_interface(Interface& interface)
     assert_specific('{');
 
     for (;;) {
-        HashMap<ByteString, ByteString> extended_attributes;
+        HashMap<String, String> extended_attributes;
 
         consume_whitespace();
 
@@ -696,7 +696,7 @@ void Parser::parse_interface(Interface& interface)
     }
 
     if (auto legacy_namespace = interface.extended_attributes.get("LegacyNamespace"sv); legacy_namespace.has_value())
-        interface.namespaced_name = ByteString::formatted("{}.{}", *legacy_namespace, interface.name);
+        interface.namespaced_name = String::formatted("{}.{}", *legacy_namespace, interface.name);
     else
         interface.namespaced_name = interface.name;
 
@@ -705,10 +705,10 @@ void Parser::parse_interface(Interface& interface)
     else
         interface.implemented_name = interface.name;
 
-    interface.constructor_class = ByteString::formatted("{}Constructor", interface.implemented_name);
-    interface.prototype_class = ByteString::formatted("{}Prototype", interface.implemented_name);
-    interface.prototype_base_class = ByteString::formatted("{}Prototype", interface.parent_name.is_empty() ? "Object" : interface.parent_name);
-    interface.global_mixin_class = ByteString::formatted("{}GlobalMixin", interface.name);
+    interface.constructor_class = String::formatted("{}Constructor", interface.implemented_name);
+    interface.prototype_class = String::formatted("{}Prototype", interface.implemented_name);
+    interface.prototype_base_class = String::formatted("{}Prototype", interface.parent_name.is_empty() ? "Object" : interface.parent_name);
+    interface.global_mixin_class = String::formatted("{}GlobalMixin", interface.name);
     consume_whitespace();
 }
 
@@ -731,16 +731,16 @@ void Parser::parse_namespace(Interface& interface)
             break;
         }
 
-        HashMap<ByteString, ByteString> extended_attributes;
+        HashMap<String, String> extended_attributes;
         parse_function(extended_attributes, interface);
     }
 
-    interface.namespace_class = ByteString::formatted("{}Namespace", interface.name);
+    interface.namespace_class = String::formatted("{}Namespace", interface.name);
     consume_whitespace();
 }
 
 // https://webidl.spec.whatwg.org/#prod-Enum
-void Parser::parse_enumeration(HashMap<ByteString, ByteString> extended_attributes, Interface& interface)
+void Parser::parse_enumeration(HashMap<String, String> extended_attributes, Interface& interface)
 {
     assert_string("enum"sv);
     consume_whitespace();
@@ -764,7 +764,7 @@ void Parser::parse_enumeration(HashMap<ByteString, ByteString> extended_attribut
         consume_whitespace();
 
         if (enumeration.values.contains(string))
-            report_parsing_error(ByteString::formatted("Enumeration {} contains duplicate member '{}'", name, string), filename, input, lexer.tell());
+            report_parsing_error(String::formatted("Enumeration {} contains duplicate member '{}'", name, string), filename, input, lexer.tell());
         else
             enumeration.values.set(string);
 
@@ -779,7 +779,7 @@ void Parser::parse_enumeration(HashMap<ByteString, ByteString> extended_attribut
     assert_specific('}');
     assert_specific(';');
 
-    HashTable<ByteString> names_already_seen;
+    HashTable<String> names_already_seen;
     for (auto& entry : enumeration.values)
         enumeration.translated_cpp_names.set(entry, convert_enumeration_value_to_cpp_enum_member(entry, names_already_seen));
 
@@ -792,7 +792,7 @@ void Parser::parse_typedef(Interface& interface)
     assert_string("typedef"sv);
     consume_whitespace();
 
-    HashMap<ByteString, ByteString> extended_attributes;
+    HashMap<String, String> extended_attributes;
     if (lexer.consume_specific('['))
         extended_attributes = parse_extended_attributes();
 
@@ -833,7 +833,7 @@ void Parser::parse_dictionary(Interface& interface)
         }
 
         bool required = false;
-        HashMap<ByteString, ByteString> extended_attributes;
+        HashMap<String, String> extended_attributes;
 
         if (lexer.consume_specific("required"sv)) {
             required = true;
@@ -865,7 +865,7 @@ void Parser::parse_dictionary(Interface& interface)
             move(type),
             move(name),
             move(extended_attributes),
-            Optional<ByteString>(move(default_value)),
+            Optional<String>(move(default_value)),
         };
         dictionary.members.append(move(member));
     }
@@ -900,7 +900,7 @@ void Parser::parse_interface_mixin(Interface& interface)
     interface.mixins.set(move(name), &mixin_interface);
 }
 
-void Parser::parse_callback_function(HashMap<ByteString, ByteString>& extended_attributes, Interface& interface)
+void Parser::parse_callback_function(HashMap<String, String>& extended_attributes, Interface& interface)
 {
     assert_string("callback"sv);
     consume_whitespace();
@@ -928,7 +928,7 @@ void Parser::parse_non_interface_entities(bool allow_interface, Interface& inter
     consume_whitespace();
 
     while (!lexer.is_eof()) {
-        HashMap<ByteString, ByteString> extended_attributes;
+        HashMap<String, String> extended_attributes;
         if (lexer.consume_specific('['))
             extended_attributes = parse_extended_attributes();
         if (lexer.next_is("dictionary")) {
@@ -966,7 +966,7 @@ void Parser::parse_non_interface_entities(bool allow_interface, Interface& inter
 
 static void resolve_union_typedefs(Interface& interface, UnionType& union_);
 
-static void resolve_typedef(Interface& interface, NonnullRefPtr<Type const>& type, HashMap<ByteString, ByteString>* extended_attributes = {})
+static void resolve_typedef(Interface& interface, NonnullRefPtr<Type const>& type, HashMap<String, String>* extended_attributes = {})
 {
     if (is<ParameterizedType>(*type)) {
         auto& parameterized_type = const_cast<Type&>(*type).as_parameterized();
@@ -1032,7 +1032,7 @@ Interface& Parser::parse()
 {
     auto this_module_or_error = FileSystem::real_path(filename);
     if (this_module_or_error.is_error()) {
-        report_parsing_error(ByteString::formatted("Failed to resolve path '{}': {}", filename, this_module_or_error.error()), filename, input, 0);
+        report_parsing_error(String::formatted("Failed to resolve path '{}': {}", filename, this_module_or_error.error()), filename, input, 0);
         VERIFY_NOT_REACHED();
     }
     auto this_module = this_module_or_error.release_value();
@@ -1083,7 +1083,7 @@ Interface& Parser::parse()
 
         for (auto& mixin : import.mixins) {
             if (auto it = interface.mixins.find(mixin.key); it != interface.mixins.end() && it->value != mixin.value)
-                report_parsing_error(ByteString::formatted("Mixin '{}' was already defined in {}", mixin.key, mixin.value->module_own_path), filename, input, lexer.tell());
+                report_parsing_error(String::formatted("Mixin '{}' was already defined in {}", mixin.key, mixin.value->module_own_path), filename, input, lexer.tell());
             interface.mixins.set(mixin.key, mixin.value);
         }
 
@@ -1096,7 +1096,7 @@ Interface& Parser::parse()
         for (auto& entry : it->value) {
             auto mixin_it = interface.mixins.find(entry);
             if (mixin_it == interface.mixins.end())
-                report_parsing_error(ByteString::formatted("Mixin '{}' was never defined", entry), filename, input, lexer.tell());
+                report_parsing_error(String::formatted("Mixin '{}' was never defined", entry), filename, input, lexer.tell());
 
             auto& mixin = mixin_it->value;
             interface.attributes.extend(mixin->attributes);
@@ -1104,7 +1104,7 @@ Interface& Parser::parse()
             interface.functions.extend(mixin->functions);
             interface.static_functions.extend(mixin->static_functions);
             if (interface.has_stringifier && mixin->has_stringifier)
-                report_parsing_error(ByteString::formatted("Both interface '{}' and mixin '{}' have defined stringifier attributes", interface.name, mixin->name), filename, input, lexer.tell());
+                report_parsing_error(String::formatted("Both interface '{}' and mixin '{}' have defined stringifier attributes", interface.name, mixin->name), filename, input, lexer.tell());
 
             if (mixin->has_stringifier) {
                 interface.stringifier_attribute = mixin->stringifier_attribute;
@@ -1212,7 +1212,7 @@ Interface& Parser::parse()
                 }
                 if (same) {
                     report_parsing_error(
-                        ByteString::formatted("Overload set '{}' contains multiple identical declarations", overload_set.key),
+                        String::formatted("Overload set '{}' contains multiple identical declarations", overload_set.key),
                         filename,
                         input,
                         functions[j].source_position.offset);
@@ -1229,7 +1229,7 @@ Interface& Parser::parse()
     return interface;
 }
 
-Parser::Parser(ByteString filename, StringView contents, ByteString import_base_path)
+Parser::Parser(String filename, StringView contents, String import_base_path)
     : import_base_path(move(import_base_path))
     , filename(move(filename))
     , input(contents)
@@ -1237,7 +1237,7 @@ Parser::Parser(ByteString filename, StringView contents, ByteString import_base_
 {
 }
 
-Parser::Parser(Parser* parent, ByteString filename, StringView contents, ByteString import_base_path)
+Parser::Parser(Parser* parent, String filename, StringView contents, String import_base_path)
     : import_base_path(move(import_base_path))
     , filename(move(filename))
     , input(contents)
@@ -1254,7 +1254,7 @@ Parser* Parser::top_level_parser()
     return current;
 }
 
-HashMap<ByteString, Interface*>& Parser::top_level_resolved_imports()
+HashMap<String, Interface*>& Parser::top_level_resolved_imports()
 {
     return top_level_parser()->resolved_imports;
 }
@@ -1264,7 +1264,7 @@ HashTable<NonnullOwnPtr<Interface>>& Parser::top_level_interfaces()
     return top_level_parser()->interfaces;
 }
 
-Vector<ByteString> Parser::imported_files() const
+Vector<String> Parser::imported_files() const
 {
     return const_cast<Parser*>(this)->top_level_resolved_imports().keys();
 }

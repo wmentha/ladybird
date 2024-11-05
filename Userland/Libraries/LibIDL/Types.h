@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/HashMap.h>
 #include <AK/NonnullRefPtr.h>
 #include <AK/SourceGenerator.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/Tuple.h>
 #include <AK/TypeCasts.h>
@@ -37,7 +37,7 @@ enum class SequenceStorageType {
 };
 
 struct CppType {
-    ByteString name;
+    String name;
     SequenceStorageType sequence_storage_type;
 };
 
@@ -53,14 +53,14 @@ public:
         Union,
     };
 
-    Type(ByteString name, bool nullable)
+    Type(String name, bool nullable)
         : m_kind(Kind::Plain)
         , m_name(move(name))
         , m_nullable(nullable)
     {
     }
 
-    Type(Kind kind, ByteString name, bool nullable)
+    Type(Kind kind, String name, bool nullable)
         : m_kind(kind)
         , m_name(move(name))
         , m_nullable(nullable)
@@ -81,7 +81,7 @@ public:
     UnionType const& as_union() const;
     UnionType& as_union();
 
-    ByteString const& name() const { return m_name; }
+    String const& name() const { return m_name; }
 
     bool is_nullable() const { return m_nullable; }
     void set_nullable(bool value) { m_nullable = value; }
@@ -119,7 +119,7 @@ public:
     // https://webidl.spec.whatwg.org/#idl-symbol
     bool is_symbol() const { return is_plain() && m_name == "symbol"; }
 
-    bool is_string() const { return is_plain() && m_name.is_one_of("ByteString", "CSSOMString", "DOMString", "USVString"); }
+    bool is_string() const { return is_plain() && m_name.is_one_of("String", "CSSOMString", "DOMString", "USVString"); }
 
     // https://webidl.spec.whatwg.org/#dfn-integer-type
     bool is_integer() const { return is_plain() && m_name.is_one_of("byte", "octet", "short", "unsigned short", "long", "unsigned long", "long long", "unsigned long long"); }
@@ -144,24 +144,24 @@ public:
 
 private:
     Kind m_kind;
-    ByteString m_name;
+    String m_name;
     bool m_nullable { false };
 };
 
 struct Parameter {
     NonnullRefPtr<Type const> type;
-    ByteString name;
+    String name;
     bool optional { false };
-    Optional<ByteString> optional_default_value;
-    HashMap<ByteString, ByteString> extended_attributes;
+    Optional<String> optional_default_value;
+    HashMap<String, String> extended_attributes;
     bool variadic { false };
 };
 
 struct Function {
     NonnullRefPtr<Type const> return_type;
-    ByteString name;
+    String name;
     Vector<Parameter> parameters;
-    HashMap<ByteString, ByteString> extended_attributes;
+    HashMap<String, String> extended_attributes;
     LineTrackingLexer::Position source_position;
     size_t overload_index { 0 };
     bool is_overloaded { false };
@@ -170,9 +170,9 @@ struct Function {
 };
 
 struct Constructor {
-    ByteString name;
+    String name;
     Vector<Parameter> parameters;
-    HashMap<ByteString, ByteString> extended_attributes;
+    HashMap<String, String> extended_attributes;
     size_t overload_index { 0 };
     bool is_overloaded { false };
 
@@ -181,45 +181,45 @@ struct Constructor {
 
 struct Constant {
     NonnullRefPtr<Type const> type;
-    ByteString name;
-    ByteString value;
+    String name;
+    String value;
 };
 
 struct Attribute {
     bool inherit { false };
     bool readonly { false };
     NonnullRefPtr<Type const> type;
-    ByteString name;
-    HashMap<ByteString, ByteString> extended_attributes;
+    String name;
+    HashMap<String, String> extended_attributes;
 
     // Added for convenience after parsing
-    ByteString getter_callback_name;
-    ByteString setter_callback_name;
+    String getter_callback_name;
+    String setter_callback_name;
 };
 
 struct DictionaryMember {
     bool required { false };
     NonnullRefPtr<Type const> type;
-    ByteString name;
-    HashMap<ByteString, ByteString> extended_attributes;
-    Optional<ByteString> default_value;
+    String name;
+    HashMap<String, String> extended_attributes;
+    Optional<String> default_value;
 };
 
 struct Dictionary {
-    ByteString parent_name;
+    String parent_name;
     Vector<DictionaryMember> members;
 };
 
 struct Typedef {
-    HashMap<ByteString, ByteString> extended_attributes;
+    HashMap<String, String> extended_attributes;
     NonnullRefPtr<Type const> type;
 };
 
 struct Enumeration {
-    OrderedHashTable<ByteString> values;
-    OrderedHashMap<ByteString, ByteString> translated_cpp_names;
-    HashMap<ByteString, ByteString> extended_attributes;
-    ByteString first_member;
+    OrderedHashTable<String> values;
+    OrderedHashMap<String, String> translated_cpp_names;
+    HashMap<String, String> extended_attributes;
+    String first_member;
     bool is_original_definition { true };
 };
 
@@ -231,7 +231,7 @@ struct CallbackFunction {
 
 class ParameterizedType : public Type {
 public:
-    ParameterizedType(ByteString name, bool nullable, Vector<NonnullRefPtr<Type const>> parameters)
+    ParameterizedType(String name, bool nullable, Vector<NonnullRefPtr<Type const>> parameters)
         : Type(Kind::Parameterized, move(name), nullable)
         , m_parameters(move(parameters))
     {
@@ -239,7 +239,7 @@ public:
 
     virtual ~ParameterizedType() override = default;
 
-    void generate_sequence_from_iterable(SourceGenerator& generator, ByteString const& cpp_name, ByteString const& iterable_cpp_name, ByteString const& iterator_method_cpp_name, IDL::Interface const&, size_t recursion_depth) const;
+    void generate_sequence_from_iterable(SourceGenerator& generator, String const& cpp_name, String const& iterable_cpp_name, String const& iterator_method_cpp_name, IDL::Interface const&, size_t recursion_depth) const;
 
     Vector<NonnullRefPtr<Type const>> const& parameters() const { return m_parameters; }
     Vector<NonnullRefPtr<Type const>>& parameters() { return m_parameters; }
@@ -263,15 +263,15 @@ class Interface {
 public:
     explicit Interface() = default;
 
-    ByteString name;
-    ByteString parent_name;
-    ByteString namespaced_name;
-    ByteString implemented_name;
+    String name;
+    String parent_name;
+    String namespaced_name;
+    String implemented_name;
 
     bool is_namespace { false };
     bool is_mixin { false };
 
-    HashMap<ByteString, ByteString> extended_attributes;
+    HashMap<String, String> extended_attributes;
 
     Vector<Attribute> attributes;
     Vector<Attribute> static_attributes;
@@ -280,7 +280,7 @@ public:
     Vector<Function> functions;
     Vector<Function> static_functions;
     bool has_stringifier { false };
-    Optional<ByteString> stringifier_attribute;
+    Optional<String> stringifier_attribute;
     bool has_unscopable_member { false };
 
     Optional<NonnullRefPtr<Type const>> value_iterator_type;
@@ -296,27 +296,27 @@ public:
 
     Optional<Function> named_property_deleter;
 
-    HashMap<ByteString, Dictionary> dictionaries;
-    HashMap<ByteString, Enumeration> enumerations;
-    HashMap<ByteString, Typedef> typedefs;
-    HashMap<ByteString, Interface*> mixins;
-    HashMap<ByteString, CallbackFunction> callback_functions;
+    HashMap<String, Dictionary> dictionaries;
+    HashMap<String, Enumeration> enumerations;
+    HashMap<String, Typedef> typedefs;
+    HashMap<String, Interface*> mixins;
+    HashMap<String, CallbackFunction> callback_functions;
 
     // Added for convenience after parsing
-    ByteString fully_qualified_name;
-    ByteString constructor_class;
-    ByteString prototype_class;
-    ByteString prototype_base_class;
-    ByteString namespace_class;
-    ByteString global_mixin_class;
-    HashMap<ByteString, HashTable<ByteString>> included_mixins;
+    String fully_qualified_name;
+    String constructor_class;
+    String prototype_class;
+    String prototype_base_class;
+    String namespace_class;
+    String global_mixin_class;
+    HashMap<String, HashTable<String>> included_mixins;
 
-    ByteString module_own_path;
+    String module_own_path;
     Vector<Interface&> imported_modules;
 
-    HashMap<ByteString, Vector<Function&>> overload_sets;
-    HashMap<ByteString, Vector<Function&>> static_overload_sets;
-    HashMap<ByteString, Vector<Constructor&>> constructor_overload_sets;
+    HashMap<String, Vector<Function&>> overload_sets;
+    HashMap<String, Vector<Function&>> static_overload_sets;
+    HashMap<String, Vector<Constructor&>> constructor_overload_sets;
 
     // https://webidl.spec.whatwg.org/#dfn-support-indexed-properties
     bool supports_indexed_properties() const { return indexed_property_getter.has_value(); }
@@ -335,7 +335,7 @@ public:
 
 class UnionType : public Type {
 public:
-    UnionType(ByteString name, bool nullable, Vector<NonnullRefPtr<Type const>> member_types)
+    UnionType(String name, bool nullable, Vector<NonnullRefPtr<Type const>> member_types)
         : Type(Kind::Union, move(name), nullable)
         , m_member_types(move(member_types))
     {
