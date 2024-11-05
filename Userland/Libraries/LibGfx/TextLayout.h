@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Forward.h>
 #include <AK/Utf32View.h>

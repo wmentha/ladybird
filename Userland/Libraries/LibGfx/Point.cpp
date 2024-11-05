@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <LibGfx/Point.h>
 #include <LibGfx/Rect.h>
+#include <AK/String.h>
 #include <LibIPC/Decoder.h>
 #include <LibIPC/Encoder.h>
 
@@ -36,15 +36,15 @@ template<typename T>
 }
 
 template<>
-ByteString IntPoint::to_byte_string() const
+String IntPoint::to_string() const
 {
-    return ByteString::formatted("[{},{}]", x(), y());
+    return MUST(String::formatted("[{},{}]", x(), y()));
 }
 
 template<>
-ByteString FloatPoint::to_byte_string() const
+String FloatPoint::to_string() const
 {
-    return ByteString::formatted("[{},{}]", x(), y());
+    return MUST(String::formatted("[{},{}]", x(), y()));
 }
 
 }

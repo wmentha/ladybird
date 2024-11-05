@@ -7,7 +7,6 @@
  */
 
 #include <AK/Assertions.h>
-#include <AK/ByteString.h>
 #include <AK/FloatingPointStringConversions.h>
 #include <AK/Optional.h>
 #include <AK/Swift.h>
@@ -52,16 +51,6 @@ String Color::to_string(HTMLCompatibleSerialization html_compatible_serializatio
 String Color::to_string_without_alpha() const
 {
     return MUST(String::formatted("#{:02x}{:02x}{:02x}", red(), green(), blue()));
-}
-
-ByteString Color::to_byte_string() const
-{
-    return to_string().to_byte_string();
-}
-
-ByteString Color::to_byte_string_without_alpha() const
-{
-    return to_string_without_alpha().to_byte_string();
 }
 
 static Optional<Color> parse_rgb_color(StringView string)
@@ -462,7 +451,7 @@ ErrorOr<Gfx::Color> IPC::decode(Decoder& decoder)
 
 ErrorOr<void> AK::Formatter<Gfx::Color>::format(FormatBuilder& builder, Gfx::Color value)
 {
-    return Formatter<StringView>::format(builder, value.to_byte_string());
+    return Formatter<StringView>::format(builder, value.to_string());
 }
 
 ErrorOr<void> AK::Formatter<Gfx::YUV>::format(FormatBuilder& builder, Gfx::YUV value)

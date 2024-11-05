@@ -9,10 +9,10 @@
 #pragma once
 
 #include <AK/Array.h>
-#include <AK/ByteString.h>
 #include <AK/Error.h>
 #include <AK/Math.h>
 #include <AK/StdLibExtras.h>
+#include <AK/String.h>
 #include <AK/StringView.h>
 
 #define LOOP_UNROLL_N 4
@@ -273,14 +273,14 @@ public:
         return VectorN<3, T>(x(), y(), z());
     }
 
-    [[nodiscard]] ByteString to_byte_string() const
+    [[nodiscard]] String to_string() const
     {
         if constexpr (N == 2)
-            return ByteString::formatted("[{},{}]", x(), y());
+            return MUST(String::formatted("[{},{}]", x(), y()));
         else if constexpr (N == 3)
-            return ByteString::formatted("[{},{},{}]", x(), y(), z());
+            return MUST(String::formatted("[{},{},{}]", x(), y(), z()));
         else
-            return ByteString::formatted("[{},{},{},{}]", x(), y(), z(), w());
+            return MUST(String::formatted("[{},{},{},{}]", x(), y(), z(), w()));
     }
 
     template<typename U>

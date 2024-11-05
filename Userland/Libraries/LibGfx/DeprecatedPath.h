@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Optional.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 #include <LibGfx/Forward.h>
 #include <LibGfx/Line.h>
@@ -201,7 +201,7 @@ public:
         return m_split_lines->bounding_box;
     }
 
-    ByteString to_byte_string() const;
+    String to_string() const;
 
     PathSegmentIterator begin() const
     {

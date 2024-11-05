@@ -7,11 +7,11 @@
  */
 
 #include <AK/Bitmap.h>
-#include <AK/ByteString.h>
 #include <AK/Checked.h>
 #include <AK/LexicalPath.h>
 #include <AK/Memory.h>
 #include <AK/MemoryStream.h>
+#include <AK/String.h>
 #include <LibCore/File.h>
 #include <LibCore/MappedFile.h>
 #include <LibCore/MimeData.h>
@@ -120,7 +120,7 @@ ErrorOr<NonnullRefPtr<Bitmap>> Bitmap::load_from_file(NonnullOwnPtr<Core::File> 
     return load_from_bytes(mapped_file->bytes(), ideal_size, mime_type);
 }
 
-ErrorOr<NonnullRefPtr<Bitmap>> Bitmap::load_from_bytes(ReadonlyBytes bytes, Optional<IntSize> ideal_size, Optional<ByteString> mine_type)
+ErrorOr<NonnullRefPtr<Bitmap>> Bitmap::load_from_bytes(ReadonlyBytes bytes, Optional<IntSize> ideal_size, Optional<String> mine_type)
 {
     if (auto decoder = TRY(ImageDecoder::try_create_for_raw_bytes(bytes, mine_type))) {
         auto frame = TRY(decoder->frame(0, ideal_size));

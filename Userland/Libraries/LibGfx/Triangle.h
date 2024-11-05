@@ -49,7 +49,7 @@ public:
         return true;
     }
 
-    ByteString to_byte_string() const;
+    String to_string() const;
 
 private:
     T m_determinant { 0 };

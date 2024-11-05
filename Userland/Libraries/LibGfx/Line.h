@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Format.h>
 #include <AK/Optional.h>
+#include <AK/String.h>
 #include <LibGfx/Forward.h>
 #include <LibGfx/Point.h>
 
@@ -165,7 +165,7 @@ public:
         return Line<U>(*this);
     }
 
-    ByteString to_byte_string() const;
+    String to_string() const;
 
 private:
     Point<T> m_a;
@@ -173,15 +173,15 @@ private:
 };
 
 template<>
-inline ByteString IntLine::to_byte_string() const
+inline String IntLine::to_string() const
 {
-    return ByteString::formatted("[{},{} -> {},{}]", m_a.x(), m_a.y(), m_b.x(), m_b.y());
+    return MUST(String::formatted("[{},{} -> {},{}]", m_a.x(), m_a.y(), m_b.x(), m_b.y()));
 }
 
 template<>
-inline ByteString FloatLine::to_byte_string() const
+inline String FloatLine::to_string() const
 {
-    return ByteString::formatted("[{},{} -> {},{}]", m_a.x(), m_a.y(), m_b.x(), m_b.y());
+    return MUST(String::formatted("[{},{} -> {},{}]", m_a.x(), m_a.y(), m_b.x(), m_b.y()));
 }
 
 }

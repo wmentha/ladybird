@@ -8,10 +8,10 @@
 
 #include <AK/LexicalPath.h>
 #include <AK/QuickSort.h>
+#include <AK/String.h>
 #include <LibCore/ConfigFile.h>
 #include <LibCore/DirIterator.h>
 #include <LibGfx/SystemTheme.h>
-#include <string.h>
 
 namespace Gfx {
 
@@ -31,7 +31,7 @@ void set_system_theme(Core::AnonymousBuffer buffer)
     theme_page = theme_buffer.data<SystemTheme>();
 }
 
-ErrorOr<Core::AnonymousBuffer> load_system_theme(Core::ConfigFile const& file, Optional<ByteString> const& color_scheme)
+ErrorOr<Core::AnonymousBuffer> load_system_theme(Core::ConfigFile const& file, Optional<String> const& color_scheme)
 {
     auto buffer = TRY(Core::AnonymousBuffer::create_with_size(sizeof(SystemTheme)));
 
@@ -191,7 +191,7 @@ ErrorOr<Core::AnonymousBuffer> load_system_theme(Core::ConfigFile const& file, O
     return buffer;
 }
 
-ErrorOr<Core::AnonymousBuffer> load_system_theme(ByteString const& path, Optional<ByteString> const& color_scheme)
+ErrorOr<Core::AnonymousBuffer> load_system_theme(String const& path, Optional<String> const& color_scheme)
 {
     auto config_file = TRY(Core::ConfigFile::open(path));
     return TRY(load_system_theme(config_file, color_scheme));
@@ -203,7 +203,7 @@ ErrorOr<Vector<SystemThemeMetaData>> list_installed_system_themes()
     Core::DirIterator dt("/res/themes", Core::DirIterator::SkipDots);
     while (dt.has_next()) {
         auto theme_name = dt.next_path();
-        auto theme_path = ByteString::formatted("/res/themes/{}", theme_name);
+        auto theme_path = MUST(String::formatted("/res/themes/{}", theme_name));
         auto config_file = TRY(Core::ConfigFile::open(theme_path));
         auto menu_name = config_file->read_entry("Menu", "Name", theme_name);
         TRY(system_themes.try_append({ LexicalPath::title(theme_name), menu_name, theme_path }));

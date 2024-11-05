@@ -7,8 +7,8 @@
  */
 
 #include <AK/Badge.h>
+#include <AK/String.h>
 #include <LibGfx/Palette.h>
-#include <string.h>
 
 namespace Gfx {
 
@@ -33,7 +33,7 @@ int PaletteImpl::metric(MetricRole role) const
     return theme().metric[(int)role];
 }
 
-ByteString PaletteImpl::path(PathRole role) const
+String PaletteImpl::path(PathRole role) const
 {
     VERIFY((int)role < (int)PathRole::__Count);
     return theme().path[(int)role];
@@ -78,7 +78,7 @@ void Palette::set_metric(MetricRole role, int value)
     theme.metric[(int)role] = value;
 }
 
-void Palette::set_path(PathRole role, ByteString path)
+void Palette::set_path(PathRole role, String path)
 {
     if (m_impl->ref_count() != 1)
         m_impl = m_impl->clone();

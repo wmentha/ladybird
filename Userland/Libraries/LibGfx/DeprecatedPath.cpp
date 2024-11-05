@@ -203,7 +203,7 @@ void DeprecatedPath::close_all_subpaths()
     }
 }
 
-ByteString DeprecatedPath::to_byte_string() const
+String DeprecatedPath::to_string() const
 {
     // Dumps this path as an SVG compatible string.
     StringBuilder builder;
@@ -229,7 +229,7 @@ ByteString DeprecatedPath::to_byte_string() const
         for (auto point : segment.points())
             builder.appendff(" {},{}", point.x(), point.y());
     }
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 void DeprecatedPath::segmentize_path()

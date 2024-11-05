@@ -1029,7 +1029,7 @@ public:
         };
     }
 
-    [[nodiscard]] ByteString to_byte_string() const;
+    [[nodiscard]] String to_string() const;
 
 private:
     Point<T> m_location;

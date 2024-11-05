@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 #include <LibGfx/Line.h>
 #include <LibGfx/Rect.h>
@@ -14,15 +14,15 @@
 namespace Gfx {
 
 template<>
-ByteString IntRect::to_byte_string() const
+String IntRect::to_string() const
 {
-    return ByteString::formatted("[{},{} {}x{}]", x(), y(), width(), height());
+    return MUST(String::formatted("[{},{} {}x{}]", x(), y(), width(), height()));
 }
 
 template<>
-ByteString FloatRect::to_byte_string() const
+String FloatRect::to_string() const
 {
-    return ByteString::formatted("[{},{} {}x{}]", x(), y(), width(), height());
+    return MUST(String::formatted("[{},{} {}x{}]", x(), y(), width(), height()));
 }
 
 }

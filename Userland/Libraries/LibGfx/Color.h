@@ -457,8 +457,6 @@ public:
     [[nodiscard]] String to_string(HTMLCompatibleSerialization = HTMLCompatibleSerialization::No) const;
     String to_string_without_alpha() const;
 
-    ByteString to_byte_string() const;
-    ByteString to_byte_string_without_alpha() const;
     static Optional<Color> from_string(StringView);
     static Optional<Color> from_named_css_color_string(StringView);
 

@@ -13,11 +13,11 @@
 #include <AK/IntegralMath.h>
 #include <AK/Memory.h>
 #include <AK/MemoryStream.h>
+#include <AK/String.h>
 #include <AK/Try.h>
 #include <LibCompress/Lzw.h>
 #include <LibGfx/ImageFormats/GIFLoader.h>
 #include <LibGfx/Painter.h>
-#include <string.h>
 
 namespace Gfx {
 

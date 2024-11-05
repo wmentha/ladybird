@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Forward.h>
 #include <AK/Types.h>
 #include <AK/Vector.h>
@@ -291,13 +290,13 @@ struct SystemTheme {
 
 Core::AnonymousBuffer& current_system_theme_buffer();
 void set_system_theme(Core::AnonymousBuffer);
-ErrorOr<Core::AnonymousBuffer> load_system_theme(Core::ConfigFile const&, Optional<ByteString> const& color_scheme = OptionalNone());
-ErrorOr<Core::AnonymousBuffer> load_system_theme(ByteString const& path, Optional<ByteString> const& color_scheme = OptionalNone());
+ErrorOr<Core::AnonymousBuffer> load_system_theme(Core::ConfigFile const&, Optional<String> const& color_scheme = OptionalNone());
+ErrorOr<Core::AnonymousBuffer> load_system_theme(String const& path, Optional<String> const& color_scheme = OptionalNone());
 
 struct SystemThemeMetaData {
-    ByteString name;
-    ByteString menu_name;
-    ByteString path;
+    String name;
+    String menu_name;
+    String path;
 };
 
 ErrorOr<Vector<SystemThemeMetaData>> list_installed_system_themes();

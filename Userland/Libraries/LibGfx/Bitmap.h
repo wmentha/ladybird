@@ -68,7 +68,7 @@ public:
     [[nodiscard]] static ErrorOr<NonnullRefPtr<Bitmap>> create_wrapper(BitmapFormat, AlphaType, IntSize, size_t pitch, void*, Function<void()>&& destruction_callback = {});
     [[nodiscard]] static ErrorOr<NonnullRefPtr<Bitmap>> load_from_file(StringView path, Optional<IntSize> ideal_size = {});
     [[nodiscard]] static ErrorOr<NonnullRefPtr<Bitmap>> load_from_file(NonnullOwnPtr<Core::File>, StringView path, Optional<IntSize> ideal_size = {});
-    [[nodiscard]] static ErrorOr<NonnullRefPtr<Bitmap>> load_from_bytes(ReadonlyBytes, Optional<IntSize> ideal_size = {}, Optional<ByteString> mine_type = {});
+    [[nodiscard]] static ErrorOr<NonnullRefPtr<Bitmap>> load_from_bytes(ReadonlyBytes, Optional<IntSize> ideal_size = {}, Optional<String> mine_type = {});
     [[nodiscard]] static ErrorOr<NonnullRefPtr<Bitmap>> create_with_anonymous_buffer(BitmapFormat, AlphaType, Core::AnonymousBuffer, IntSize);
 
     ErrorOr<NonnullRefPtr<Gfx::Bitmap>> clone() const;

@@ -44,7 +44,7 @@ public:
     }
 
     int metric(MetricRole) const;
-    ByteString path(PathRole) const;
+    String path(PathRole) const;
     SystemTheme const& theme() const { return *m_theme_buffer.data<SystemTheme>(); }
 
     void replace_internal_buffer(Core::AnonymousBuffer);
@@ -174,25 +174,25 @@ public:
     int window_title_button_width() const { return metric(MetricRole::TitleButtonWidth); }
     int window_title_button_height() const { return metric(MetricRole::TitleButtonHeight); }
 
-    ByteString title_button_icons_path() const { return path(PathRole::TitleButtonIcons); }
-    ByteString active_window_shadow_path() const { return path(PathRole::ActiveWindowShadow); }
-    ByteString inactive_window_shadow_path() const { return path(PathRole::InactiveWindowShadow); }
-    ByteString menu_shadow_path() const { return path(PathRole::MenuShadow); }
-    ByteString taskbar_shadow_path() const { return path(PathRole::TaskbarShadow); }
-    ByteString tooltip_shadow_path() const { return path(PathRole::TooltipShadow); }
-    ByteString color_scheme_path() const { return path(PathRole::ColorScheme); }
+    String title_button_icons_path() const { return path(PathRole::TitleButtonIcons); }
+    String active_window_shadow_path() const { return path(PathRole::ActiveWindowShadow); }
+    String inactive_window_shadow_path() const { return path(PathRole::InactiveWindowShadow); }
+    String menu_shadow_path() const { return path(PathRole::MenuShadow); }
+    String taskbar_shadow_path() const { return path(PathRole::TaskbarShadow); }
+    String tooltip_shadow_path() const { return path(PathRole::TooltipShadow); }
+    String color_scheme_path() const { return path(PathRole::ColorScheme); }
 
     Color color(ColorRole role) const { return m_impl->color(role); }
     Gfx::TextAlignment alignment(AlignmentRole role) const { return m_impl->alignment(role); }
     bool flag(FlagRole role) const { return m_impl->flag(role); }
     int metric(MetricRole role) const { return m_impl->metric(role); }
-    ByteString path(PathRole role) const { return m_impl->path(role); }
+    String path(PathRole role) const { return m_impl->path(role); }
 
     void set_color(ColorRole, Color);
     void set_alignment(AlignmentRole, Gfx::TextAlignment);
     void set_flag(FlagRole, bool);
     void set_metric(MetricRole, int);
-    void set_path(PathRole, ByteString);
+    void set_path(PathRole, String);
 
     SystemTheme const& theme() const { return m_impl->theme(); }
 

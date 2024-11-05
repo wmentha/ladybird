@@ -48,7 +48,7 @@ static ErrorOr<OwnPtr<ImageDecoderPlugin>> probe_and_sniff_for_appropriate_plugi
     return OwnPtr<ImageDecoderPlugin> {};
 }
 
-ErrorOr<RefPtr<ImageDecoder>> ImageDecoder::try_create_for_raw_bytes(ReadonlyBytes bytes, [[maybe_unused]] Optional<ByteString> mime_type)
+ErrorOr<RefPtr<ImageDecoder>> ImageDecoder::try_create_for_raw_bytes(ReadonlyBytes bytes, [[maybe_unused]] Optional<String> mime_type)
 {
     if (auto plugin = TRY(probe_and_sniff_for_appropriate_plugin(bytes)); plugin)
         return adopt_ref_if_nonnull(new (nothrow) ImageDecoder(plugin.release_nonnull()));
