@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "TIFFLoader.h"
 #include <AK/ConstrainedStream.h>
 #include <AK/Debug.h>
 #include <AK/Endian.h>
@@ -15,6 +14,7 @@
 #include <LibGfx/CMYKBitmap.h>
 #include <LibGfx/ImageFormats/CCITTDecoder.h>
 #include <LibGfx/ImageFormats/ExifOrientedBitmap.h>
+#include <LibGfx/ImageFormats/TIFFLoader.h>
 #include <LibGfx/ImageFormats/TIFFMetadata.h>
 
 namespace Gfx {

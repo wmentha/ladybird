@@ -7,11 +7,10 @@
 
 #pragma once
 
-#include "VectorN.h"
-
 #include <AK/Error.h>
 #include <AK/Format.h>
 #include <AK/StringView.h>
+#include <LibGfx/Vector2.h>
 
 namespace Gfx {
 

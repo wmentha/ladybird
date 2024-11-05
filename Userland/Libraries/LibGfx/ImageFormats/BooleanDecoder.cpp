@@ -8,8 +8,7 @@
 #include <AK/BuiltinWrappers.h>
 #include <AK/Debug.h>
 #include <AK/Endian.h>
-
-#include "BooleanDecoder.h"
+#include <LibGfx/ImageFormats/BooleanDecoder.h>
 
 namespace Gfx {
 

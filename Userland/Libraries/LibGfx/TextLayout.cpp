@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "TextLayout.h"
 #include <AK/TypeCasts.h>
 #include <LibGfx/Font/ScaledFont.h>
+#include <LibGfx/TextLayout.h>
 #include <harfbuzz/hb.h>
 
 namespace Gfx {
