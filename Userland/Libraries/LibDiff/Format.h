@@ -13,7 +13,7 @@
 
 namespace Diff {
 
-ByteString generate_only_additions(StringView);
+ErrorOr<String> generate_only_additions(StringView);
 
 enum class ColorOutput {
     Yes,

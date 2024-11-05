@@ -8,14 +8,14 @@
 
 #include "Format.h"
 #include <AK/Assertions.h>
-#include <AK/ByteString.h>
 #include <AK/Stream.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/Vector.h>
 #include <LibDiff/Hunks.h>
 
 namespace Diff {
-ByteString generate_only_additions(StringView text)
+ErrorOr<String> generate_only_additions(StringView text)
 {
     auto lines = text.split_view('\n', SplitBehavior::KeepEmpty);
     StringBuilder builder;
@@ -23,7 +23,7 @@ ByteString generate_only_additions(StringView text)
     for (auto const& line : lines) {
         builder.appendff("+{}\n", line);
     }
-    return builder.to_byte_string();
+    return builder.to_string();
 }
 
 ErrorOr<void> write_unified_header(StringView old_path, StringView new_path, Stream& stream)
