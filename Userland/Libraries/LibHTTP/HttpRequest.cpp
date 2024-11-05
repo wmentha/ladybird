@@ -111,15 +111,15 @@ ErrorOr<HttpRequest, HttpRequest::ParseError> HttpRequest::from_raw_request(Read
     Vector<u8, 256> buffer;
 
     Optional<unsigned> content_length;
-    ByteString method;
-    ByteString resource;
-    ByteString protocol;
+    String method;
+    String resource;
+    String protocol;
     HeaderMap headers;
     Header current_header;
     ByteBuffer body;
 
     auto commit_and_advance_to = [&](auto& output, State new_state) {
-        output = ByteString::copy(buffer);
+        output = String::from_utf8_without_validation(AK::to_readonly_bytes(buffer));
         buffer.clear();
         state = new_state;
     };
@@ -209,23 +209,23 @@ ErrorOr<HttpRequest, HttpRequest::ParseError> HttpRequest::from_raw_request(Read
         return ParseError::RequestIncomplete;
 
     HttpRequest request;
-    if (method == "GET")
+    if (method == "GET"_string)
         request.m_method = Method::GET;
-    else if (method == "HEAD")
+    else if (method == "HEAD"_string)
         request.m_method = Method::HEAD;
-    else if (method == "POST")
+    else if (method == "POST"_string)
         request.m_method = Method::POST;
-    else if (method == "DELETE")
+    else if (method == "DELETE"_string)
         request.set_method(HTTP::HttpRequest::Method::DELETE);
-    else if (method == "PATCH")
+    else if (method == "PATCH"_string)
         request.set_method(HTTP::HttpRequest::Method::PATCH);
-    else if (method == "OPTIONS")
+    else if (method == "OPTIONS"_string)
         request.set_method(HTTP::HttpRequest::Method::OPTIONS);
-    else if (method == "TRACE")
+    else if (method == "TRACE"_string)
         request.set_method(HTTP::HttpRequest::Method::TRACE);
-    else if (method == "CONNECT")
+    else if (method == "CONNECT"_string)
         request.set_method(HTTP::HttpRequest::Method::CONNECT);
-    else if (method == "PUT")
+    else if (method == "PUT"_string)
         request.set_method(HTTP::HttpRequest::Method::PUT);
     else
         return ParseError::UnsupportedMethod;
@@ -233,22 +233,11 @@ ErrorOr<HttpRequest, HttpRequest::ParseError> HttpRequest::from_raw_request(Read
     request.m_headers = move(headers);
     auto url_parts = resource.split_limit('?', 2, SplitBehavior::KeepEmpty);
 
-    auto url_part_to_string = [](ByteString const& url_part) -> ErrorOr<String, ParseError> {
-        auto query_string_or_error = String::from_byte_string(url_part);
-        if (!query_string_or_error.is_error())
-            return query_string_or_error.release_value();
-
-        if (query_string_or_error.error().code() == ENOMEM)
-            return ParseError::OutOfMemory;
-
-        return ParseError::InvalidURL;
-    };
-
     request.m_url.set_cannot_be_a_base_url(true);
     if (url_parts.size() == 2) {
         request.m_resource = url_parts[0];
         request.m_url.set_paths({ url_parts[0] });
-        request.m_url.set_query(TRY(url_part_to_string(url_parts[1])));
+        request.m_url.set_query(url_parts[1]);
     } else {
         request.m_resource = resource;
         request.m_url.set_paths({ resource });
@@ -278,10 +267,10 @@ Optional<Header> HttpRequest::get_http_basic_authentication_header(URL::URL cons
     builder.clear();
     builder.append("Basic "sv);
     builder.append(token);
-    return Header { "Authorization", builder.to_byte_string() };
+    return Header { "Authorization", MUST(builder.to_string()) };
 }
 
-Optional<HttpRequest::BasicAuthenticationCredentials> HttpRequest::parse_http_basic_authentication_header(ByteString const& value)
+Optional<HttpRequest::BasicAuthenticationCredentials> HttpRequest::parse_http_basic_authentication_header(String const& value)
 {
     if (!value.starts_with("Basic "sv, AK::CaseSensitivity::CaseInsensitive))
         return {};
@@ -291,12 +280,13 @@ Optional<HttpRequest::BasicAuthenticationCredentials> HttpRequest::parse_http_ba
     auto decoded_token_bb = decode_base64(token);
     if (decoded_token_bb.is_error())
         return {};
-    auto decoded_token = ByteString::copy(decoded_token_bb.value());
-    auto colon_index = decoded_token.find(':');
+    auto decoded_value = decoded_token_bb.value();
+    auto decoded_token = String:from_utf8_without_validation(decoded_value.bytes());
+    auto colon_index = decoded_token.find_byte_offset(':');
     if (!colon_index.has_value())
         return {};
-    auto username = decoded_token.substring_view(0, colon_index.value());
-    auto password = decoded_token.substring_view(colon_index.value() + 1);
+    auto username = decoded_token.substring_from_byte_offset(0, colon_index.value());
+    auto password = decoded_token.substring_from_byte_offset(colon_index.value() + 1);
     return BasicAuthenticationCredentials { username, password };
 }
 

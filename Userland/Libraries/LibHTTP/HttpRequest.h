@@ -8,9 +8,9 @@
 #pragma once
 
 #include <AK/ByteBuffer.h>
-#include <AK/ByteString.h>
 #include <AK/Noncopyable.h>
 #include <AK/Optional.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 #include <LibCore/Forward.h>
 #include <LibHTTP/HeaderMap.h>
@@ -58,8 +58,8 @@ public:
     };
 
     struct BasicAuthenticationCredentials {
-        ByteString username;
-        ByteString password;
+        String username;
+        String password;
     };
 
     HttpRequest() = default;
@@ -67,7 +67,7 @@ public:
 
     AK_MAKE_DEFAULT_MOVABLE(HttpRequest);
 
-    ByteString const& resource() const { return m_resource; }
+    String const& resource() const { return m_resource; }
     HeaderMap const& headers() const { return m_headers; }
 
     URL::URL const& url() const { return m_url; }
@@ -86,11 +86,11 @@ public:
 
     static ErrorOr<HttpRequest, HttpRequest::ParseError> from_raw_request(ReadonlyBytes);
     static Optional<Header> get_http_basic_authentication_header(URL::URL const&);
-    static Optional<BasicAuthenticationCredentials> parse_http_basic_authentication_header(ByteString const&);
+    static Optional<BasicAuthenticationCredentials> parse_http_basic_authentication_header(String const&);
 
 private:
     URL::URL m_url;
-    ByteString m_resource;
+    String m_resource;
     Method m_method { GET };
     HeaderMap m_headers;
     ByteBuffer m_body;

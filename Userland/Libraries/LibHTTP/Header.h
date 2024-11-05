@@ -6,15 +6,15 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <LibIPC/Decoder.h>
 #include <LibIPC/Encoder.h>
 
 namespace HTTP {
 
 struct Header {
-    ByteString name;
-    ByteString value;
+    String name;
+    String value;
 };
 
 }
@@ -32,8 +32,8 @@ inline ErrorOr<void> encode(Encoder& encoder, HTTP::Header const& header)
 template<>
 inline ErrorOr<HTTP::Header> decode(Decoder& decoder)
 {
-    auto name = TRY(decoder.decode<ByteString>());
-    auto value = TRY(decoder.decode<ByteString>());
+    auto name = TRY(decoder.decode<String>());
+    auto value = TRY(decoder.decode<String>());
     return HTTP::Header { move(name), move(value) };
 }
 

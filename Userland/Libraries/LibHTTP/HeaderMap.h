@@ -15,18 +15,18 @@ public:
     HeaderMap() = default;
     ~HeaderMap() = default;
 
-    void set(ByteString name, ByteString value)
+    void set(String name, String value)
     {
         m_map.set(name, value);
         m_headers.append({ move(name), move(value) });
     }
 
-    [[nodiscard]] bool contains(ByteString const& name) const
+    [[nodiscard]] bool contains(String const& name) const
     {
         return m_map.contains(name);
     }
 
-    [[nodiscard]] Optional<ByteString> get(ByteString const& name) const
+    [[nodiscard]] Optional<String> get(String const& name) const
     {
         return m_map.get(name);
     }
@@ -37,7 +37,7 @@ public:
     }
 
 private:
-    HashMap<ByteString, ByteString, CaseInsensitiveStringTraits> m_map;
+    HashMap<String, String, CaseInsensitiveStringTraits> m_map;
     Vector<Header> m_headers;
 };
 
