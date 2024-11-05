@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Error.h>
+#include <AK/String.h>
 #include <AK/StringView.h>
 #include <LibCore/File.h>
 #include <sys/stat.h>
@@ -18,9 +18,9 @@ namespace FileSystem {
 #define DEFAULT_PATH "/usr/local/sbin:/usr/local/bin:/usr/bin:/bin"
 #define DEFAULT_PATH_SV "/usr/local/sbin:/usr/local/bin:/usr/bin:/bin"sv
 
-ErrorOr<ByteString> current_working_directory();
-ErrorOr<ByteString> absolute_path(StringView path);
-ErrorOr<ByteString> real_path(StringView path);
+ErrorOr<String> current_working_directory();
+ErrorOr<String> absolute_path(StringView path);
+ErrorOr<String> real_path(StringView path);
 
 bool exists(StringView path);
 bool exists(int fd);
@@ -77,7 +77,7 @@ ErrorOr<off_t> block_device_size_from_ioctl(StringView path);
 ErrorOr<off_t> block_device_size_from_ioctl(int fd);
 bool can_delete_or_move(StringView path);
 
-ErrorOr<ByteString> read_link(StringView link_path);
+ErrorOr<String> read_link(StringView link_path);
 ErrorOr<void> link_file(StringView destination_path, StringView source_path);
 
 bool looks_like_shared_library(StringView path);
