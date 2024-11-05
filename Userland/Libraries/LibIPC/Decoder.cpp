@@ -31,19 +31,6 @@ ErrorOr<String> decode(Decoder& decoder)
 }
 
 template<>
-ErrorOr<ByteString> decode(Decoder& decoder)
-{
-    auto length = TRY(decoder.decode_size());
-    if (length == 0)
-        return ByteString::empty();
-
-    return ByteString::create_and_overwrite(length, [&](Bytes bytes) -> ErrorOr<void> {
-        TRY(decoder.decode_into(bytes));
-        return {};
-    });
-}
-
-template<>
 ErrorOr<ByteBuffer> decode(Decoder& decoder)
 {
     auto length = TRY(decoder.decode_size());
@@ -60,7 +47,7 @@ ErrorOr<ByteBuffer> decode(Decoder& decoder)
 template<>
 ErrorOr<JsonValue> decode(Decoder& decoder)
 {
-    auto json = TRY(decoder.decode<ByteString>());
+    auto json = TRY(decoder.decode<String>());
     return JsonValue::from_string(json);
 }
 
@@ -81,7 +68,7 @@ ErrorOr<UnixDateTime> decode(Decoder& decoder)
 template<>
 ErrorOr<URL::URL> decode(Decoder& decoder)
 {
-    auto url_string = TRY(decoder.decode<ByteString>());
+    auto url_string = TRY(decoder.decode<String>());
     URL::URL url { url_string };
 
     bool has_blob_url = TRY(decoder.decode<bool>());
@@ -100,7 +87,7 @@ ErrorOr<URL::URL> decode(Decoder& decoder)
 template<>
 ErrorOr<URL::Origin> decode(Decoder& decoder)
 {
-    auto scheme = TRY(decoder.decode<ByteString>());
+    auto scheme = TRY(decoder.decode<String>());
     auto host = TRY(decoder.decode<URL::Host>());
     auto port = TRY(decoder.decode<Optional<u16>>());
 

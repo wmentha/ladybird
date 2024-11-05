@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Concepts.h>
 #include <AK/Forward.h>
 #include <AK/NumericLimits.h>
@@ -86,9 +85,6 @@ ErrorOr<T> decode(Decoder& decoder)
 
 template<>
 ErrorOr<String> decode(Decoder&);
-
-template<>
-ErrorOr<ByteString> decode(Decoder&);
 
 template<>
 ErrorOr<ByteBuffer> decode(Decoder&);
