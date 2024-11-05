@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringView.h>
 #include <LibCrypto/Cipher/Mode/Mode.h>
@@ -100,12 +100,12 @@ public:
     {
     }
 
-    virtual ByteString class_name() const override
+    virtual String class_name() const override
     {
         StringBuilder builder;
         builder.append(this->cipher().class_name());
         builder.append("_CTR"sv);
-        return builder.to_byte_string();
+        return builder.to_string_without_validation();
     }
 
     virtual size_t IV_length() const override

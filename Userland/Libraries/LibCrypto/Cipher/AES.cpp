@@ -23,20 +23,20 @@ constexpr void swap_keys(u32* keys, size_t i, size_t j)
     keys[j] = temp;
 }
 
-ByteString AESCipherBlock::to_byte_string() const
+String AESCipherBlock::to_string() const
 {
     StringBuilder builder;
     for (auto value : m_data)
         builder.appendff("{:02x}", value);
-    return builder.to_byte_string();
+    return builder.to_string_without_validation();
 }
 
-ByteString AESCipherKey::to_byte_string() const
+String AESCipherKey::to_string() const
 {
     StringBuilder builder;
     for (size_t i = 0; i < (rounds() + 1) * 4; ++i)
         builder.appendff("{:02x}", m_rd_keys[i]);
-    return builder.to_byte_string();
+    return MUST(builder.to_string_without_validation());
 }
 
 void AESCipherKey::expand_encrypt_key(ReadonlyBytes user_key, size_t bits)

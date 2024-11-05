@@ -7,8 +7,8 @@
 #pragma once
 
 #include <AK/ByteReader.h>
-#include <AK/ByteString.h>
 #include <AK/Endian.h>
+#include <AK/String.h>
 #include <AK/Types.h>
 #include <LibCrypto/Hash/HashFunction.h>
 
@@ -44,9 +44,9 @@ public:
 
     constexpr static size_t digest_size() { return TagType::Size; }
 
-    ByteString class_name() const
+    String class_name() const
     {
-        return "GHash";
+        return "GHash"_string;
     }
 
     TagType process(ReadonlyBytes aad, ReadonlyBytes cipher);

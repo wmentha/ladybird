@@ -361,7 +361,7 @@ JS_DEFINE_NATIVE_FUNCTION(ZonedDateTimePrototype::epoch_seconds_getter)
     auto s = ns.big_integer().divided_by(Crypto::UnsignedBigInteger { 1'000'000'000 }).quotient;
 
     // 5. Return 𝔽(s).
-    return Value((double)s.to_base_deprecated(10).to_number<i64>().value());
+    return Value(MUST((double)s.to_base(10)).to_number<i64>().value());
 }
 
 // 6.3.16 get Temporal.ZonedDateTime.prototype.epochMilliseconds, https://tc39.es/proposal-temporal/#sec-get-temporal.zoneddatetime.prototype.epochmilliseconds
@@ -378,7 +378,7 @@ JS_DEFINE_NATIVE_FUNCTION(ZonedDateTimePrototype::epoch_milliseconds_getter)
     auto ms = ns.big_integer().divided_by(Crypto::UnsignedBigInteger { 1'000'000 }).quotient;
 
     // 5. Return 𝔽(ms).
-    return Value((double)ms.to_base_deprecated(10).to_number<i64>().value());
+    return Value(MUST((double)ms.to_base(10)).to_number<i64>().value());
 }
 
 // 6.3.17 get Temporal.ZonedDateTime.prototype.epochMicroseconds, https://tc39.es/proposal-temporal/#sec-get-temporal.zoneddatetime.prototype.epochmicroseconds

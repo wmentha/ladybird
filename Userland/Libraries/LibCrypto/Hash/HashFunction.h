@@ -54,7 +54,7 @@ public:
 
     virtual void reset() = 0;
 
-    virtual ByteString class_name() const = 0;
+    virtual String class_name() const = 0;
 
 protected:
     virtual ~HashFunction() = default;

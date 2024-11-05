@@ -33,7 +33,7 @@ public:
             return ByteBuffer::create_uninitialized(input_size + T::block_size() - remainder);
     }
 
-    virtual ByteString class_name() const = 0;
+    virtual String class_name() const = 0;
 
     T& cipher()
     {

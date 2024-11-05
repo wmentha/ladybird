@@ -5,7 +5,6 @@
  */
 
 #include "BigFraction.h"
-#include <AK/ByteString.h>
 #include <AK/Math.h>
 #include <AK/StringBuilder.h>
 #include <LibCrypto/NumberTheory/ModularFunctions.h>
@@ -185,7 +184,7 @@ void BigFraction::reduce()
     m_denominator = denominator_divide.quotient;
 }
 
-ByteString BigFraction::to_byte_string(unsigned rounding_threshold) const
+String BigFraction::to_string(unsigned rounding_threshold) const
 {
     StringBuilder builder;
     if (m_numerator.is_negative() && m_numerator != "0"_bigint)
@@ -204,7 +203,7 @@ ByteString BigFraction::to_byte_string(unsigned rounding_threshold) const
     auto const rounded_fraction = rounded(rounding_threshold);
 
     // We take the unsigned value as we already manage the '-'
-    auto const full_value = rounded_fraction.m_numerator.unsigned_value().to_base_deprecated(10);
+    auto const full_value = MUST(rounded_fraction.m_numerator.unsigned_value().to_base(10));
     int split = full_value.length() - (number_of_digits(rounded_fraction.m_denominator) - 1);
 
     if (split < 0)
@@ -240,7 +239,7 @@ ByteString BigFraction::to_byte_string(unsigned rounding_threshold) const
             builder.append(fractional_value);
     }
 
-    return builder.to_byte_string();
+    return builder.to_string_without_validation();
 }
 
 BigFraction BigFraction::sqrt() const

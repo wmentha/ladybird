@@ -71,9 +71,9 @@ struct Tag {
     Type type;
 };
 
-ByteString kind_name(Kind);
-ByteString class_name(Class);
-ByteString type_name(Type);
+String kind_name(Kind);
+String class_name(Class);
+String type_name(Type);
 
 Optional<UnixDateTime> parse_utc_time(StringView);
 Optional<UnixDateTime> parse_generalized_time(StringView);

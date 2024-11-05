@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/Types.h>
 #include <LibCrypto/Hash/HashFunction.h>
 
@@ -52,9 +52,9 @@ public:
     virtual DigestType digest() override;
     virtual DigestType peek() override;
 
-    virtual ByteString class_name() const override
+    virtual String class_name() const override
     {
-        return "MD5";
+        return "MD5"_string;
     }
 
     static DigestType hash(u8 const* data, size_t length)

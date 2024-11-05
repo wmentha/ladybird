@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 #include <LibCrypto/Cipher/Cipher.h>
 #include <LibCrypto/Cipher/Mode/CBC.h>
@@ -44,7 +44,7 @@ public:
             m_data[i] ^= ivec[i];
     }
 
-    ByteString to_byte_string() const;
+    String to_string() const;
 
 private:
     constexpr static size_t data_size() { return sizeof(m_data); }
@@ -58,7 +58,7 @@ struct AESCipherKey : public CipherKey {
     virtual void expand_decrypt_key(ReadonlyBytes user_key, size_t bits) override;
     static bool is_valid_key_size(size_t bits) { return bits == 128 || bits == 192 || bits == 256; }
 
-    ByteString to_byte_string() const;
+    String to_string() const;
 
     u32 const* round_keys() const
     {
@@ -112,9 +112,9 @@ public:
     virtual void encrypt_block(BlockType const& in, BlockType& out) override;
     virtual void decrypt_block(BlockType const& in, BlockType& out) override;
 
-    virtual ByteString class_name() const override
+    virtual String class_name() const override
     {
-        return "AES";
+        return "AES"_string;
     }
 
 protected:

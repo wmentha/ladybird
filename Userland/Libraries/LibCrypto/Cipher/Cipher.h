@@ -113,7 +113,7 @@ public:
     virtual void encrypt_block(BlockType const& in, BlockType& out) = 0;
     virtual void decrypt_block(BlockType const& in, BlockType& out) = 0;
 
-    virtual ByteString class_name() const = 0;
+    virtual String class_name() const = 0;
 
 protected:
     virtual ~Cipher() = default;

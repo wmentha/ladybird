@@ -275,7 +275,7 @@ public:
             return write_boolean(value, class_override, kind_override);
         } else if constexpr (IsSame<ValueType, UnsignedBigInteger> || (IsIntegral<ValueType> && IsUnsigned<ValueType>)) {
             return write_arbitrary_sized_integer(value, class_override, kind_override);
-        } else if constexpr (IsOneOf<ValueType, StringView, String, ByteString>) {
+        } else if constexpr (IsOneOf<ValueType, StringView, String>) {
             return write_printable_string(value, class_override, kind_override);
         } else if constexpr (IsOneOf<ValueType, ReadonlyBytes, ByteBuffer>) {
             return write_octet_string(value, class_override, kind_override);

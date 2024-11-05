@@ -196,10 +196,10 @@ public:
             [&](auto& hash) { hash.reset(); });
     }
 
-    virtual ByteString class_name() const override
+    virtual String class_name() const override
     {
         return m_algorithm.visit(
-            [&](Empty const&) -> ByteString { return "UninitializedHashManager"; },
+            [&](Empty const&) -> String { return "UninitializedHashManager"_string; },
             [&](auto const& hash) { return hash.class_name(); });
     }
 

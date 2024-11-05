@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <LibCrypto/Hash/HashFunction.h>
 
@@ -96,9 +96,9 @@ public:
     static DigestType hash(ByteBuffer const& buffer) { return hash(buffer.data(), buffer.size()); }
     static DigestType hash(StringView buffer) { return hash((u8 const*)buffer.characters_without_null_termination(), buffer.length()); }
 
-    virtual ByteString class_name() const override
+    virtual String class_name() const override
     {
-        return ByteString::formatted("SHA{}", DigestSize * 8);
+        return MUST(String::formatted("SHA{}", DigestSize * 8));
     }
 
     virtual void reset() override
@@ -146,9 +146,9 @@ public:
     static DigestType hash(ByteBuffer const& buffer) { return hash(buffer.data(), buffer.size()); }
     static DigestType hash(StringView buffer) { return hash((u8 const*)buffer.characters_without_null_termination(), buffer.length()); }
 
-    virtual ByteString class_name() const override
+    virtual String class_name() const override
     {
-        return ByteString::formatted("SHA{}", DigestSize * 8);
+        return MUST(String::formatted("SHA{}", DigestSize * 8));
     }
 
     virtual void reset() override
@@ -196,9 +196,9 @@ public:
     static DigestType hash(ByteBuffer const& buffer) { return hash(buffer.data(), buffer.size()); }
     static DigestType hash(StringView buffer) { return hash((u8 const*)buffer.characters_without_null_termination(), buffer.length()); }
 
-    virtual ByteString class_name() const override
+    virtual String class_name() const override
     {
-        return ByteString::formatted("SHA{}", DigestSize * 8);
+        return MUST(String::formatted("SHA{}", DigestSize * 8));
     }
 
     virtual void reset() override

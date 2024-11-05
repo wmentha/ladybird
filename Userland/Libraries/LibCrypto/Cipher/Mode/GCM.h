@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Memory.h>
 #include <AK/OwnPtr.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringView.h>
 #include <LibCrypto/Authentication/GHash.h>
@@ -40,12 +40,12 @@ public:
         m_ghash = Authentication::GHash(m_auth_key);
     }
 
-    virtual ByteString class_name() const override
+    virtual String class_name() const override
     {
         StringBuilder builder;
         builder.append(this->cipher().class_name());
         builder.append("_GCM"sv);
-        return builder.to_byte_string();
+        return builder.to_string_without_validation();
     }
 
     virtual size_t IV_length() const override

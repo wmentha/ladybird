@@ -7,7 +7,7 @@
 #pragma once
 
 #include <AK/ByteBuffer.h>
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringView.h>
 #include <AK/Types.h>
@@ -69,12 +69,12 @@ public:
         m_outer_hasher.update(m_key_data + m_inner_hasher.block_size(), m_outer_hasher.block_size());
     }
 
-    ByteString class_name() const
+    String class_name() const
     {
         StringBuilder builder;
         builder.append("HMAC-"sv);
         builder.append(m_inner_hasher.class_name());
-        return builder.to_byte_string();
+        return builder.to_string_without_validation();
     }
 
 private:
