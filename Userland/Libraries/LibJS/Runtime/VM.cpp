@@ -120,10 +120,12 @@ VM::VM(OwnPtr<CustomData> custom_data, ErrorMessages error_messages)
         return Vector<ByteString> { "type" };
     };
 
-    // 19.2.1.2 HostEnsureCanCompileStrings ( callerRealm, calleeRealm ), https://tc39.es/ecma262/#sec-hostensurecancompilestrings
-    host_ensure_can_compile_strings = [](Realm&) -> ThrowCompletionOr<void> {
-        // The host-defined abstract operation HostEnsureCanCompileStrings takes argument calleeRealm (a Realm Record)
-        // and returns either a normal completion containing unused or a throw completion.
+    // 19.2.1.2 HostEnsureCanCompileStrings ( calleeRealm, parameterStrings, bodyString, direct ), https://tc39.es/ecma262/#sec-hostensurecancompilestrings
+    host_ensure_can_compile_strings = [](Realm&, ReadonlySpan<String>, StringView, EvalMode) -> ThrowCompletionOr<void> {
+        // The host-defined abstract operation HostEnsureCanCompileStrings takes arguments calleeRealm (a Realm Record),
+        // parameterStrings (a List of Strings), bodyString (a String), and direct (a Boolean) and returns either a normal
+        // completion containing unused or a throw completion.
+        //
         // It allows host environments to block certain ECMAScript functions which allow developers to compile strings into ECMAScript code.
         // An implementation of HostEnsureCanCompileStrings must conform to the following requirements:
         //   - If the returned Completion Record is a normal completion, it must be a normal completion containing unused.
@@ -163,6 +165,18 @@ VM::VM(OwnPtr<CustomData> custom_data, ErrorMessages error_messages)
             return throw_completion<RangeError>(ErrorType::NotEnoughMemoryToAllocate, new_byte_length);
 
         return HandledByHost::Handled;
+    };
+
+    // 3.6.1 HostInitializeShadowRealm ( realm ), https://tc39.es/proposal-shadowrealm/#sec-hostinitializeshadowrealm
+    // https://github.com/tc39/proposal-shadowrealm/pull/410
+    host_initialize_shadow_realm = [](Realm&, NonnullOwnPtr<ExecutionContext>, ShadowRealm&) -> ThrowCompletionOr<void> {
+        // The host-defined abstract operation HostInitializeShadowRealm takes argument realm (a Realm Record) and returns
+        // either a normal completion containing unused or a throw completion. It is used to inform the host of any newly
+        // created realms from the ShadowRealm constructor. The idea of this hook is to initialize host data structures
+        // related to the ShadowRealm, e.g., for module loading.
+        //
+        // The host may use this hook to add properties to the ShadowRealm's global object. Those properties must be configurable.
+        return {};
     };
 
     // AD-HOC: Inform the host that we received a date string we were unable to parse.
