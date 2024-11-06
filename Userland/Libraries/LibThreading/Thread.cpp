@@ -6,7 +6,6 @@
 
 #include <LibThreading/Thread.h>
 #include <pthread.h>
-#include <string.h>
 #include <unistd.h>
 
 namespace Threading {
@@ -46,7 +45,7 @@ ErrorOr<int> Thread::get_priority() const
     return scheduling_parameters.sched_priority;
 }
 
-ByteString Thread::thread_name() const { return m_thread_name; }
+String Thread::thread_name() const { return m_thread_name; }
 
 pthread_t Thread::tid() const { return m_tid; }
 

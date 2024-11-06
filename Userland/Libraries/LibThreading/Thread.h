@@ -9,10 +9,10 @@
 
 #include <AK/Assertions.h>
 #include <AK/AtomicRefCounted.h>
-#include <AK/ByteString.h>
 #include <AK/DistinctNumeric.h>
 #include <AK/Function.h>
 #include <AK/Result.h>
+#include <AK/String.h>
 #include <LibCore/EventReceiver.h>
 #include <pthread.h>
 
@@ -69,7 +69,7 @@ public:
     template<typename T = void>
     Result<T, ThreadError> join();
 
-    ByteString thread_name() const;
+    String thread_name() const;
     pthread_t tid() const;
     ThreadState state() const;
     bool is_started() const;
@@ -80,7 +80,7 @@ private:
     explicit Thread(ESCAPING Function<intptr_t()> action, StringView thread_name = {});
     Function<intptr_t()> m_action;
     pthread_t m_tid { 0 };
-    ByteString m_thread_name;
+    String m_thread_name;
     Atomic<ThreadState> m_state { ThreadState::Startable };
 };
 
@@ -120,25 +120,25 @@ template<>
 struct AK::Formatter<Threading::ThreadState> : AK::Formatter<FormatString> {
     ErrorOr<void> format(FormatBuilder& builder, Threading::ThreadState state)
     {
-        ByteString name = "";
+        String name;
         switch (state) {
         case Threading::ThreadState::Detached:
-            name = "Detached";
+            name = "Detached"_string;
             break;
         case Threading::ThreadState::DetachedExited:
-            name = "DetachedExited";
+            name = "DetachedExited"_string;
             break;
         case Threading::ThreadState::Exited:
-            name = "Exited";
+            name = "Exited"_string;
             break;
         case Threading::ThreadState::Joined:
-            name = "Joined";
+            name = "Joined"_string;
             break;
         case Threading::ThreadState::Running:
-            name = "Running";
+            name = "Running"_string;
             break;
         case Threading::ThreadState::Startable:
-            name = "Startable";
+            name = "Startable"_string;
             break;
         default:
             VERIFY_NOT_REACHED();
