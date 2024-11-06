@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "JsonObject.h"
+#include <AK/JsonObject.h>
 
 namespace AK {
 
