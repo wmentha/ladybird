@@ -107,7 +107,8 @@ Optional<String> calendar_display_name(StringView locale, StringView calendar)
         calendar = "ethiopic-amete-alem"sv;
 
     icu::UnicodeString result;
-    locale_data->standard_display_names().keyValueDisplayName("calendar", ByteString(calendar).characters(), result);
+    auto bytes = calendar.bytes();
+    locale_data->standard_display_names().keyValueDisplayName("calendar", bytes.data(), result);
 
     return icu_string_to_string(result);
 }

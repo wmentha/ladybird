@@ -19,7 +19,7 @@
 namespace AK {
 
 struct ResolvedLocale {
-    ByteString buffer;
+    String buffer;
     char const* locale { nullptr };
 };
 
@@ -30,7 +30,8 @@ static ResolvedLocale resolve_locale(Optional<StringView> const& locale)
 
     ResolvedLocale resolved_locale;
     resolved_locale.buffer = *locale;
-    resolved_locale.locale = resolved_locale.buffer.characters();
+    auto bytes = resolved_locale.buffer.bytes();
+    resolved_locale.locale = bytes.data();
 
     return resolved_locale;
 }

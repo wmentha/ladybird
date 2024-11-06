@@ -85,11 +85,15 @@ static constexpr bool is_legacy_non_iana_time_zone(StringView time_zone)
     return legacy_zones.contains_slow(time_zone);
 }
 
-static Vector<String> icu_available_time_zones(Optional<ByteString> const& region)
+static Vector<String> icu_available_time_zones(Optional<String> const& region)
 {
     UErrorCode status = U_ZERO_ERROR;
-
-    char const* icu_region = region.has_value() ? region->characters() : nullptr;
+    char const* icu_region = nullptr;
+    
+    if (region.has_value()) {
+        auto bytes = region->bytes();
+        icu_region = bytes.data();
+    }
 
     auto time_zone_enumerator = adopt_own_if_nonnull(icu::TimeZone::createTimeZoneIDEnumeration(UCAL_ZONE_TYPE_ANY, icu_region, nullptr, status));
     if (icu_failure(status))

@@ -879,7 +879,8 @@ NonnullOwnPtr<NumberFormat> NumberFormat::create(
     apply_rounding_options(formatter, rounding_options);
 
     if (!numbering_system.is_empty()) {
-        if (auto* symbols = icu::NumberingSystem::createInstanceByName(ByteString(numbering_system).characters(), status); symbols && icu_success(status))
+        auto bytes = numbering_system.bytes();
+        if (auto* symbols = icu::NumberingSystem::createInstanceByName(bytes.data(), status); symbols && icu_success(status))
             formatter = formatter.adoptSymbols(symbols);
     }
 
