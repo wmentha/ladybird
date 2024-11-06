@@ -211,7 +211,7 @@ void TLSv12::set_root_certificates(Vector<Certificate> certificates)
         }
         // FIXME: Figure out what we should do when our root certs are invalid.
 
-        m_context.root_certificates.set(MUST(cert.subject.to_string()).to_byte_string(), cert);
+        m_context.root_certificates.set(MUST(cert.subject.to_string()), cert);
     }
     dbgln_if(TLS_DEBUG, "{}: Set {} root certificates", this, m_context.root_certificates.size());
 }
@@ -293,7 +293,7 @@ bool Context::verify_chain(StringView host) const
             return false;
         }
 
-        auto maybe_root_certificate = root_certificates.get(issuer_string.to_byte_string());
+        auto maybe_root_certificate = root_certificates.get(issuer_string);
         if (maybe_root_certificate.has_value()) {
             auto& root_certificate = *maybe_root_certificate;
             auto verification_correct = verify_certificate_pair(cert, root_certificate);

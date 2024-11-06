@@ -306,11 +306,11 @@ public:
     Vector<Certificate> const& certificates() const { return m_ca_certificates; }
 
     static ErrorOr<Vector<Certificate>> parse_pem_root_certificate_authorities(ByteBuffer&);
-    static ErrorOr<Vector<Certificate>> load_certificates(Span<ByteString> custom_cert_paths = {});
+    static ErrorOr<Vector<Certificate>> load_certificates(Span<String> custom_cert_paths = {});
 
     static DefaultRootCACertificates& the();
 
-    static void set_default_certificate_paths(Span<ByteString> paths);
+    static void set_default_certificate_paths(Span<String> paths);
 
 private:
     Vector<Certificate> m_ca_certificates;
