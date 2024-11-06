@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <LibURL/Host.h>
 
 namespace URL {
@@ -15,7 +15,7 @@ namespace URL {
 class Origin {
 public:
     Origin() = default;
-    Origin(Optional<ByteString> const& scheme, Host const& host, Optional<u16> port)
+    Origin(Optional<String> const& scheme, Host const& host, Optional<u16> port)
         : m_scheme(scheme)
         , m_host(host)
         , m_port(port)
@@ -71,7 +71,7 @@ public:
     }
 
     // https://html.spec.whatwg.org/multipage/origin.html#ascii-serialisation-of-an-origin
-    ByteString serialize() const;
+    String serialize() const;
 
     // https://html.spec.whatwg.org/multipage/origin.html#concept-origin-effective-domain
     Optional<Host> effective_domain() const
@@ -89,7 +89,7 @@ public:
     bool operator==(Origin const& other) const { return is_same_origin(other); }
 
 private:
-    Optional<ByteString> m_scheme;
+    Optional<String> m_scheme;
     Host m_host;
     Optional<u16> m_port;
 };

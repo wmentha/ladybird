@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/CopyOnWrite.h>
 #include <AK/String.h>
 #include <AK/StringView.h>
@@ -58,8 +57,8 @@ enum class SpaceAsPlus {
     No,
     Yes,
 };
-String percent_encode(StringView input, PercentEncodeSet set = PercentEncodeSet::Userinfo, SpaceAsPlus = SpaceAsPlus::No);
-ByteString percent_decode(StringView input);
+ErrorOr<String> percent_encode(StringView input, PercentEncodeSet set = PercentEncodeSet::Userinfo, SpaceAsPlus = SpaceAsPlus::No);
+ErrorOr<String> percent_decode(StringView input);
 
 // https://url.spec.whatwg.org/#url-representation
 // A URL is a struct that represents a universal identifier. To disambiguate from a valid URL string it can also be referred to as a URL record.
@@ -69,7 +68,7 @@ class URL {
 public:
     URL() = default;
     URL(StringView);
-    URL(ByteString const& string)
+    URL(String const& string)
         : URL(string.view())
     {
     }
@@ -85,11 +84,11 @@ public:
     String const& password() const { return m_data->password; }
     Host const& host() const { return m_data->host; }
     ErrorOr<String> serialized_host() const;
-    ByteString basename() const;
+    String basename() const;
     Optional<String> const& query() const { return m_data->query; }
     Optional<String> const& fragment() const { return m_data->fragment; }
     Optional<u16> port() const { return m_data->port; }
-    ByteString path_segment_at_index(size_t index) const;
+    String path_segment_at_index(size_t index) const;
     size_t path_segment_count() const { return m_data->paths.size(); }
 
     u16 port_or_default() const { return m_data->port.value_or(default_port_for_scheme(m_data->scheme).value_or(0)); }
@@ -104,7 +103,7 @@ public:
     void set_password(StringView);
     void set_host(Host);
     void set_port(Optional<u16>);
-    void set_paths(Vector<ByteString> const&);
+    void set_paths(Vector<String> const&);
     Vector<String> const& paths() const { return m_data->paths; }
     void set_query(Optional<String> query) { m_data->query = move(query); }
     void set_fragment(Optional<String> fragment) { m_data->fragment = move(fragment); }
@@ -116,11 +115,9 @@ public:
         m_data->paths.append(String {});
     }
 
-    String serialize_path() const;
-    ByteString serialize(ExcludeFragment = ExcludeFragment::No) const;
-    ByteString serialize_for_display() const;
-    ByteString to_byte_string() const { return serialize(); }
-    ErrorOr<String> to_string() const;
+    ErrorOr<String> serialize_path() const;
+    ErrorOr<String> serialize(ExcludeFragment = ExcludeFragment::No) const;
+    ErrorOr<String> serialize_for_display() const;
 
     Origin origin() const;
 
@@ -195,8 +192,8 @@ private:
     AK::CopyOnWrite<Data> m_data;
 };
 
-URL create_with_url_or_path(ByteString const&);
-URL create_with_file_scheme(ByteString const& path, ByteString const& fragment = {}, ByteString const& hostname = {});
+URL create_with_url_or_path(String const&);
+URL create_with_file_scheme(String const& path, String const& fragment = {}, String const& hostname = {});
 URL create_with_data(StringView mime_type, StringView payload, bool is_base64 = false);
 
 }
@@ -211,5 +208,5 @@ struct AK::Formatter<URL::URL> : AK::Formatter<StringView> {
 
 template<>
 struct AK::Traits<URL::URL> : public AK::DefaultTraits<URL::URL> {
-    static unsigned hash(URL::URL const& url) { return url.to_byte_string().hash(); }
+    static unsigned hash(URL::URL const& url) { return MUST(url.serialize()).hash(); }
 };

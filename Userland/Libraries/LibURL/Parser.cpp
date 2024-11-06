@@ -5,12 +5,12 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Debug.h>
 #include <AK/IntegralMath.h>
 #include <AK/Optional.h>
 #include <AK/SourceLocation.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringUtils.h>
 #include <AK/Utf8View.h>
@@ -850,7 +850,7 @@ URL Parser::basic_parse(StringView raw_input, Optional<URL> const& base_url, URL
             report_validation_error();
     }
 
-    ByteString processed_input = raw_input.substring_view(start_index, end_index - start_index);
+    String processed_input = MUST(String::from_utf8(raw_input.substring_view(start_index, end_index - start_index)));
 
     // 2. If input contains any ASCII tab or newline, invalid-URL-unit validation error.
     // 3. Remove all ASCII tab or newline from input.
@@ -1183,7 +1183,7 @@ URL Parser::basic_parse(StringView raw_input, Optional<URL> const& base_url, URL
 
                 // 2. If atSignSeen is true, then prepend "%40" to buffer.
                 if (at_sign_seen) {
-                    auto content = buffer.to_byte_string();
+                    auto content = buffer;
                     buffer.clear();
                     buffer.append("%40"sv);
                     buffer.append(content);

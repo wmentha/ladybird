@@ -36,13 +36,13 @@ URL URL::complete_url(StringView relative_url) const
     return Parser::basic_parse(relative_url, *this);
 }
 
-ByteString URL::path_segment_at_index(size_t index) const
+String URL::path_segment_at_index(size_t index) const
 {
     VERIFY(index < path_segment_count());
     return percent_decode(m_data->paths[index]);
 }
 
-ByteString URL::basename() const
+String URL::basename() const
 {
     if (!m_data->valid)
         return {};
@@ -96,7 +96,7 @@ void URL::set_port(Optional<u16> port)
     m_data->valid = compute_validity();
 }
 
-void URL::set_paths(Vector<ByteString> const& paths)
+void URL::set_paths(Vector<String> const& paths)
 {
     m_data->paths.clear_with_capacity();
     m_data->paths.ensure_capacity(paths.size());
@@ -168,7 +168,7 @@ Optional<u16> default_port_for_scheme(StringView scheme)
     return {};
 }
 
-URL create_with_file_scheme(ByteString const& path, ByteString const& fragment, ByteString const& hostname)
+URL create_with_file_scheme(String const& path, String const& fragment, String const& hostname)
 {
     LexicalPath lexical_path(path);
     if (!lexical_path.is_absolute())
@@ -176,22 +176,22 @@ URL create_with_file_scheme(ByteString const& path, ByteString const& fragment, 
 
     URL url;
     url.set_scheme("file"_string);
-    url.set_host(hostname == "localhost" ? String {} : String::from_byte_string(hostname).release_value_but_fixme_should_propagate_errors());
+    url.set_host(hostname == "localhost" ? String {} : hostname);
     url.set_paths(lexical_path.parts());
     if (path.ends_with('/'))
         url.append_slash();
     if (!fragment.is_empty())
-        url.set_fragment(String::from_byte_string(fragment).release_value_but_fixme_should_propagate_errors());
+        url.set_fragment(fragment);
     return url;
 }
 
-URL create_with_url_or_path(ByteString const& url_or_path)
+URL create_with_url_or_path(String const& url_or_path)
 {
     URL url = url_or_path;
     if (url.is_valid())
         return url;
 
-    ByteString path = LexicalPath::canonicalized_path(url_or_path);
+    String path = LexicalPath::canonicalized_path(url_or_path);
     return create_with_file_scheme(path);
 }
 
@@ -207,7 +207,7 @@ URL create_with_data(StringView mime_type, StringView payload, bool is_base64)
         builder.append(";base64"sv);
     builder.append(',');
     builder.append(payload);
-    url.set_paths({ builder.to_byte_string() });
+    url.set_paths({ MUST(builder.to_string()) });
     return url;
 }
 
@@ -218,7 +218,7 @@ bool is_special_scheme(StringView scheme)
 }
 
 // https://url.spec.whatwg.org/#url-path-serializer
-String URL::serialize_path() const
+ErrorOr<String> URL::serialize_path() const
 {
     // 1. If url has an opaque path, then return url’s path.
     // FIXME: Reimplement this step once we modernize the URL implementation to meet the spec.
@@ -235,11 +235,11 @@ String URL::serialize_path() const
     }
 
     // 4. Return output.
-    return output.to_string_without_validation();
+    return output.to_string();
 }
 
 // https://url.spec.whatwg.org/#concept-url-serializer
-ByteString URL::serialize(ExcludeFragment exclude_fragment) const
+ErrorOr<String> URL::serialize(ExcludeFragment exclude_fragment) const
 {
     // 1. Let output be url’s scheme and U+003A (:) concatenated.
     StringBuilder output;
@@ -301,14 +301,14 @@ ByteString URL::serialize(ExcludeFragment exclude_fragment) const
     }
 
     // 7. Return output.
-    return output.to_byte_string();
+    return output.to_string();
 }
 
 // https://url.spec.whatwg.org/#url-rendering
 // NOTE: This does e.g. not display credentials.
 // FIXME: Parts of the URL other than the host should have their sequences of percent-encoded bytes replaced with code points
 //        resulting from percent-decoding those sequences converted to bytes, unless that renders those sequences invisible.
-ByteString URL::serialize_for_display() const
+ErrorOr<String> URL::serialize_for_display() const
 {
     VERIFY(m_data->valid);
 
@@ -344,12 +344,7 @@ ByteString URL::serialize_for_display() const
         builder.append(*m_data->fragment);
     }
 
-    return builder.to_byte_string();
-}
-
-ErrorOr<String> URL::to_string() const
-{
-    return String::from_byte_string(serialize());
+    return builder.to_string();
 }
 
 // https://url.spec.whatwg.org/#concept-url-origin
@@ -386,7 +381,7 @@ Origin URL::origin() const
     // -> "wss"
     if (scheme().is_one_of("ftp"sv, "http"sv, "https"sv, "ws"sv, "wss"sv)) {
         // Return the tuple origin (url’s scheme, url’s host, url’s port, null).
-        return Origin(scheme().to_byte_string(), host(), port());
+        return Origin(scheme(), host(), port());
     }
 
     // -> "file"
@@ -394,7 +389,7 @@ Origin URL::origin() const
     if (scheme() == "file"sv || scheme() == "resource"sv) {
         // Unfortunate as it is, this is left as an exercise to the reader. When in doubt, return a new opaque origin.
         // Note: We must return an origin with the `file://' protocol for `file://' iframes to work from `file://' pages.
-        return Origin(scheme().to_byte_string(), String {}, {});
+        return Origin(scheme(), String {}, {});
     }
 
     // -> Otherwise
@@ -464,7 +459,7 @@ void append_percent_encoded_if_necessary(StringBuilder& builder, u32 code_point,
         builder.append_code_point(code_point);
 }
 
-String percent_encode(StringView input, PercentEncodeSet set, SpaceAsPlus space_as_plus)
+ErrorOr<String> percent_encode(StringView input, PercentEncodeSet set, SpaceAsPlus space_as_plus)
 {
     StringBuilder builder;
     for (auto code_point : Utf8View(input)) {
@@ -473,10 +468,10 @@ String percent_encode(StringView input, PercentEncodeSet set, SpaceAsPlus space_
         else
             append_percent_encoded_if_necessary(builder, code_point, set);
     }
-    return MUST(builder.to_string());
+    return builder.to_string();
 }
 
-ByteString percent_decode(StringView input)
+ErrorOr<String> percent_decode(StringView input)
 {
     if (!input.contains('%'))
         return input;
@@ -495,7 +490,7 @@ ByteString percent_decode(StringView input)
             builder.append(byte);
         }
     }
-    return builder.to_byte_string();
+    return builder.to_string();
 }
 
 }
