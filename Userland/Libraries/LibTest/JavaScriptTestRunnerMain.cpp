@@ -20,12 +20,12 @@ namespace JS {
 
 RefPtr<::JS::VM> g_vm;
 bool g_collect_on_every_allocation = false;
-ByteString g_currently_running_test;
-HashMap<ByteString, FunctionWithLength> s_exposed_global_functions;
+String g_currently_running_test;
+HashMap<String, FunctionWithLength> s_exposed_global_functions;
 Function<void()> g_main_hook;
-HashMap<bool*, Tuple<ByteString, ByteString, char>> g_extra_args;
-IntermediateRunFileResult (*g_run_file)(ByteString const&, JS::Realm&, JS::ExecutionContext&) = nullptr;
-ByteString g_test_root;
+HashMap<bool*, Tuple<String, String, char>> g_extra_args;
+IntermediateRunFileResult (*g_run_file)(String const&, JS::Realm&, JS::ExecutionContext&) = nullptr;
+String g_test_root;
 int g_test_argc;
 char** g_test_argv;
 
@@ -88,8 +88,8 @@ int main(int argc, char** argv)
     bool print_json = false;
     bool per_file = false;
     StringView specified_test_root;
-    ByteString common_path;
-    ByteString test_glob;
+    String common_path;
+    String test_glob;
 
     Core::ArgsParser args_parser;
     args_parser.add_option(print_times, "Show duration of each test", "show-time", 't');
@@ -123,24 +123,24 @@ int main(int argc, char** argv)
     if (per_file)
         print_json = true;
 
-    test_glob = ByteString::formatted("*{}*", test_glob);
+    test_glob = MUST(String::formatted("*{}*", test_glob));
 
     if (getenv("DISABLE_DBG_OUTPUT")) {
         AK::set_debug_enabled(false);
     }
 
-    ByteString test_root;
+    String test_root;
 
     if (!specified_test_root.is_empty()) {
-        test_root = ByteString { specified_test_root };
+        test_root = MUST(String::from_utf8(specified_test_root))
     } else {
         char* ladybird_source_dir = getenv("LADYBIRD_SOURCE_DIR");
         if (!ladybird_source_dir) {
             warnln("No test root given, {} requires the LADYBIRD_SOURCE_DIR environment variable to be set", g_program_name);
             return 1;
         }
-        test_root = ByteString::formatted("{}/{}", ladybird_source_dir, g_test_root_fragment);
-        common_path = ByteString::formatted("{}/Userland/Libraries/LibJS/Tests/test-common.js", ladybird_source_dir);
+        test_root = MUST(String::formatted("{}/{}", ladybird_source_dir, g_test_root_fragment));
+        common_path = MUST(String::formatted("{}/Userland/Libraries/LibJS/Tests/test-common.js", ladybird_source_dir));
     }
     if (!FileSystem::is_directory(test_root)) {
         warnln("Test root is not a directory: {}", test_root);
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
             warnln("No test root given, {} requires the LADYBIRD_SOURCE_DIR environment variable to be set", g_program_name);
             return 1;
         }
-        common_path = ByteString::formatted("{}/Userland/Libraries/LibJS/Tests/test-common.js", ladybird_source_dir);
+        common_path = MUST(String::formatted("{}/Userland/Libraries/LibJS/Tests/test-common.js", ladybird_source_dir));
     }
 
     auto test_root_or_error = FileSystem::real_path(test_root);

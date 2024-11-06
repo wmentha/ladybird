@@ -83,7 +83,7 @@
     } __testjs_flag_hook_##flag;
 
 #define TEST_ROOT(path) \
-    ByteString Test::JS::g_test_root_fragment = path
+    String Test::JS::g_test_root_fragment = path##_string
 
 #define TESTJS_RUN_FILE_FUNCTION(...)                                                                            \
     struct __TestJS_run_file {                                                                                   \
@@ -91,7 +91,7 @@
         {                                                                                                        \
             ::Test::JS::g_run_file = hook;                                                                       \
         }                                                                                                        \
-        static ::Test::JS::IntermediateRunFileResult hook(ByteString const&, JS::Realm&, JS::ExecutionContext&); \
+        static ::Test::JS::IntermediateRunFileResult hook(String const&, JS::Realm&, JS::ExecutionContext&); \
     } __testjs_common_run_file {};                                                                               \
     ::Test::JS::IntermediateRunFileResult __TestJS_run_file::hook(__VA_ARGS__)
 
@@ -112,33 +112,33 @@ static consteval size_t __testjs_last()
 static constexpr auto TOP_LEVEL_TEST_NAME = "__$$TOP_LEVEL$$__";
 extern RefPtr<JS::VM> g_vm;
 extern bool g_collect_on_every_allocation;
-extern ByteString g_currently_running_test;
+extern String g_currently_running_test;
 struct FunctionWithLength {
     JS::ThrowCompletionOr<JS::Value> (*function)(JS::VM&);
     size_t length { 0 };
 };
-extern HashMap<ByteString, FunctionWithLength> s_exposed_global_functions;
-extern ByteString g_test_root_fragment;
-extern ByteString g_test_root;
+extern HashMap<String, FunctionWithLength> s_exposed_global_functions;
+extern String g_test_root_fragment;
+extern String g_test_root;
 extern int g_test_argc;
 extern char** g_test_argv;
 extern Function<void()> g_main_hook;
-extern HashMap<bool*, Tuple<ByteString, ByteString, char>> g_extra_args;
+extern HashMap<bool*, Tuple<String, String, char>> g_extra_args;
 
 struct ParserError {
     JS::ParserError error;
-    ByteString hint;
+    String hint;
 };
 
 struct JSFileResult {
-    ByteString name;
+    String name;
     Optional<ParserError> error {};
     double time_taken { 0 };
     // A failed test takes precedence over a skipped test, which both have
     // precedence over a passed test
     Test::Result most_severe_test_result { Test::Result::Pass };
     Vector<Test::Suite> suites {};
-    Vector<ByteString> logged_messages {};
+    Vector<String> logged_messages {};
 };
 
 enum class RunFileHookResult {
@@ -147,11 +147,11 @@ enum class RunFileHookResult {
 };
 
 using IntermediateRunFileResult = AK::Result<JSFileResult, RunFileHookResult>;
-extern IntermediateRunFileResult (*g_run_file)(ByteString const&, JS::Realm&, JS::ExecutionContext&);
+extern IntermediateRunFileResult (*g_run_file)(String const&, JS::Realm&, JS::ExecutionContext&);
 
 class TestRunner : public ::Test::TestRunner {
 public:
-    TestRunner(ByteString test_root, ByteString common_path, bool print_times, bool print_progress, bool print_json, bool detailed_json)
+    TestRunner(String test_root, String common_path, bool print_times, bool print_progress, bool print_json, bool detailed_json)
         : ::Test::TestRunner(move(test_root), print_times, print_progress, print_json, detailed_json)
         , m_common_path(move(common_path))
     {
@@ -161,12 +161,12 @@ public:
     virtual ~TestRunner() = default;
 
 protected:
-    virtual void do_run_single_test(ByteString const& test_path, size_t, size_t) override;
-    virtual Vector<ByteString> get_test_paths() const override;
-    virtual JSFileResult run_file_test(ByteString const& test_path);
+    virtual void do_run_single_test(String const& test_path, size_t, size_t) override;
+    virtual Vector<String> get_test_paths() const override;
+    virtual JSFileResult run_file_test(String const& test_path);
     void print_file_result(JSFileResult const& file_result) const;
 
-    ByteString m_common_path;
+    String m_common_path;
 };
 
 class TestRunnerGlobalObject final : public JS::GlobalObject {
@@ -249,7 +249,7 @@ inline ErrorOr<JsonValue> get_test_results(JS::Realm& realm)
     return JsonValue();
 }
 
-inline void TestRunner::do_run_single_test(ByteString const& test_path, size_t, size_t)
+inline void TestRunner::do_run_single_test(String const& test_path, size_t, size_t)
 {
     auto file_result = run_file_test(test_path);
     if (!m_print_json)
@@ -259,10 +259,10 @@ inline void TestRunner::do_run_single_test(ByteString const& test_path, size_t, 
         ensure_suites().extend(file_result.suites);
 }
 
-inline Vector<ByteString> TestRunner::get_test_paths() const
+inline Vector<String> TestRunner::get_test_paths() const
 {
-    Vector<ByteString> paths;
-    iterate_directory_recursively(m_test_root, [&](ByteString const& file_path) {
+    Vector<String> paths;
+    iterate_directory_recursively(m_test_root, [&](String const& file_path) {
         if (!file_path.ends_with(".js"sv))
             return;
         if (!file_path.ends_with("test-common.js"sv))
@@ -272,7 +272,7 @@ inline Vector<ByteString> TestRunner::get_test_paths() const
     return paths;
 }
 
-inline JSFileResult TestRunner::run_file_test(ByteString const& test_path)
+inline JSFileResult TestRunner::run_file_test(String const& test_path)
 {
     g_currently_running_test = test_path;
 
@@ -333,7 +333,7 @@ inline JSFileResult TestRunner::run_file_test(ByteString const& test_path)
     auto result = parse_script(m_common_path, *realm);
     if (result.is_error()) {
         warnln("Unable to parse test-common.js");
-        warnln("{}", result.error().error.to_byte_string());
+        warnln("{}", result.error().error.to_string());
         warnln("{}", result.error().hint);
         cleanup_and_exit();
     }
@@ -367,21 +367,21 @@ inline JSFileResult TestRunner::run_file_test(ByteString const& test_path)
     auto& arr = user_output.as_array();
     for (auto& entry : arr.indexed_properties()) {
         auto message = MUST(arr.get(entry.index()));
-        file_result.logged_messages.append(message.to_string_without_side_effects().to_byte_string());
+        file_result.logged_messages.append(message.to_string_without_side_effects());
     }
 
-    test_json.value().as_object().for_each_member([&](ByteString const& suite_name, JsonValue const& suite_value) {
+    test_json.value().as_object().for_each_member([&](String const& suite_name, JsonValue const& suite_value) {
         Test::Suite suite { test_path, suite_name };
 
         VERIFY(suite_value.is_object());
 
-        suite_value.as_object().for_each_member([&](ByteString const& test_name, JsonValue const& test_value) {
+        suite_value.as_object().for_each_member([&](String const& test_name, JsonValue const& test_value) {
             Test::Case test { test_name, Test::Result::Fail, "", 0 };
 
             VERIFY(test_value.is_object());
             VERIFY(test_value.as_object().has("result"sv));
 
-            auto result = test_value.as_object().get_byte_string("result"sv);
+            auto result = test_value.as_object().get_string("result"_string);
             VERIFY(result.has_value());
             auto result_string = result.value();
             if (result_string == "pass") {
@@ -392,7 +392,7 @@ inline JSFileResult TestRunner::run_file_test(ByteString const& test_path)
                 m_counts.tests_failed++;
                 suite.most_severe_test_result = Test::Result::Fail;
                 VERIFY(test_value.as_object().has("details"sv));
-                auto details = test_value.as_object().get_byte_string("details"sv);
+                auto details = test_value.as_object().get_string("details"_string);
                 VERIFY(result.has_value());
                 test.details = details.value();
             } else if (result_string == "xfail") {
@@ -453,9 +453,9 @@ inline JSFileResult TestRunner::run_file_test(ByteString const& test_path)
                 detail_builder.append(error_as_error.stack_string());
             }
 
-            test_case.details = detail_builder.to_byte_string();
+            test_case.details = MUST(detail_builder.to_string());
         } else {
-            test_case.details = error.to_string_without_side_effects().to_byte_string();
+            test_case.details = error.to_string_without_side_effects().to_string();
         }
 
         suite.tests.append(move(test_case));
@@ -523,7 +523,7 @@ inline void TestRunner::print_file_result(JSFileResult const& file_result) const
             outln("         {}", message);
         }
         print_modifiers({ FG_RED });
-        outln("         {}", test_error.error.to_byte_string());
+        outln("         {}", test_error.error.to_string());
         outln();
         return;
     }

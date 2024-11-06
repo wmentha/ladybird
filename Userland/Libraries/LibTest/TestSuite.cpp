@@ -99,25 +99,25 @@ void disable_reporting()
     TestSuite::the().disable_reporting();
 }
 
-static ByteString test_result_to_string(TestResult result)
+static String test_result_to_string(TestResult result)
 {
     switch (result) {
     case TestResult::NotRun:
-        return "Not run";
+        return "Not run"_string;
     case TestResult::Passed:
-        return "Completed";
+        return "Completed"_string;
     case TestResult::Failed:
-        return "Failed";
+        return "Failed"_string;
     case TestResult::Rejected:
-        return "Rejected";
+        return "Rejected"_string;
     case TestResult::Overrun:
-        return "Ran out of randomness";
+        return "Ran out of randomness"_string;
     default:
-        return "Unknown TestResult";
+        return "Unknown TestResult"_string;
     }
 }
 
-int TestSuite::main(ByteString const& suite_name, Span<StringView> arguments)
+int TestSuite::main(String const& suite_name, Span<StringView> arguments)
 {
     m_suite_name = suite_name;
 
@@ -154,7 +154,7 @@ int TestSuite::main(ByteString const& suite_name, Span<StringView> arguments)
     return run(matching_tests);
 }
 
-Vector<NonnullRefPtr<TestCase>> TestSuite::find_cases(ByteString const& search, bool find_tests, bool find_benchmarks)
+Vector<NonnullRefPtr<TestCase>> TestSuite::find_cases(String const& search, bool find_tests, bool find_benchmarks)
 {
     Vector<NonnullRefPtr<TestCase>> matches;
     for (auto& t : m_cases) {
