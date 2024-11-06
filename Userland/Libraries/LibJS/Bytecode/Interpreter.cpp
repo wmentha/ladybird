@@ -40,7 +40,7 @@ namespace JS::Bytecode {
 
 bool g_dump_bytecode = false;
 
-static ByteString format_operand(StringView name, Operand operand, Bytecode::Executable const& executable)
+static String format_operand(StringView name, Operand operand, Bytecode::Executable const& executable)
 {
     StringBuilder builder;
     if (!name.is_empty())
@@ -68,7 +68,7 @@ static ByteString format_operand(StringView name, Operand operand, Bytecode::Exe
         else if (value.is_double())
             builder.appendff("Double({})", value.as_double());
         else if (value.is_bigint())
-            builder.appendff("BigInt({})", value.as_bigint().to_byte_string());
+            builder.appendff("BigInt({})", MUST(value.as_bigint().to_string()));
         else if (value.is_string())
             builder.appendff("String(\"{}\")", value.as_string().utf8_string_view());
         else if (value.is_undefined())
@@ -83,10 +83,10 @@ static ByteString format_operand(StringView name, Operand operand, Bytecode::Exe
     default:
         VERIFY_NOT_REACHED();
     }
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-static ByteString format_operand_list(StringView name, ReadonlySpan<Operand> operands, Bytecode::Executable const& executable)
+static String format_operand_list(StringView name, ReadonlySpan<Operand> operands, Bytecode::Executable const& executable)
 {
     StringBuilder builder;
     if (!name.is_empty())
@@ -97,17 +97,17 @@ static ByteString format_operand_list(StringView name, ReadonlySpan<Operand> ope
         builder.appendff("{}", format_operand(""sv, operands[i], executable));
     }
     builder.append("]"sv);
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-static ByteString format_value_list(StringView name, ReadonlySpan<Value> values)
+static String format_value_list(StringView name, ReadonlySpan<Value> values)
 {
     StringBuilder builder;
     if (!name.is_empty())
         builder.appendff("\033[32m{}\033[0m:[", name);
     builder.join(", "sv, values);
     builder.append("]"sv);
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 ALWAYS_INLINE static ThrowCompletionOr<Value> loosely_inequals(VM& vm, Value src1, Value src2)
@@ -808,7 +808,7 @@ void Interpreter::enter_object_environment(Object& object)
     running_execution_context().lexical_environment = new_object_environment(object, true, old_environment);
 }
 
-ThrowCompletionOr<NonnullGCPtr<Bytecode::Executable>> compile(VM& vm, ASTNode const& node, FunctionKind kind, DeprecatedFlyString const& name)
+ThrowCompletionOr<NonnullGCPtr<Bytecode::Executable>> compile(VM& vm, ASTNode const& node, FunctionKind kind, FlyString const& name)
 {
     auto executable_result = Bytecode::Generator::generate_from_ast_node(vm, node, kind);
     if (executable_result.is_error())
@@ -1154,7 +1154,7 @@ inline ThrowCompletionOr<Value> get_global(Interpreter& interpreter, IdentifierT
     return vm.throw_completion<ReferenceError>(ErrorType::UnknownIdentifier, identifier);
 }
 
-inline ThrowCompletionOr<void> put_by_property_key(VM& vm, Value base, Value this_value, Value value, Optional<DeprecatedFlyString const&> const& base_identifier, PropertyKey name, Op::PropertyKind kind, PropertyLookupCache* cache = nullptr)
+inline ThrowCompletionOr<void> put_by_property_key(VM& vm, Value base, Value this_value, Value value, Optional<FlyString const&> const& base_identifier, PropertyKey name, Op::PropertyKind kind, PropertyLookupCache* cache = nullptr)
 {
     // Better error message than to_object would give
     if (vm.in_strict_mode() && base.is_nullish())
@@ -1174,14 +1174,14 @@ inline ThrowCompletionOr<void> put_by_property_key(VM& vm, Value base, Value thi
     case Op::PropertyKind::Getter: {
         auto& function = value.as_function();
         if (function.name().is_empty() && is<ECMAScriptFunctionObject>(function))
-            static_cast<ECMAScriptFunctionObject*>(&function)->set_name(ByteString::formatted("get {}", name));
+            static_cast<ECMAScriptFunctionObject*>(&function)->set_name(MUST(String::formatted("get {}", name)));
         object->define_direct_accessor(name, &function, nullptr, Attribute::Configurable | Attribute::Enumerable);
         break;
     }
     case Op::PropertyKind::Setter: {
         auto& function = value.as_function();
         if (function.name().is_empty() && is<ECMAScriptFunctionObject>(function))
-            static_cast<ECMAScriptFunctionObject*>(&function)->set_name(ByteString::formatted("set {}", name));
+            static_cast<ECMAScriptFunctionObject*>(&function)->set_name(MUST(String::formatted("set {}", name)));
         object->define_direct_accessor(name, nullptr, &function, Attribute::Configurable | Attribute::Enumerable);
         break;
     }
@@ -1264,7 +1264,7 @@ inline Value new_function(VM& vm, FunctionNode const& function_node, Optional<Id
     Value value;
 
     if (!function_node.has_name()) {
-        DeprecatedFlyString name = {};
+        FlyString name = {};
         if (lhs_name.has_value())
             name = vm.bytecode_interpreter().current_executable().get_identifier(lhs_name.value());
         value = function_node.instantiate_ordinary_function_expression(vm, name);
@@ -1281,7 +1281,7 @@ inline Value new_function(VM& vm, FunctionNode const& function_node, Optional<Id
     return value;
 }
 
-inline ThrowCompletionOr<void> put_by_value(VM& vm, Value base, Optional<DeprecatedFlyString const&> const& base_identifier, Value property_key_value, Value value, Op::PropertyKind kind)
+inline ThrowCompletionOr<void> put_by_value(VM& vm, Value base, Optional<FlyString const&> const& base_identifier, Value property_key_value, Value value, Op::PropertyKind kind)
 {
     // OPTIMIZATION: Fast path for simple Int32 indexes in array-like objects.
     if ((kind == Op::PropertyKind::KeyValue || kind == Op::PropertyKind::DirectKeyValue)
@@ -1368,7 +1368,7 @@ struct CalleeAndThis {
     Value this_value;
 };
 
-inline ThrowCompletionOr<CalleeAndThis> get_callee_and_this_from_environment(Bytecode::Interpreter& interpreter, DeprecatedFlyString const& name, EnvironmentCoordinate& cache)
+inline ThrowCompletionOr<CalleeAndThis> get_callee_and_this_from_environment(Bytecode::Interpreter& interpreter, FlyString const& name, EnvironmentCoordinate& cache)
 {
     auto& vm = interpreter.vm();
 
@@ -1414,7 +1414,7 @@ inline ThrowCompletionOr<CalleeAndThis> get_callee_and_this_from_environment(Byt
 }
 
 // 13.2.7.3 Runtime Semantics: Evaluation, https://tc39.es/ecma262/#sec-regular-expression-literals-runtime-semantics-evaluation
-inline Value new_regexp(VM& vm, ParsedRegex const& parsed_regex, ByteString const& pattern, ByteString const& flags)
+inline Value new_regexp(VM& vm, ParsedRegex const& parsed_regex, String const& pattern, String const& flags)
 {
     // 1. Let pattern be CodePointsToString(BodyText of RegularExpressionLiteral).
     // 2. Let flags be CodePointsToString(FlagText of RegularExpressionLiteral).
@@ -1456,7 +1456,7 @@ inline MarkedVector<Value> argument_list_evaluation(VM& vm, Value arguments)
     return argument_values;
 }
 
-inline ThrowCompletionOr<void> create_variable(VM& vm, DeprecatedFlyString const& name, Op::EnvironmentMode mode, bool is_global, bool is_immutable, bool is_strict)
+inline ThrowCompletionOr<void> create_variable(VM& vm, FlyString const& name, Op::EnvironmentMode mode, bool is_global, bool is_immutable, bool is_strict)
 {
     if (mode == Op::EnvironmentMode::Lexical) {
         VERIFY(!is_global);
@@ -1491,8 +1491,8 @@ inline ThrowCompletionOr<ECMAScriptFunctionObject*> new_class(VM& vm, Value supe
     auto* class_environment = vm.lexical_environment();
     vm.running_execution_context().lexical_environment = vm.running_execution_context().saved_lexical_environments.take_last();
 
-    Optional<DeprecatedFlyString> binding_name;
-    DeprecatedFlyString class_name;
+    Optional<FlyString> binding_name;
+    FlyString class_name;
     if (!class_expression.has_name() && lhs_name.has_value()) {
         class_name = interpreter.current_executable().get_identifier(lhs_name.value());
     } else {
@@ -1742,11 +1742,11 @@ inline ThrowCompletionOr<Object*> get_object_property_iterator(VM& vm, Value val
     return vm.heap().allocate<IteratorRecord>(realm, realm, object, callback, false).ptr();
 }
 
-ByteString Instruction::to_byte_string(Bytecode::Executable const& executable) const
+String Instruction::to_string(Bytecode::Executable const& executable) const
 {
 #define __BYTECODE_OP(op)       \
     case Instruction::Type::op: \
-        return static_cast<Bytecode::Op::op const&>(*this).to_byte_string_impl(executable);
+        return static_cast<Bytecode::Op::op const&>(*this).to_string_impl(executable);
 
     switch (type()) {
         ENUMERATE_BYTECODE_OPS(__BYTECODE_OP)
@@ -1795,18 +1795,18 @@ void Dump::execute_impl(Bytecode::Interpreter& interpreter) const
         return {};                                                                              \
     }
 
-#define JS_DEFINE_TO_BYTE_STRING_FOR_COMMON_BINARY_OP(OpTitleCase, op_snake_case)             \
-    ByteString OpTitleCase::to_byte_string_impl(Bytecode::Executable const& executable) const \
-    {                                                                                         \
-        return ByteString::formatted(#OpTitleCase " {}, {}, {}",                              \
-            format_operand("dst"sv, m_dst, executable),                                       \
-            format_operand("lhs"sv, m_lhs, executable),                                       \
-            format_operand("rhs"sv, m_rhs, executable));                                      \
+#define JS_DEFINE_TO_STRING_FOR_COMMON_BINARY_OP(OpTitleCase, op_snake_case)         \
+    String OpTitleCase::to_string_impl(Bytecode::Executable const& executable) const \
+    {                                                                                \
+        return MUST(String::formatted(#OpTitleCase " {}, {}, {}",                    \
+            format_operand("dst"sv, m_dst, executable),                              \
+            format_operand("lhs"sv, m_lhs, executable),                              \
+            format_operand("rhs"sv, m_rhs, executable)));                            \
     }
 
 JS_ENUMERATE_COMMON_BINARY_OPS_WITHOUT_FAST_PATH(JS_DEFINE_EXECUTE_FOR_COMMON_BINARY_OP)
-JS_ENUMERATE_COMMON_BINARY_OPS_WITHOUT_FAST_PATH(JS_DEFINE_TO_BYTE_STRING_FOR_COMMON_BINARY_OP)
-JS_ENUMERATE_COMMON_BINARY_OPS_WITH_FAST_PATH(JS_DEFINE_TO_BYTE_STRING_FOR_COMMON_BINARY_OP)
+JS_ENUMERATE_COMMON_BINARY_OPS_WITHOUT_FAST_PATH(JS_DEFINE_TO_STRING_FOR_COMMON_BINARY_OP)
+JS_ENUMERATE_COMMON_BINARY_OPS_WITH_FAST_PATH(JS_DEFINE_TO_STRING_FOR_COMMON_BINARY_OP)
 
 ThrowCompletionOr<void> Add::execute_impl(Bytecode::Interpreter& interpreter) const
 {
@@ -2037,11 +2037,11 @@ static ThrowCompletionOr<Value> typeof_(VM& vm, Value value)
         interpreter.set(dst(), TRY(op_snake_case(vm, interpreter.get(src()))));                 \
         return {};                                                                              \
     }                                                                                           \
-    ByteString OpTitleCase::to_byte_string_impl(Bytecode::Executable const& executable) const   \
+    String OpTitleCase::to_string_impl(Bytecode::Executable const& executable) const            \
     {                                                                                           \
-        return ByteString::formatted(#OpTitleCase " {}, {}",                                    \
+        return MUST(String::formatted(#OpTitleCase " {}, {}",                                   \
             format_operand("dst"sv, dst(), executable),                                         \
-            format_operand("src"sv, src(), executable));                                        \
+            format_operand("src"sv, src(), executable)));                                       \
     }
 
 JS_ENUMERATE_COMMON_UNARY_OPS(JS_DEFINE_COMMON_UNARY_OP)
@@ -2113,11 +2113,11 @@ void NewRegExp::execute_impl(Bytecode::Interpreter& interpreter) const
         auto& realm = *vm.current_realm();                                                                             \
         interpreter.set(dst(), ErrorName::create(realm, interpreter.current_executable().get_string(m_error_string))); \
     }                                                                                                                  \
-    ByteString New##ErrorName::to_byte_string_impl(Bytecode::Executable const& executable) const                       \
+    String New##ErrorName::to_string_impl(Bytecode::Executable const& executable) const                                \
     {                                                                                                                  \
-        return ByteString::formatted("New" #ErrorName " {}, {}",                                                       \
+        return MUST(String::formatted("New" #ErrorName " {}, {}",                                                      \
             format_operand("dst"sv, m_dst, executable),                                                                \
-            executable.string_table->get(m_error_string));                                                             \
+            executable.string_table->get(m_error_string)));                                                            \
     }
 
 JS_ENUMERATE_NEW_BUILTIN_ERROR_OPS(JS_DEFINE_NEW_BUILTIN_ERROR_OP)
@@ -2956,63 +2956,63 @@ void BlockDeclarationInstantiation::execute_impl(Bytecode::Interpreter& interpre
     m_scope_node.block_declaration_instantiation(vm, running_execution_context.lexical_environment);
 }
 
-ByteString Mov::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Mov::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Mov {}, {}",
+    return MUST(String::formatted("Mov {}, {}",
         format_operand("dst"sv, m_dst, executable),
-        format_operand("src"sv, m_src, executable));
+        format_operand("src"sv, m_src, executable)));
 }
 
-ByteString NewArray::to_byte_string_impl(Bytecode::Executable const& executable) const
+String NewArray::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     builder.appendff("NewArray {}", format_operand("dst"sv, dst(), executable));
     if (m_element_count != 0) {
         builder.appendff(", {}", format_operand_list("args"sv, { m_elements, m_element_count }, executable));
     }
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString NewPrimitiveArray::to_byte_string_impl(Bytecode::Executable const& executable) const
+String NewPrimitiveArray::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("NewPrimitiveArray {}, {}"sv,
+    return MUST(String::formatted("NewPrimitiveArray {}, {}"sv,
         format_operand("dst"sv, dst(), executable),
-        format_value_list("elements"sv, elements()));
+        format_value_list("elements"sv, elements())));
 }
 
-ByteString AddPrivateName::to_byte_string_impl(Bytecode::Executable const& executable) const
+String AddPrivateName::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("AddPrivateName {}"sv, executable.identifier_table->get(m_name));
+    return MUST(String::formatted("AddPrivateName {}"sv, executable.identifier_table->get(m_name)));
 }
 
-ByteString ArrayAppend::to_byte_string_impl(Bytecode::Executable const& executable) const
+String ArrayAppend::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Append {}, {}{}",
+    return MUST(String::formatted("Append {}, {}{}",
         format_operand("dst"sv, dst(), executable),
         format_operand("src"sv, src(), executable),
-        m_is_spread ? " **"sv : ""sv);
+        m_is_spread ? " **"sv : ""sv));
 }
 
-ByteString IteratorToArray::to_byte_string_impl(Bytecode::Executable const& executable) const
+String IteratorToArray::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("IteratorToArray {}, {}",
+    return MUST(String::formatted("IteratorToArray {}, {}",
         format_operand("dst"sv, dst(), executable),
-        format_operand("iterator"sv, iterator(), executable));
+        format_operand("iterator"sv, iterator(), executable)));
 }
 
-ByteString NewObject::to_byte_string_impl(Bytecode::Executable const& executable) const
+String NewObject::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("NewObject {}", format_operand("dst"sv, dst(), executable));
+    return MUST(String::formatted("NewObject {}", format_operand("dst"sv, dst(), executable)));
 }
 
-ByteString NewRegExp::to_byte_string_impl(Bytecode::Executable const& executable) const
+String NewRegExp::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("NewRegExp {}, source:{} (\"{}\") flags:{} (\"{}\")",
+    return MUST(String::formatted("NewRegExp {}, source:{} (\"{}\") flags:{} (\"{}\")",
         format_operand("dst"sv, dst(), executable),
-        m_source_index, executable.get_string(m_source_index), m_flags_index, executable.get_string(m_flags_index));
+        m_source_index, executable.get_string(m_source_index), m_flags_index, executable.get_string(m_flags_index)));
 }
 
-ByteString CopyObjectExcludingProperties::to_byte_string_impl(Bytecode::Executable const& executable) const
+String CopyObjectExcludingProperties::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     builder.appendff("CopyObjectExcludingProperties {}, {}",
@@ -3027,120 +3027,120 @@ ByteString CopyObjectExcludingProperties::to_byte_string_impl(Bytecode::Executab
         }
         builder.append(']');
     }
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString ConcatString::to_byte_string_impl(Bytecode::Executable const& executable) const
+String ConcatString::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("ConcatString {}, {}",
+    return MUST(String::formatted("ConcatString {}, {}",
         format_operand("dst"sv, dst(), executable),
-        format_operand("src"sv, src(), executable));
+        format_operand("src"sv, src(), executable)));
 }
 
-ByteString GetCalleeAndThisFromEnvironment::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetCalleeAndThisFromEnvironment::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetCalleeAndThisFromEnvironment {}, {} <- {}",
+    return MUST(String::formatted("GetCalleeAndThisFromEnvironment {}, {} <- {}",
         format_operand("callee"sv, m_callee, executable),
         format_operand("this"sv, m_this_value, executable),
-        executable.identifier_table->get(m_identifier));
+        executable.identifier_table->get(m_identifier)));
 }
 
-ByteString GetBinding::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetBinding::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetBinding {}, {}",
+    return MUST(String::formatted("GetBinding {}, {}",
         format_operand("dst"sv, dst(), executable),
-        executable.identifier_table->get(m_identifier));
+        executable.identifier_table->get(m_identifier)));
 }
 
-ByteString GetGlobal::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetGlobal::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetGlobal {}, {}", format_operand("dst"sv, dst(), executable),
-        executable.identifier_table->get(m_identifier));
+    return MUST(String::formatted("GetGlobal {}, {}", format_operand("dst"sv, dst(), executable),
+        executable.identifier_table->get(m_identifier)));
 }
 
-ByteString DeleteVariable::to_byte_string_impl(Bytecode::Executable const& executable) const
+String DeleteVariable::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("DeleteVariable {}", executable.identifier_table->get(m_identifier));
+    return MUST(String::formatted("DeleteVariable {}", executable.identifier_table->get(m_identifier)));
 }
 
-ByteString CreateLexicalEnvironment::to_byte_string_impl(Bytecode::Executable const&) const
+String CreateLexicalEnvironment::to_string_impl(Bytecode::Executable const&) const
 {
-    return "CreateLexicalEnvironment"sv;
+    return "CreateLexicalEnvironment"_string;
 }
 
-ByteString CreatePrivateEnvironment::to_byte_string_impl(Bytecode::Executable const&) const
+String CreatePrivateEnvironment::to_string_impl(Bytecode::Executable const&) const
 {
-    return "CreatePrivateEnvironment"sv;
+    return "CreatePrivateEnvironment"_string;
 }
 
-ByteString CreateVariableEnvironment::to_byte_string_impl(Bytecode::Executable const&) const
+String CreateVariableEnvironment::to_string_impl(Bytecode::Executable const&) const
 {
-    return "CreateVariableEnvironment"sv;
+    return "CreateVariableEnvironment"_string;
 }
 
-ByteString CreateVariable::to_byte_string_impl(Bytecode::Executable const& executable) const
+String CreateVariable::to_string_impl(Bytecode::Executable const& executable) const
 {
     auto mode_string = m_mode == EnvironmentMode::Lexical ? "Lexical" : "Variable";
-    return ByteString::formatted("CreateVariable env:{} immutable:{} global:{} {}", mode_string, m_is_immutable, m_is_global, executable.identifier_table->get(m_identifier));
+    return MUST(String::formatted("CreateVariable env:{} immutable:{} global:{} {}", mode_string, m_is_immutable, m_is_global, executable.identifier_table->get(m_identifier)));
 }
 
-ByteString CreateRestParams::to_byte_string_impl(Bytecode::Executable const& executable) const
+String CreateRestParams::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("CreateRestParams {}, rest_index:{}", format_operand("dst"sv, m_dst, executable), m_rest_index);
+    return MUST(String::formatted("CreateRestParams {}, rest_index:{}", format_operand("dst"sv, m_dst, executable), m_rest_index));
 }
 
-ByteString CreateArguments::to_byte_string_impl(Bytecode::Executable const& executable) const
+String CreateArguments::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     builder.appendff("CreateArguments");
     if (m_dst.has_value())
         builder.appendff(" {}", format_operand("dst"sv, *m_dst, executable));
     builder.appendff(" {} immutable:{}", m_kind == Kind::Mapped ? "mapped"sv : "unmapped"sv, m_is_immutable);
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString EnterObjectEnvironment::to_byte_string_impl(Executable const& executable) const
+String EnterObjectEnvironment::to_string_impl(Executable const& executable) const
 {
-    return ByteString::formatted("EnterObjectEnvironment {}",
-        format_operand("object"sv, m_object, executable));
+    return MUST(String::formatted("EnterObjectEnvironment {}",
+        format_operand("object"sv, m_object, executable)));
 }
 
-ByteString InitializeLexicalBinding::to_byte_string_impl(Bytecode::Executable const& executable) const
+String InitializeLexicalBinding::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("InitializeLexicalBinding {}, {}",
+    return MUST(String::formatted("InitializeLexicalBinding {}, {}",
         executable.identifier_table->get(m_identifier),
-        format_operand("src"sv, src(), executable));
+        format_operand("src"sv, src(), executable)));
 }
 
-ByteString InitializeVariableBinding::to_byte_string_impl(Bytecode::Executable const& executable) const
+String InitializeVariableBinding::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("InitializeVariableBinding {}, {}",
+    return MUST(String::formatted("InitializeVariableBinding {}, {}",
         executable.identifier_table->get(m_identifier),
-        format_operand("src"sv, src(), executable));
+        format_operand("src"sv, src(), executable)));
 }
 
-ByteString SetLexicalBinding::to_byte_string_impl(Bytecode::Executable const& executable) const
+String SetLexicalBinding::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("SetLexicalBinding {}, {}",
+    return MUST(String::formatted("SetLexicalBinding {}, {}",
         executable.identifier_table->get(m_identifier),
-        format_operand("src"sv, src(), executable));
+        format_operand("src"sv, src(), executable)));
 }
 
-ByteString SetVariableBinding::to_byte_string_impl(Bytecode::Executable const& executable) const
+String SetVariableBinding::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("SetVariableBinding {}, {}",
+    return MUST(String::formatted("SetVariableBinding {}, {}",
         executable.identifier_table->get(m_identifier),
-        format_operand("src"sv, src(), executable));
+        format_operand("src"sv, src(), executable)));
 }
 
-ByteString GetArgument::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetArgument::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetArgument {}, {}", index(), format_operand("dst"sv, dst(), executable));
+    return MUST(String::formatted("GetArgument {}, {}", index(), format_operand("dst"sv, dst(), executable)));
 }
 
-ByteString SetArgument::to_byte_string_impl(Bytecode::Executable const& executable) const
+String SetArgument::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("SetArgument {}, {}", index(), format_operand("src"sv, src(), executable));
+    return MUST(String::formatted("SetArgument {}, {}", index(), format_operand("src"sv, src(), executable)));
 }
 
 static StringView property_kind_to_string(PropertyKind kind)
@@ -3162,156 +3162,156 @@ static StringView property_kind_to_string(PropertyKind kind)
     VERIFY_NOT_REACHED();
 }
 
-ByteString PutById::to_byte_string_impl(Bytecode::Executable const& executable) const
+String PutById::to_string_impl(Bytecode::Executable const& executable) const
 {
     auto kind = property_kind_to_string(m_kind);
-    return ByteString::formatted("PutById {}, {}, {}, kind:{}",
+    return MUST(String::formatted("PutById {}, {}, {}, kind:{}",
         format_operand("base"sv, m_base, executable),
         executable.identifier_table->get(m_property),
         format_operand("src"sv, m_src, executable),
-        kind);
+        kind));
 }
 
-ByteString PutByIdWithThis::to_byte_string_impl(Bytecode::Executable const& executable) const
+String PutByIdWithThis::to_string_impl(Bytecode::Executable const& executable) const
 {
     auto kind = property_kind_to_string(m_kind);
-    return ByteString::formatted("PutByIdWithThis {}, {}, {}, {}, kind:{}",
+    return MUST(String::formatted("PutByIdWithThis {}, {}, {}, {}, kind:{}",
         format_operand("base"sv, m_base, executable),
         executable.identifier_table->get(m_property),
         format_operand("src"sv, m_src, executable),
         format_operand("this"sv, m_this_value, executable),
-        kind);
+        kind));
 }
 
-ByteString PutPrivateById::to_byte_string_impl(Bytecode::Executable const& executable) const
+String PutPrivateById::to_string_impl(Bytecode::Executable const& executable) const
 {
     auto kind = property_kind_to_string(m_kind);
-    return ByteString::formatted(
+    return MUST(String::formatted(
         "PutPrivateById {}, {}, {}, kind:{} ",
         format_operand("base"sv, m_base, executable),
         executable.identifier_table->get(m_property),
         format_operand("src"sv, m_src, executable),
-        kind);
+        kind));
 }
 
-ByteString GetById::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetById::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetById {}, {}, {}",
+    return MUST(String::formatted("GetById {}, {}, {}",
         format_operand("dst"sv, m_dst, executable),
         format_operand("base"sv, m_base, executable),
-        executable.identifier_table->get(m_property));
+        executable.identifier_table->get(m_property)));
 }
 
-ByteString GetByIdWithThis::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetByIdWithThis::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetByIdWithThis {}, {}, {}, {}",
-        format_operand("dst"sv, m_dst, executable),
-        format_operand("base"sv, m_base, executable),
-        executable.identifier_table->get(m_property),
-        format_operand("this"sv, m_this_value, executable));
-}
-
-ByteString GetLength::to_byte_string_impl(Bytecode::Executable const& executable) const
-{
-    return ByteString::formatted("GetLength {}, {}",
-        format_operand("dst"sv, m_dst, executable),
-        format_operand("base"sv, m_base, executable));
-}
-
-ByteString GetLengthWithThis::to_byte_string_impl(Bytecode::Executable const& executable) const
-{
-    return ByteString::formatted("GetLengthWithThis {}, {}, {}",
-        format_operand("dst"sv, m_dst, executable),
-        format_operand("base"sv, m_base, executable),
-        format_operand("this"sv, m_this_value, executable));
-}
-
-ByteString GetPrivateById::to_byte_string_impl(Bytecode::Executable const& executable) const
-{
-    return ByteString::formatted("GetPrivateById {}, {}, {}",
-        format_operand("dst"sv, m_dst, executable),
-        format_operand("base"sv, m_base, executable),
-        executable.identifier_table->get(m_property));
-}
-
-ByteString HasPrivateId::to_byte_string_impl(Bytecode::Executable const& executable) const
-{
-    return ByteString::formatted("HasPrivateId {}, {}, {}",
-        format_operand("dst"sv, m_dst, executable),
-        format_operand("base"sv, m_base, executable),
-        executable.identifier_table->get(m_property));
-}
-
-ByteString DeleteById::to_byte_string_impl(Bytecode::Executable const& executable) const
-{
-    return ByteString::formatted("DeleteById {}, {}, {}",
-        format_operand("dst"sv, m_dst, executable),
-        format_operand("base"sv, m_base, executable),
-        executable.identifier_table->get(m_property));
-}
-
-ByteString DeleteByIdWithThis::to_byte_string_impl(Bytecode::Executable const& executable) const
-{
-    return ByteString::formatted("DeleteByIdWithThis {}, {}, {}, {}",
+    return MUST(String::formatted("GetByIdWithThis {}, {}, {}, {}",
         format_operand("dst"sv, m_dst, executable),
         format_operand("base"sv, m_base, executable),
         executable.identifier_table->get(m_property),
-        format_operand("this"sv, m_this_value, executable));
+        format_operand("this"sv, m_this_value, executable)));
 }
 
-ByteString Jump::to_byte_string_impl(Bytecode::Executable const&) const
+String GetLength::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Jump {}", m_target);
+    return MUST(String::formatted("GetLength {}, {}",
+        format_operand("dst"sv, m_dst, executable),
+        format_operand("base"sv, m_base, executable)));
 }
 
-ByteString JumpIf::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetLengthWithThis::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("JumpIf {}, \033[32mtrue\033[0m:{} \033[32mfalse\033[0m:{}",
+    return MUST(String::formatted("GetLengthWithThis {}, {}, {}",
+        format_operand("dst"sv, m_dst, executable),
+        format_operand("base"sv, m_base, executable),
+        format_operand("this"sv, m_this_value, executable)));
+}
+
+String GetPrivateById::to_string_impl(Bytecode::Executable const& executable) const
+{
+    return MUST(String::formatted("GetPrivateById {}, {}, {}",
+        format_operand("dst"sv, m_dst, executable),
+        format_operand("base"sv, m_base, executable),
+        executable.identifier_table->get(m_property)));
+}
+
+String HasPrivateId::to_string_impl(Bytecode::Executable const& executable) const
+{
+    return MUST(String::formatted("HasPrivateId {}, {}, {}",
+        format_operand("dst"sv, m_dst, executable),
+        format_operand("base"sv, m_base, executable),
+        executable.identifier_table->get(m_property)));
+}
+
+String DeleteById::to_string_impl(Bytecode::Executable const& executable) const
+{
+    return MUST(String::formatted("DeleteById {}, {}, {}",
+        format_operand("dst"sv, m_dst, executable),
+        format_operand("base"sv, m_base, executable),
+        executable.identifier_table->get(m_property)));
+}
+
+String DeleteByIdWithThis::to_string_impl(Bytecode::Executable const& executable) const
+{
+    return MUST(String::formatted("DeleteByIdWithThis {}, {}, {}, {}",
+        format_operand("dst"sv, m_dst, executable),
+        format_operand("base"sv, m_base, executable),
+        executable.identifier_table->get(m_property),
+        format_operand("this"sv, m_this_value, executable)));
+}
+
+String Jump::to_string_impl(Bytecode::Executable const&) const
+{
+    return MUST(String::formatted("Jump {}", m_target));
+}
+
+String JumpIf::to_string_impl(Bytecode::Executable const& executable) const
+{
+    return MUST(String::formatted("JumpIf {}, \033[32mtrue\033[0m:{} \033[32mfalse\033[0m:{}",
         format_operand("condition"sv, m_condition, executable),
         m_true_target,
-        m_false_target);
+        m_false_target));
 }
 
-ByteString JumpTrue::to_byte_string_impl(Bytecode::Executable const& executable) const
+String JumpTrue::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("JumpTrue {}, {}",
+    return MUST(String::formatted("JumpTrue {}, {}",
         format_operand("condition"sv, m_condition, executable),
-        m_target);
+        m_target));
 }
 
-ByteString JumpFalse::to_byte_string_impl(Bytecode::Executable const& executable) const
+String JumpFalse::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("JumpFalse {}, {}",
+    return MUST(String::formatted("JumpFalse {}, {}",
         format_operand("condition"sv, m_condition, executable),
-        m_target);
+        m_target));
 }
 
-ByteString JumpNullish::to_byte_string_impl(Bytecode::Executable const& executable) const
+String JumpNullish::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("JumpNullish {}, null:{} nonnull:{}",
+    return MUST(String::formatted("JumpNullish {}, null:{} nonnull:{}",
         format_operand("condition"sv, m_condition, executable),
         m_true_target,
-        m_false_target);
+        m_false_target));
 }
 
-#define HANDLE_COMPARISON_OP(op_TitleCase, op_snake_case, numeric_operator)                          \
-    ByteString Jump##op_TitleCase::to_byte_string_impl(Bytecode::Executable const& executable) const \
-    {                                                                                                \
-        return ByteString::formatted("Jump" #op_TitleCase " {}, {}, true:{}, false:{}",              \
-            format_operand("lhs"sv, m_lhs, executable),                                              \
-            format_operand("rhs"sv, m_rhs, executable),                                              \
-            m_true_target,                                                                           \
-            m_false_target);                                                                         \
+#define HANDLE_COMPARISON_OP(op_TitleCase, op_snake_case, numeric_operator)                 \
+    String Jump##op_TitleCase::to_string_impl(Bytecode::Executable const& executable) const \
+    {                                                                                       \
+        return MUST(String::formatted("Jump" #op_TitleCase " {}, {}, true:{}, false:{}",    \
+            format_operand("lhs"sv, m_lhs, executable),                                     \
+            format_operand("rhs"sv, m_rhs, executable),                                     \
+            m_true_target,                                                                  \
+            m_false_target));                                                               \
     }
 
 JS_ENUMERATE_COMPARISON_OPS(HANDLE_COMPARISON_OP)
 
-ByteString JumpUndefined::to_byte_string_impl(Bytecode::Executable const& executable) const
+String JumpUndefined::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("JumpUndefined {}, undefined:{} defined:{}",
+    return MUST(String::formatted("JumpUndefined {}, undefined:{} defined:{}",
         format_operand("condition"sv, m_condition, executable),
         m_true_target,
-        m_false_target);
+        m_false_target));
 }
 
 static StringView call_type_to_string(CallType type)
@@ -3327,7 +3327,7 @@ static StringView call_type_to_string(CallType type)
     VERIFY_NOT_REACHED();
 }
 
-ByteString Call::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Call::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     builder.appendff("Call {}, {}, {}, "sv,
@@ -3341,10 +3341,10 @@ ByteString Call::to_byte_string_impl(Bytecode::Executable const& executable) con
         builder.appendff(", `{}`", executable.get_string(m_expression_string.value()));
     }
 
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString CallConstruct::to_byte_string_impl(Bytecode::Executable const& executable) const
+String CallConstruct::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     builder.appendff("CallConstruct {}, {}, {}, "sv,
@@ -3358,10 +3358,10 @@ ByteString CallConstruct::to_byte_string_impl(Bytecode::Executable const& execut
         builder.appendff(", `{}`", executable.get_string(m_expression_string.value()));
     }
 
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString CallDirectEval::to_byte_string_impl(Bytecode::Executable const& executable) const
+String CallDirectEval::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     builder.appendff("CallDirectEval {}, {}, {}, "sv,
@@ -3375,10 +3375,10 @@ ByteString CallDirectEval::to_byte_string_impl(Bytecode::Executable const& execu
         builder.appendff(", `{}`", executable.get_string(m_expression_string.value()));
     }
 
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString CallBuiltin::to_byte_string_impl(Bytecode::Executable const& executable) const
+String CallBuiltin::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     builder.appendff("CallBuiltin {}, {}, {}, "sv,
@@ -3394,10 +3394,10 @@ ByteString CallBuiltin::to_byte_string_impl(Bytecode::Executable const& executab
         builder.appendff(", `{}`", executable.get_string(m_expression_string.value()));
     }
 
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString CallWithArgumentArray::to_byte_string_impl(Bytecode::Executable const& executable) const
+String CallWithArgumentArray::to_string_impl(Bytecode::Executable const& executable) const
 {
     auto type = call_type_to_string(m_type);
     StringBuilder builder;
@@ -3410,17 +3410,17 @@ ByteString CallWithArgumentArray::to_byte_string_impl(Bytecode::Executable const
 
     if (m_expression_string.has_value())
         builder.appendff(" ({})", executable.get_string(m_expression_string.value()));
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString SuperCallWithArgumentArray::to_byte_string_impl(Bytecode::Executable const& executable) const
+String SuperCallWithArgumentArray::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("SuperCallWithArgumentArray {}, {}",
+    return MUST(String::formatted("SuperCallWithArgumentArray {}, {}",
         format_operand("dst"sv, m_dst, executable),
-        format_operand("arguments"sv, m_arguments, executable));
+        format_operand("arguments"sv, m_arguments, executable)));
 }
 
-ByteString NewFunction::to_byte_string_impl(Bytecode::Executable const& executable) const
+String NewFunction::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     builder.appendff("NewFunction {}",
@@ -3431,10 +3431,10 @@ ByteString NewFunction::to_byte_string_impl(Bytecode::Executable const& executab
         builder.appendff(" lhs_name:{}"sv, executable.get_identifier(m_lhs_name.value()));
     if (m_home_object.has_value())
         builder.appendff(", {}"sv, format_operand("home_object"sv, m_home_object.value(), executable));
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString NewClass::to_byte_string_impl(Bytecode::Executable const& executable) const
+String NewClass::to_string_impl(Bytecode::Executable const& executable) const
 {
     StringBuilder builder;
     auto name = m_class_expression.name();
@@ -3446,310 +3446,310 @@ ByteString NewClass::to_byte_string_impl(Bytecode::Executable const& executable)
         builder.appendff(", {}", name);
     if (m_lhs_name.has_value())
         builder.appendff(", lhs_name:{}"sv, executable.get_identifier(m_lhs_name.value()));
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-ByteString Return::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Return::to_string_impl(Bytecode::Executable const& executable) const
 {
     if (m_value.has_value())
-        return ByteString::formatted("Return {}", format_operand("value"sv, m_value.value(), executable));
-    return "Return";
+        return MUST(String::formatted("Return {}", format_operand("value"sv, m_value.value(), executable)));
+    return "Return"_string;
 }
 
-ByteString Increment::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Increment::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Increment {}", format_operand("dst"sv, m_dst, executable));
+    return MUST(String::formatted("Increment {}", format_operand("dst"sv, m_dst, executable)));
 }
 
-ByteString PostfixIncrement::to_byte_string_impl(Bytecode::Executable const& executable) const
+String PostfixIncrement::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("PostfixIncrement {}, {}",
+    return MUST(String::formatted("PostfixIncrement {}, {}",
         format_operand("dst"sv, m_dst, executable),
-        format_operand("src"sv, m_src, executable));
+        format_operand("src"sv, m_src, executable)));
 }
 
-ByteString Decrement::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Decrement::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Decrement {}", format_operand("dst"sv, m_dst, executable));
+    return MUST(String::formatted("Decrement {}", format_operand("dst"sv, m_dst, executable)));
 }
 
-ByteString PostfixDecrement::to_byte_string_impl(Bytecode::Executable const& executable) const
+String PostfixDecrement::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("PostfixDecrement {}, {}",
+    return MUST(String::formatted("PostfixDecrement {}, {}",
         format_operand("dst"sv, m_dst, executable),
-        format_operand("src"sv, m_src, executable));
+        format_operand("src"sv, m_src, executable)));
 }
 
-ByteString Throw::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Throw::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Throw {}",
-        format_operand("src"sv, m_src, executable));
+    return MUST(String::formatted("Throw {}",
+        format_operand("src"sv, m_src, executable)));
 }
 
-ByteString ThrowIfNotObject::to_byte_string_impl(Bytecode::Executable const& executable) const
+String ThrowIfNotObject::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("ThrowIfNotObject {}",
-        format_operand("src"sv, m_src, executable));
+    return MUST(String::formatted("ThrowIfNotObject {}",
+        format_operand("src"sv, m_src, executable)));
 }
 
-ByteString ThrowIfNullish::to_byte_string_impl(Bytecode::Executable const& executable) const
+String ThrowIfNullish::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("ThrowIfNullish {}",
-        format_operand("src"sv, m_src, executable));
+    return MUST(String::formatted("ThrowIfNullish {}",
+        format_operand("src"sv, m_src, executable)));
 }
 
-ByteString ThrowIfTDZ::to_byte_string_impl(Bytecode::Executable const& executable) const
+String ThrowIfTDZ::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("ThrowIfTDZ {}",
-        format_operand("src"sv, m_src, executable));
+    return MUST(String::formatted("ThrowIfTDZ {}",
+        format_operand("src"sv, m_src, executable)));
 }
 
-ByteString EnterUnwindContext::to_byte_string_impl(Bytecode::Executable const&) const
+String EnterUnwindContext::to_string_impl(Bytecode::Executable const&) const
 {
-    return ByteString::formatted("EnterUnwindContext entry:{}", m_entry_point);
+    return MUST(String::formatted("EnterUnwindContext entry:{}", m_entry_point));
 }
 
-ByteString ScheduleJump::to_byte_string_impl(Bytecode::Executable const&) const
+String ScheduleJump::to_string_impl(Bytecode::Executable const&) const
 {
-    return ByteString::formatted("ScheduleJump {}", m_target);
+    return MUST(String::formatted("ScheduleJump {}", m_target));
 }
 
-ByteString LeaveLexicalEnvironment::to_byte_string_impl(Bytecode::Executable const&) const
+String LeaveLexicalEnvironment::to_string_impl(Bytecode::Executable const&) const
 {
-    return "LeaveLexicalEnvironment"sv;
+    return "LeaveLexicalEnvironment"_string;
 }
 
-ByteString LeavePrivateEnvironment::to_byte_string_impl(Bytecode::Executable const&) const
+String LeavePrivateEnvironment::to_string_impl(Bytecode::Executable const&) const
 {
-    return "LeavePrivateEnvironment"sv;
+    return "LeavePrivateEnvironment"_string;
 }
 
-ByteString LeaveUnwindContext::to_byte_string_impl(Bytecode::Executable const&) const
+String LeaveUnwindContext::to_string_impl(Bytecode::Executable const&) const
 {
-    return "LeaveUnwindContext";
+    return "LeaveUnwindContext"_string;
 }
 
-ByteString ContinuePendingUnwind::to_byte_string_impl(Bytecode::Executable const&) const
+String ContinuePendingUnwind::to_string_impl(Bytecode::Executable const&) const
 {
-    return ByteString::formatted("ContinuePendingUnwind resume:{}", m_resume_target);
+    return MUST(String::formatted("ContinuePendingUnwind resume:{}", m_resume_target));
 }
 
-ByteString Yield::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Yield::to_string_impl(Bytecode::Executable const& executable) const
 {
     if (m_continuation_label.has_value()) {
-        return ByteString::formatted("Yield continuation:{}, {}",
+        return MUST(String::formatted("Yield continuation:{}, {}",
             m_continuation_label.value(),
-            format_operand("value"sv, m_value, executable));
+            format_operand("value"sv, m_value, executable)));
     }
-    return ByteString::formatted("Yield return {}",
-        format_operand("value"sv, m_value, executable));
+    return MUST(String::formatted("Yield return {}",
+        format_operand("value"sv, m_value, executable)));
 }
 
-ByteString PrepareYield::to_byte_string_impl(Bytecode::Executable const& executable) const
+String PrepareYield::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("PrepareYield {}, {}",
+    return MUST(String::formatted("PrepareYield {}, {}",
         format_operand("dst"sv, m_dest, executable),
-        format_operand("value"sv, m_value, executable));
+        format_operand("value"sv, m_value, executable)));
 }
 
-ByteString Await::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Await::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Await {}, continuation:{}",
+    return MUST(String::formatted("Await {}, continuation:{}",
         format_operand("argument"sv, m_argument, executable),
-        m_continuation_label);
+        m_continuation_label));
 }
 
-ByteString GetByValue::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetByValue::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetByValue {}, {}, {}",
+    return MUST(String::formatted("GetByValue {}, {}, {}",
         format_operand("dst"sv, m_dst, executable),
         format_operand("base"sv, m_base, executable),
-        format_operand("property"sv, m_property, executable));
+        format_operand("property"sv, m_property, executable)));
 }
 
-ByteString GetByValueWithThis::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetByValueWithThis::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetByValueWithThis {}, {}, {}",
+    return MUST(String::formatted("GetByValueWithThis {}, {}, {}",
         format_operand("dst"sv, m_dst, executable),
         format_operand("base"sv, m_base, executable),
-        format_operand("property"sv, m_property, executable));
+        format_operand("property"sv, m_property, executable)));
 }
 
-ByteString PutByValue::to_byte_string_impl(Bytecode::Executable const& executable) const
+String PutByValue::to_string_impl(Bytecode::Executable const& executable) const
 {
     auto kind = property_kind_to_string(m_kind);
-    return ByteString::formatted("PutByValue {}, {}, {}, kind:{}",
+    return MUST(String::formatted("PutByValue {}, {}, {}, kind:{}",
         format_operand("base"sv, m_base, executable),
         format_operand("property"sv, m_property, executable),
         format_operand("src"sv, m_src, executable),
-        kind);
+        kind));
 }
 
-ByteString PutByValueWithThis::to_byte_string_impl(Bytecode::Executable const& executable) const
+String PutByValueWithThis::to_string_impl(Bytecode::Executable const& executable) const
 {
     auto kind = property_kind_to_string(m_kind);
-    return ByteString::formatted("PutByValueWithThis {}, {}, {}, {}, kind:{}",
+    return MUST(String::formatted("PutByValueWithThis {}, {}, {}, {}, kind:{}",
         format_operand("base"sv, m_base, executable),
         format_operand("property"sv, m_property, executable),
         format_operand("src"sv, m_src, executable),
         format_operand("this"sv, m_this_value, executable),
-        kind);
+        kind));
 }
 
-ByteString DeleteByValue::to_byte_string_impl(Bytecode::Executable const& executable) const
+String DeleteByValue::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("DeleteByValue {}, {}, {}",
+    return MUST(String::formatted("DeleteByValue {}, {}, {}",
         format_operand("dst"sv, dst(), executable),
         format_operand("base"sv, m_base, executable),
-        format_operand("property"sv, m_property, executable));
+        format_operand("property"sv, m_property, executable)));
 }
 
-ByteString DeleteByValueWithThis::to_byte_string_impl(Bytecode::Executable const& executable) const
+String DeleteByValueWithThis::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("DeleteByValueWithThis {}, {}, {}, {}",
+    return MUST(String::formatted("DeleteByValueWithThis {}, {}, {}, {}",
         format_operand("dst"sv, dst(), executable),
         format_operand("base"sv, m_base, executable),
         format_operand("property"sv, m_property, executable),
-        format_operand("this"sv, m_this_value, executable));
+        format_operand("this"sv, m_this_value, executable)));
 }
 
-ByteString GetIterator::to_byte_string_impl(Executable const& executable) const
+String GetIterator::to_string_impl(Executable const& executable) const
 {
     auto hint = m_hint == IteratorHint::Sync ? "sync" : "async";
-    return ByteString::formatted("GetIterator {}, {}, hint:{}",
+    return MUST(String::formatted("GetIterator {}, {}, hint:{}",
         format_operand("dst"sv, m_dst, executable),
         format_operand("iterable"sv, m_iterable, executable),
-        hint);
+        hint));
 }
 
-ByteString GetMethod::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetMethod::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetMethod {}, {}, {}",
+    return MUST(String::formatted("GetMethod {}, {}, {}",
         format_operand("dst"sv, m_dst, executable),
         format_operand("object"sv, m_object, executable),
-        executable.identifier_table->get(m_property));
+        executable.identifier_table->get(m_property)));
 }
 
-ByteString GetObjectPropertyIterator::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetObjectPropertyIterator::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetObjectPropertyIterator {}, {}",
+    return MUST(String::formatted("GetObjectPropertyIterator {}, {}",
         format_operand("dst"sv, dst(), executable),
-        format_operand("object"sv, object(), executable));
+        format_operand("object"sv, object(), executable)));
 }
 
-ByteString IteratorClose::to_byte_string_impl(Bytecode::Executable const& executable) const
+String IteratorClose::to_string_impl(Bytecode::Executable const& executable) const
 {
     if (!m_completion_value.has_value())
-        return ByteString::formatted("IteratorClose {}, completion_type={} completion_value=<empty>",
+        return MUST(String::formatted("IteratorClose {}, completion_type={} completion_value=<empty>",
             format_operand("iterator_record"sv, m_iterator_record, executable),
-            to_underlying(m_completion_type));
+            to_underlying(m_completion_type)));
 
     auto completion_value_string = m_completion_value->to_string_without_side_effects();
-    return ByteString::formatted("IteratorClose {}, completion_type={} completion_value={}",
+    return MUST(String::formatted("IteratorClose {}, completion_type={} completion_value={}",
         format_operand("iterator_record"sv, m_iterator_record, executable),
-        to_underlying(m_completion_type), completion_value_string);
+        to_underlying(m_completion_type), completion_value_string));
 }
 
-ByteString AsyncIteratorClose::to_byte_string_impl(Bytecode::Executable const& executable) const
+String AsyncIteratorClose::to_string_impl(Bytecode::Executable const& executable) const
 {
     if (!m_completion_value.has_value()) {
-        return ByteString::formatted("AsyncIteratorClose {}, completion_type:{} completion_value:<empty>",
+        return MUST(String::formatted("AsyncIteratorClose {}, completion_type:{} completion_value:<empty>",
             format_operand("iterator_record"sv, m_iterator_record, executable),
-            to_underlying(m_completion_type));
+            to_underlying(m_completion_type)));
     }
 
-    return ByteString::formatted("AsyncIteratorClose {}, completion_type:{}, completion_value:{}",
+    return MUST(String::formatted("AsyncIteratorClose {}, completion_type:{}, completion_value:{}",
         format_operand("iterator_record"sv, m_iterator_record, executable),
-        to_underlying(m_completion_type), m_completion_value);
+        to_underlying(m_completion_type), m_completion_value));
 }
 
-ByteString IteratorNext::to_byte_string_impl(Executable const& executable) const
+String IteratorNext::to_string_impl(Executable const& executable) const
 {
-    return ByteString::formatted("IteratorNext {}, {}",
+    return MUST(String::formatted("IteratorNext {}, {}",
         format_operand("dst"sv, m_dst, executable),
-        format_operand("iterator_record"sv, m_iterator_record, executable));
+        format_operand("iterator_record"sv, m_iterator_record, executable)));
 }
 
-ByteString ResolveThisBinding::to_byte_string_impl(Bytecode::Executable const&) const
+String ResolveThisBinding::to_string_impl(Bytecode::Executable const&) const
 {
-    return "ResolveThisBinding"sv;
+    return "ResolveThisBinding"_string;
 }
 
-ByteString ResolveSuperBase::to_byte_string_impl(Bytecode::Executable const& executable) const
+String ResolveSuperBase::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("ResolveSuperBase {}",
-        format_operand("dst"sv, m_dst, executable));
+    return MUST(String::formatted("ResolveSuperBase {}",
+        format_operand("dst"sv, m_dst, executable)));
 }
 
-ByteString GetNewTarget::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetNewTarget::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetNewTarget {}", format_operand("dst"sv, m_dst, executable));
+    return MUST(String::formatted("GetNewTarget {}", format_operand("dst"sv, m_dst, executable)));
 }
 
-ByteString GetImportMeta::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetImportMeta::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetImportMeta {}", format_operand("dst"sv, m_dst, executable));
+    return MUST(String::formatted("GetImportMeta {}", format_operand("dst"sv, m_dst, executable)));
 }
 
-ByteString TypeofBinding::to_byte_string_impl(Bytecode::Executable const& executable) const
+String TypeofBinding::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("TypeofBinding {}, {}",
+    return MUST(String::formatted("TypeofBinding {}, {}",
         format_operand("dst"sv, m_dst, executable),
-        executable.identifier_table->get(m_identifier));
+        executable.identifier_table->get(m_identifier)));
 }
 
-ByteString BlockDeclarationInstantiation::to_byte_string_impl(Bytecode::Executable const&) const
+String BlockDeclarationInstantiation::to_string_impl(Bytecode::Executable const&) const
 {
-    return "BlockDeclarationInstantiation"sv;
+    return "BlockDeclarationInstantiation"_string;
 }
 
-ByteString ImportCall::to_byte_string_impl(Bytecode::Executable const& executable) const
+String ImportCall::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("ImportCall {}, {}, {}",
+    return MUST(String::formatted("ImportCall {}, {}, {}",
         format_operand("dst"sv, m_dst, executable),
         format_operand("specifier"sv, m_specifier, executable),
-        format_operand("options"sv, m_options, executable));
+        format_operand("options"sv, m_options, executable)));
 }
 
-ByteString Catch::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Catch::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Catch {}",
-        format_operand("dst"sv, m_dst, executable));
+    return MUST(String::formatted("Catch {}",
+        format_operand("dst"sv, m_dst, executable)));
 }
 
-ByteString LeaveFinally::to_byte_string_impl(Bytecode::Executable const&) const
+String LeaveFinally::to_string_impl(Bytecode::Executable const&) const
 {
-    return ByteString::formatted("LeaveFinally");
+    return MUST(String::formatted("LeaveFinally"));
 }
 
-ByteString RestoreScheduledJump::to_byte_string_impl(Bytecode::Executable const&) const
+String RestoreScheduledJump::to_string_impl(Bytecode::Executable const&) const
 {
-    return ByteString::formatted("RestoreScheduledJump");
+    return MUST(String::formatted("RestoreScheduledJump"));
 }
 
-ByteString GetObjectFromIteratorRecord::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetObjectFromIteratorRecord::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetObjectFromIteratorRecord {}, {}",
+    return MUST(String::formatted("GetObjectFromIteratorRecord {}, {}",
         format_operand("object"sv, m_object, executable),
-        format_operand("iterator_record"sv, m_iterator_record, executable));
+        format_operand("iterator_record"sv, m_iterator_record, executable)));
 }
 
-ByteString GetNextMethodFromIteratorRecord::to_byte_string_impl(Bytecode::Executable const& executable) const
+String GetNextMethodFromIteratorRecord::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("GetNextMethodFromIteratorRecord {}, {}",
+    return MUST(String::formatted("GetNextMethodFromIteratorRecord {}, {}",
         format_operand("next_method"sv, m_next_method, executable),
-        format_operand("iterator_record"sv, m_iterator_record, executable));
+        format_operand("iterator_record"sv, m_iterator_record, executable)));
 }
 
-ByteString End::to_byte_string_impl(Bytecode::Executable const& executable) const
+String End::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("End {}", format_operand("value"sv, m_value, executable));
+    return MUST(String::formatted("End {}", format_operand("value"sv, m_value, executable)));
 }
 
-ByteString Dump::to_byte_string_impl(Bytecode::Executable const& executable) const
+String Dump::to_string_impl(Bytecode::Executable const& executable) const
 {
-    return ByteString::formatted("Dump '{}', {}", m_text,
-        format_operand("value"sv, m_value, executable));
+    return MUST(String::formatted("Dump '{}', {}", m_text,
+        format_operand("value"sv, m_value, executable)));
 }
 
 }

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <AK/DeprecatedFlyString.h>
+#include <AK/FlyString.h>
 #include <AK/Function.h>
 #include <AK/HashMap.h>
 #include <AK/RefCounted.h>
@@ -73,11 +73,6 @@ public:
     HashMap<String, GCPtr<PrimitiveString>>& string_cache()
     {
         return m_string_cache;
-    }
-
-    HashMap<ByteString, GCPtr<PrimitiveString>>& byte_string_cache()
-    {
-        return m_byte_string_cache;
     }
 
     HashMap<Utf16String, GCPtr<PrimitiveString>>& utf16_string_cache()
@@ -195,8 +190,8 @@ public:
     u32 execution_generation() const { return m_execution_generation; }
     void finish_execution_generation() { ++m_execution_generation; }
 
-    ThrowCompletionOr<Reference> resolve_binding(DeprecatedFlyString const&, Environment* = nullptr);
-    ThrowCompletionOr<Reference> get_identifier_reference(Environment*, DeprecatedFlyString, bool strict, size_t hops = 0);
+    ThrowCompletionOr<Reference> resolve_binding(FlyString const&, Environment* = nullptr);
+    ThrowCompletionOr<Reference> get_identifier_reference(Environment*, FlyString, bool strict, size_t hops = 0);
 
     // 5.2.3.2 Throw an Exception, https://tc39.es/ecma262/#sec-throw-an-exception
     template<typename T, typename... Args>
@@ -272,7 +267,7 @@ public:
     Function<HashMap<PropertyKey, Value>(SourceTextModule&)> host_get_import_meta_properties;
     Function<void(Object*, SourceTextModule const&)> host_finalize_import_meta;
 
-    Function<Vector<ByteString>()> host_get_supported_import_attributes;
+    Function<Vector<String>()> host_get_supported_import_attributes;
 
     void set_dynamic_imports_allowed(bool value) { m_dynamic_imports_allowed = value; }
 
@@ -307,7 +302,6 @@ private:
     void set_well_known_symbols(WellKnownSymbols well_known_symbols) { m_well_known_symbols = move(well_known_symbols); }
 
     HashMap<String, GCPtr<PrimitiveString>> m_string_cache;
-    HashMap<ByteString, GCPtr<PrimitiveString>> m_byte_string_cache;
     HashMap<Utf16String, GCPtr<PrimitiveString>> m_utf16_string_cache;
 
     Heap m_heap;
@@ -331,13 +325,13 @@ private:
 
     struct StoredModule {
         ImportedModuleReferrer referrer;
-        ByteString filename;
-        ByteString type;
+        String filename;
+        String type;
         Handle<Module> module;
         bool has_once_started_linking { false };
     };
 
-    StoredModule* get_stored_module(ImportedModuleReferrer const& script_or_module, ByteString const& filename, ByteString const& type);
+    StoredModule* get_stored_module(ImportedModuleReferrer const& script_or_module, String const& filename, String const& type);
 
     Vector<StoredModule> m_loaded_modules;
 

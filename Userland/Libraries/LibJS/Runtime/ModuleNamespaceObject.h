@@ -32,13 +32,12 @@ public:
     virtual ThrowCompletionOr<MarkedVector<Value>> internal_own_property_keys() const override;
     virtual void initialize(Realm&) override;
 
-private:
-    ModuleNamespaceObject(Realm&, Module* module, Vector<DeprecatedFlyString> exports);
+private:    ModuleNamespaceObject(Realm&, Module* module, Vector<FlyString> exports);
 
     virtual void visit_edges(Visitor&) override;
 
-    GCPtr<Module> m_module;                // [[Module]]
-    Vector<DeprecatedFlyString> m_exports; // [[Exports]]
+    GCPtr<Module> m_module;      // [[Module]]
+    Vector<FlyString> m_exports; // [[Exports]]
 };
 
 }

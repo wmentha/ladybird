@@ -4,14 +4,12 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "ConsoleObjectPrototype.h"
-
-#include <AK/ByteString.h>
 #include <AK/Function.h>
 #include <LibJS/Runtime/AbstractOperations.h>
 #include <LibJS/Runtime/Accessor.h>
 #include <LibJS/Runtime/BooleanObject.h>
 #include <LibJS/Runtime/Completion.h>
+#include <LibJS/Runtime/ConsoleObjectPrototype.h>
 #include <LibJS/Runtime/Date.h>
 #include <LibJS/Runtime/GlobalObject.h>
 #include <LibJS/Runtime/NumberObject.h>

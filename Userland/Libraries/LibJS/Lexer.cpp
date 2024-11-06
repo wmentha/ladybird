@@ -16,7 +16,7 @@
 
 namespace JS {
 
-HashMap<DeprecatedFlyString, TokenType> Lexer::s_keywords;
+HashMap<FlyString, TokenType> Lexer::s_keywords;
 
 static constexpr TokenType parse_two_char_token(StringView view)
 {
@@ -296,13 +296,13 @@ void Lexer::consume()
 
     if (is_line_terminator()) {
         if constexpr (LEXER_DEBUG) {
-            ByteString type;
+            String type;
             if (m_current_char == '\n')
-                type = "LINE FEED";
+                type = "LINE FEED"_string;
             else if (m_current_char == '\r')
-                type = "CARRIAGE RETURN";
+                type = "CARRIAGE RETURN"_string;
             else if (m_source[m_position + 1] == (char)0xa8)
-                type = "LINE SEPARATOR";
+                type = "LINE SEPARATOR"_string;
             else
                 type = "PARAGRAPH SEPARATOR";
             dbgln("Found a line terminator: {}", type);
@@ -700,7 +700,7 @@ Token Lexer::next()
     // bunch of Invalid* tokens (bad numeric literals, unterminated comments etc.)
     StringView token_message;
 
-    Optional<DeprecatedFlyString> identifier;
+    Optional<FlyString> identifier;
     size_t identifier_length = 0;
 
     if (m_current_token.type() == TokenType::RegexLiteral && !is_eof() && is_ascii_alpha(m_current_char) && !did_consume_whitespace_or_comments) {

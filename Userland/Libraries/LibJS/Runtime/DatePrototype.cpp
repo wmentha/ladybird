@@ -7,9 +7,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/DateConstants.h>
 #include <AK/Function.h>
+#include <AK/String.h>
 #include <AK/TypeCasts.h>
 #include <LibCore/DateTime.h>
 #include <LibCrypto/BigInt/UnsignedBigInteger.h>
@@ -1068,7 +1068,7 @@ JS_DEFINE_NATIVE_FUNCTION(DatePrototype::to_string)
 }
 
 // 21.4.4.41.1 TimeString ( tv ), https://tc39.es/ecma262/#sec-timestring
-ByteString time_string(double time)
+String time_string(double time)
 {
     // 1. Let hour be ToZeroPaddedDecimalString(ℝ(HourFromTime(tv)), 2).
     auto hour = hour_from_time(time);
@@ -1080,11 +1080,11 @@ ByteString time_string(double time)
     auto second = sec_from_time(time);
 
     // 4. Return the string-concatenation of hour, ":", minute, ":", second, the code unit 0x0020 (SPACE), and "GMT".
-    return ByteString::formatted("{:02}:{:02}:{:02} GMT", hour, minute, second);
+    return MUST(String::formatted("{:02}:{:02}:{:02} GMT", hour, minute, second));
 }
 
 // 21.4.4.41.2 DateString ( tv ), https://tc39.es/ecma262/#sec-datestring
-ByteString date_string(double time)
+String date_string(double time)
 {
     // 1. Let weekday be the Name of the entry in Table 62 with the Number WeekDay(tv).
     auto weekday = short_day_names[week_day(time)];
@@ -1103,11 +1103,11 @@ ByteString date_string(double time)
 
     // 6. Let paddedYear be ToZeroPaddedDecimalString(abs(ℝ(yv)), 4).
     // 7. Return the string-concatenation of weekday, the code unit 0x0020 (SPACE), month, the code unit 0x0020 (SPACE), day, the code unit 0x0020 (SPACE), yearSign, and paddedYear.
-    return ByteString::formatted("{} {} {:02} {}{:04}", weekday, month, day, year_sign, abs(year));
+    return MUST(String::formatted("{} {} {:02} {}{:04}", weekday, month, day, year_sign, abs(year)));
 }
 
 // 21.4.4.41.3 TimeZoneString ( tv ), https://tc39.es/ecma262/#sec-timezoneestring
-ByteString time_zone_string(double time)
+String time_zone_string(double time)
 {
     // 1. Let systemTimeZoneIdentifier be SystemTimeZoneIdentifier().
     auto system_time_zone_identifier = JS::system_time_zone_identifier();
@@ -1162,11 +1162,11 @@ ByteString time_zone_string(double time)
         tz_name = name.release_value();
 
     // 10. Return the string-concatenation of offsetSign, offsetHour, offsetMin, and tzName.
-    return ByteString::formatted("{}{:02}{:02} ({})", offset_sign, offset_hour, offset_min, tz_name);
+    return MUST(String::formatted("{}{:02}{:02} ({})", offset_sign, offset_hour, offset_min, tz_name));
 }
 
 // 21.4.4.41.4 ToDateString ( tv ), https://tc39.es/ecma262/#sec-todatestring
-ByteString to_date_string(double time)
+String to_date_string(double time)
 {
     // 1. If tv is NaN, return "Invalid Date".
     if (Value(time).is_nan())
@@ -1176,7 +1176,7 @@ ByteString to_date_string(double time)
     time = local_time(time);
 
     // 3. Return the string-concatenation of DateString(t), the code unit 0x0020 (SPACE), TimeString(t), and TimeZoneString(tv).
-    return ByteString::formatted("{} {}{}", date_string(time), time_string(time), time_zone_string(time));
+    return MUST(String::formatted("{} {}{}", date_string(time), time_string(time), time_zone_string(time)));
 }
 
 // 14.1.1 Date.prototype.toTemporalInstant ( ), https://tc39.es/proposal-temporal/#sec-date.prototype.totemporalinstant
@@ -1206,7 +1206,7 @@ JS_DEFINE_NATIVE_FUNCTION(DatePrototype::to_time_string)
 
     // 4. Let t be LocalTime(tv).
     // 5. Return the string-concatenation of TimeString(t) and TimeZoneString(tv).
-    auto string = ByteString::formatted("{}{}", time_string(local_time(time)), time_zone_string(time));
+    auto string = MUST(String::formatted("{}{}", time_string(local_time(time)), time_zone_string(time)));
     return PrimitiveString::create(vm, move(string));
 }
 
@@ -1238,7 +1238,7 @@ JS_DEFINE_NATIVE_FUNCTION(DatePrototype::to_utc_string)
 
     // 9. Let paddedYear be ToZeroPaddedDecimalString(abs(ℝ(yv)), 4).
     // 10. Return the string-concatenation of weekday, ",", the code unit 0x0020 (SPACE), day, the code unit 0x0020 (SPACE), month, the code unit 0x0020 (SPACE), yearSign, paddedYear, the code unit 0x0020 (SPACE), and TimeString(tv).
-    auto string = ByteString::formatted("{}, {:02} {} {}{:04} {}", weekday, day, month, year_sign, abs(year), time_string(time));
+    auto string = MUST(String::formatted("{}, {:02} {} {}{:04} {}", weekday, day, month, year_sign, abs(year), time_string(time)));
     return PrimitiveString::create(vm, move(string));
 }
 
@@ -1251,7 +1251,7 @@ JS_DEFINE_NATIVE_FUNCTION(DatePrototype::symbol_to_primitive)
     auto hint_value = vm.argument(0);
     if (!hint_value.is_string())
         return vm.throw_completion<TypeError>(ErrorType::InvalidHint, hint_value.to_string_without_side_effects());
-    auto hint = hint_value.as_string().byte_string();
+    auto hint = MUST(hint_value.as_string());
     Value::PreferredType try_first;
     if (hint == "string" || hint == "default")
         try_first = Value::PreferredType::String;

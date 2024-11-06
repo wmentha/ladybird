@@ -413,9 +413,9 @@ ErrorOr<void> initialize_main_thread_vm(HTML::EventLoop::Type type)
     // FIXME: Implement 8.1.5.5.3 HostResolveImportedModule(referencingScriptOrModule, moduleRequest), https://html.spec.whatwg.org/multipage/webappapis.html#hostresolveimportedmodule(referencingscriptormodule,-modulerequest)
 
     // 8.1.6.5.2 HostGetSupportedImportAttributes(), https://html.spec.whatwg.org/multipage/webappapis.html#hostgetsupportedimportassertions
-    s_main_thread_vm->host_get_supported_import_attributes = []() -> Vector<ByteString> {
+    s_main_thread_vm->host_get_supported_import_attributes = []() -> Vector<String> {
         // 1. Return « "type" ».
-        return { "type"sv };
+        return { "type"_string };
     };
 
     // 8.1.6.7.3 HostLoadImportedModule(referrer, moduleRequest, loadState, payload), https://html.spec.whatwg.org/multipage/webappapis.html#hostloadimportedmodule

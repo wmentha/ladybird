@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/NonnullRefPtr.h>
 #include <AK/RefCounted.h>
+#include <AK/String.h>
 #include <AK/Types.h>
 #include <AK/Utf16View.h>
 #include <AK/Vector.h>
@@ -65,7 +65,6 @@ public:
     Utf16View substring_view(size_t code_unit_offset) const;
 
     [[nodiscard]] String to_utf8() const;
-    [[nodiscard]] ByteString to_byte_string() const;
     u16 code_unit_at(size_t index) const;
 
     size_t length_in_code_units() const;

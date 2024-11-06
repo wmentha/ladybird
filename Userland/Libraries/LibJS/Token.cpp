@@ -93,14 +93,14 @@ static u32 hex2int(char x)
     return 10u + (to_ascii_lowercase(x) - 'a');
 }
 
-ByteString Token::string_value(StringValueStatus& status) const
+String Token::string_value(StringValueStatus& status) const
 {
     VERIFY(type() == TokenType::StringLiteral || type() == TokenType::TemplateLiteralString);
 
     auto is_template = type() == TokenType::TemplateLiteralString;
     GenericLexer lexer(is_template ? value() : value().substring_view(1, value().length() - 2));
 
-    auto encoding_failure = [&status](StringValueStatus parse_status) -> ByteString {
+    auto encoding_failure = [&status](StringValueStatus parse_status) -> String {
         status = parse_status;
         return {};
     };
@@ -174,7 +174,7 @@ ByteString Token::string_value(StringValueStatus& status) const
 
         // In non-strict mode LegacyOctalEscapeSequence is allowed in strings:
         // https://tc39.es/ecma262/#sec-additional-syntax-string-literals
-        Optional<ByteString> octal_str;
+        Optional<String> octal_str;
 
         auto is_octal_digit = [](char ch) { return ch >= '0' && ch <= '7'; };
         auto is_zero_to_three = [](char ch) { return ch >= '0' && ch <= '3'; };
@@ -210,13 +210,13 @@ ByteString Token::string_value(StringValueStatus& status) const
         lexer.retreat();
         builder.append(lexer.consume_escaped_character('\\', "b\bf\fn\nr\rt\tv\v"sv));
     }
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 // 12.8.6.2 Static Semantics: TRV, https://tc39.es/ecma262/#sec-static-semantics-trv
-ByteString Token::raw_template_value() const
+String Token::raw_template_value() const
 {
-    return value().replace("\r\n"sv, "\n"sv, ReplaceMode::All).replace("\r"sv, "\n"sv, ReplaceMode::All);
+    return MUST(value().replace("\r\n"sv, "\n"sv, ReplaceMode::All).replace("\r"sv, "\n"sv, ReplaceMode::All));
 }
 
 bool Token::bool_value() const

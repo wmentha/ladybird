@@ -84,7 +84,7 @@ void Error::populate_stack()
     for (auto& element : stack_trace) {
         auto* context = element.execution_context;
         TracebackFrame frame {
-            .function_name = context->function_name ? context->function_name->byte_string() : "",
+            .function_name = context->function_name ? context->function_name->to_string() : "",
             .cached_source_range = element.source_range,
         };
 

@@ -331,7 +331,6 @@
     M(WrappedFunctionCopyNameAndLengthThrowCompletion, "Trying to copy target name and length did not complete normally")               \
     M(YieldFromIteratorMissingThrowMethod, "yield* protocol violation: iterator must have a throw method")                              \
     M(URIMalformed, "URI malformed") /* LibWeb bindings */                                                                              \
-    M(NotAByteString, "Argument to {}() must be a byte string")                                                                         \
     M(BadArgCountOne, "{}() needs one argument")                                                                                        \
     M(BadArgCountAtLeastOne, "{}() needs at least one argument")                                                                        \
     M(BadArgCountMany, "{}() needs {} arguments")                                                                                       \

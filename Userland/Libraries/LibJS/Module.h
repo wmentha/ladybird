@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <AK/DeprecatedFlyString.h>
+#include <AK/FlyString.h>
 #include <LibJS/Heap/GCPtr.h>
 #include <LibJS/ModuleLoading.h>
 #include <LibJS/Runtime/Environment.h>
@@ -38,7 +38,7 @@ struct ResolvedBinding {
 
     Type type { Null };
     GCPtr<Module> module;
-    DeprecatedFlyString export_name;
+    FlyString export_name;
 
     bool is_valid() const
     {
@@ -109,8 +109,8 @@ public:
     virtual ThrowCompletionOr<void> link(VM& vm) = 0;
     virtual ThrowCompletionOr<Promise*> evaluate(VM& vm) = 0;
 
-    virtual ThrowCompletionOr<Vector<DeprecatedFlyString>> get_exported_names(VM& vm, Vector<Module*> export_star_set = {}) = 0;
-    virtual ThrowCompletionOr<ResolvedBinding> resolve_export(VM& vm, DeprecatedFlyString const& export_name, Vector<ResolvedBinding> resolve_set = {}) = 0;
+    virtual ThrowCompletionOr<Vector<FlyString>> get_exported_names(VM& vm, Vector<Module*> export_star_set = {}) = 0;
+    virtual ThrowCompletionOr<ResolvedBinding> resolve_export(VM& vm, FlyString const& export_name, Vector<ResolvedBinding> resolve_set = {}) = 0;
 
     virtual ThrowCompletionOr<u32> inner_module_linking(VM& vm, Vector<Module*>& stack, u32 index);
     virtual ThrowCompletionOr<u32> inner_module_evaluation(VM& vm, Vector<Module*>& stack, u32 index);
@@ -118,7 +118,7 @@ public:
     virtual PromiseCapability& load_requested_modules(GCPtr<GraphLoadingState::HostDefined>) = 0;
 
 protected:
-    Module(Realm&, ByteString filename, Script::HostDefined* host_defined = nullptr);
+    Module(Realm&, String filename, Script::HostDefined* host_defined = nullptr);
 
     virtual void visit_edges(Cell::Visitor&) override;
 
@@ -128,7 +128,7 @@ protected:
     }
 
 private:
-    Object* module_namespace_create(VM& vm, Vector<DeprecatedFlyString> unambiguous_names);
+    Object* module_namespace_create(VM& vm, Vector<FlyString> unambiguous_names);
 
     // These handles are only safe as long as the VM they live in is valid.
     // But evaluated modules SHOULD be stored in the VM so unless you intentionally
@@ -141,7 +141,7 @@ private:
     Script::HostDefined* m_host_defined { nullptr }; // [[HostDefined]]
 
     // Needed for potential lookups of modules.
-    ByteString m_filename;
+    String m_filename;
 };
 
 class CyclicModule;

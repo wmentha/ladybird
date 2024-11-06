@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Format.h>
+#include <AK/String.h>
 #include <AK/Types.h>
 #include <AK/Vector.h>
 
@@ -79,11 +79,11 @@ template<>
 struct Formatter<JS::PropertyAttributes> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JS::PropertyAttributes const& property_attributes)
     {
-        Vector<ByteString> parts;
-        parts.append(ByteString::formatted("[[Writable]]: {}", property_attributes.is_writable()));
-        parts.append(ByteString::formatted("[[Enumerable]]: {}", property_attributes.is_enumerable()));
-        parts.append(ByteString::formatted("[[Configurable]]: {}", property_attributes.is_configurable()));
-        return Formatter<StringView>::format(builder, ByteString::formatted("PropertyAttributes {{ {} }}", ByteString::join(", "sv, parts)));
+        Vector<String> parts;
+        parts.append(MUST(String::formatted("[[Writable]]: {}", property_attributes.is_writable())));
+        parts.append(MUST(String::formatted("[[Enumerable]]: {}", property_attributes.is_enumerable())));
+        parts.append(MUST(String::formatted("[[Configurable]]: {}", property_attributes.is_configurable())));
+        return Formatter<StringView>::format(builder, String::formatted("PropertyAttributes {{ {} }}", MUST(String::join(", "sv, parts))));
     }
 };
 

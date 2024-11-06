@@ -7,40 +7,40 @@
 
 #pragma once
 
-#include <AK/DeprecatedFlyString.h>
+#include <AK/FlyString.h>
 #include <AK/Vector.h>
 #include <LibJS/Module.h>
 
 namespace JS {
 
 struct ModuleWithSpecifier {
-    ByteString specifier;        // [[Specifier]]
+    String specifier;        // [[Specifier]]
     NonnullGCPtr<Module> module; // [[Module]]
 };
 
 // https://tc39.es/proposal-import-attributes/#importattribute-record
 struct ImportAttribute {
-    ByteString key;
-    ByteString value;
+    String key;
+    String value;
 };
 
 // https://tc39.es/proposal-import-attributes/#modulerequest-record
 struct ModuleRequest {
     ModuleRequest() = default;
 
-    explicit ModuleRequest(DeprecatedFlyString specifier)
+    explicit ModuleRequest(FlyString specifier)
         : module_specifier(move(specifier))
     {
     }
 
-    ModuleRequest(DeprecatedFlyString specifier, Vector<ImportAttribute> attributes);
+    ModuleRequest(FlyString specifier, Vector<ImportAttribute> attributes);
 
-    void add_attribute(ByteString key, ByteString value)
+    void add_attribute(String key, String value)
     {
         attributes.empend(move(key), move(value));
     }
 
-    DeprecatedFlyString module_specifier; // [[Specifier]]
+    FlyString module_specifier; // [[Specifier]]
     Vector<ImportAttribute> attributes;   // [[Attributes]]
 };
 

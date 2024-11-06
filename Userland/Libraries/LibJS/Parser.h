@@ -200,7 +200,7 @@ public:
                 if (!hint.is_empty())
                     warnln("{}", hint);
             }
-            warnln("SyntaxError: {}", error.to_byte_string());
+            warnln("SyntaxError: {}", MUST(error.to_string()));
         }
     }
 
@@ -211,7 +211,7 @@ public:
     // Needs to mess with m_state, and we're not going to expose a non-const getter for that :^)
     friend ThrowCompletionOr<NonnullGCPtr<ECMAScriptFunctionObject>> FunctionConstructor::create_dynamic_function(VM&, FunctionObject&, FunctionObject*, FunctionKind, ReadonlySpan<String> parameter_args, String const& body_arg);
 
-    static Parser parse_function_body_from_string(ByteString const& body_string, u16 parse_options, Vector<FunctionParameter> const& parameters, FunctionKind kind, FunctionParsingInsights&);
+    static Parser parse_function_body_from_string(String const& body_string, u16 parse_options, Vector<FunctionParameter> const& parameters, FunctionKind kind, FunctionParsingInsights&);
 
 private:
     friend class ScopePusher;
@@ -244,7 +244,7 @@ private:
     bool match(TokenType type) const;
     bool done() const;
     void expected(char const* what);
-    void syntax_error(ByteString const& message, Optional<Position> = {});
+    void syntax_error(String const& message, Optional<Position> = {});
     Token consume();
     Token consume_and_allow_division();
     Token consume_identifier();
@@ -261,7 +261,7 @@ private:
 
     Token next_token(size_t steps = 1) const;
 
-    void check_identifier_name_for_assignment_validity(DeprecatedFlyString const&, bool force_strict = false);
+    void check_identifier_name_for_assignment_validity(FlyString const&, bool force_strict = false);
 
     bool try_parse_arrow_function_expression_failed_at_position(Position const&) const;
     void set_try_parse_arrow_function_expression_failed_at_position(Position const&, bool);
@@ -271,7 +271,7 @@ private:
     bool parse_directive(ScopeNode& body);
     void parse_statement_list(ScopeNode& output_node, AllowLabelledFunction allow_labelled_functions = AllowLabelledFunction::No);
 
-    DeprecatedFlyString consume_string_value();
+    FlyString consume_string_value();
     ModuleRequest parse_module_request();
 
     struct RulePosition {
@@ -334,12 +334,12 @@ private:
         ParserState(Lexer, Program::Type);
     };
 
-    [[nodiscard]] NonnullRefPtr<Identifier const> create_identifier_and_register_in_current_scope(SourceRange range, DeprecatedFlyString string, Optional<DeclarationKind> = {});
+    [[nodiscard]] NonnullRefPtr<Identifier const> create_identifier_and_register_in_current_scope(SourceRange range, FlyString string, Optional<DeclarationKind> = {});
 
     NonnullRefPtr<SourceCode const> m_source_code;
     Vector<Position> m_rule_starts;
     ParserState m_state;
-    DeprecatedFlyString m_filename;
+    FlyString m_filename;
     Vector<ParserState> m_saved_state;
     HashMap<size_t, TokenMemoization> m_token_memoizations;
     Program::Type m_program_type;

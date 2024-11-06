@@ -114,11 +114,6 @@ String Utf16String::to_utf8() const
     return MUST(view().to_utf8(Utf16View::AllowInvalidCodeUnits::Yes));
 }
 
-ByteString Utf16String::to_byte_string() const
-{
-    return MUST(view().to_byte_string(Utf16View::AllowInvalidCodeUnits::Yes));
-}
-
 u16 Utf16String::code_unit_at(size_t index) const
 {
     return view().code_unit_at(index);

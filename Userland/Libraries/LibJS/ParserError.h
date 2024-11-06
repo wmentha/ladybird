@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Error.h>
 #include <AK/Optional.h>
 #include <AK/String.h>
@@ -16,12 +15,12 @@
 namespace JS {
 
 struct ParserError {
-    ByteString message;
+    String message;
     Optional<Position> position;
 
     String to_string() const;
-    ByteString to_byte_string() const;
-    ByteString source_location_hint(StringView source, char const spacer = ' ', char const indicator = '^') const;
+    String to_string() const;
+    String source_location_hint(StringView source, char const spacer = ' ', char const indicator = '^') const;
 };
 
 }

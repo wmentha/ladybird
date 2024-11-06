@@ -26,7 +26,7 @@ namespace JS {
 JS_DEFINE_ALLOCATOR(DateConstructor);
 
 // 21.4.3.2 Date.parse ( string ), https://tc39.es/ecma262/#sec-date.parse
-static double parse_simplified_iso8601(ByteString const& iso_8601)
+static double parse_simplified_iso8601(String const& iso_8601)
 {
     // 21.4.1.15 Date Time String Format, https://tc39.es/ecma262/#sec-date-time-string-format
     GenericLexer lexer(iso_8601);
@@ -150,7 +150,7 @@ static double parse_simplified_iso8601(ByteString const& iso_8601)
     return time_clip(time_ms);
 }
 
-static double parse_date_string(VM& vm, ByteString const& date_string)
+static double parse_date_string(VM& vm, String const& date_string)
 {
     if (date_string.is_empty())
         return NAN;
@@ -269,7 +269,7 @@ ThrowCompletionOr<NonnullGCPtr<Object>> DateConstructor::construct(FunctionObjec
             if (primitive.is_string()) {
                 // 1. Assert: The next step never returns an abrupt completion because Type(v) is String.
                 // 2. Let tv be the result of parsing v as a date, in exactly the same manner as for the parse method (21.4.3.2).
-                time_value = parse_date_string(vm, primitive.as_string().byte_string());
+                time_value = parse_date_string(vm, MUST(primitive.as_string()));
             }
             // iii. Else,
             else {
@@ -344,7 +344,7 @@ JS_DEFINE_NATIVE_FUNCTION(DateConstructor::parse)
     if (!vm.argument_count())
         return js_nan();
 
-    auto date_string = TRY(vm.argument(0).to_byte_string(vm));
+    auto date_string = TRY(vm.argument(0).to_string(vm));
 
     return Value(parse_date_string(vm, date_string));
 }

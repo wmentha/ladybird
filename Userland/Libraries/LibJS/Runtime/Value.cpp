@@ -8,7 +8,6 @@
 
 #include <AK/AllOf.h>
 #include <AK/Assertions.h>
-#include <AK/ByteString.h>
 #include <AK/CharacterTypes.h>
 #include <AK/FloatingPointStringConversions.h>
 #include <AK/StringBuilder.h>
@@ -209,14 +208,7 @@ String number_to_string(double d, NumberToStringMode mode)
 {
     StringBuilder builder;
     number_to_string_impl(builder, d, mode);
-    return builder.to_string().release_value();
-}
-
-ByteString number_to_byte_string(double d, NumberToStringMode mode)
-{
-    StringBuilder builder;
-    number_to_string_impl(builder, d, mode);
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 // 7.2.2 IsArray ( argument ), https://tc39.es/ecma262/#sec-isarray
@@ -438,12 +430,6 @@ ThrowCompletionOr<String> Value::to_string(VM& vm) const
     }
 }
 
-// 7.1.17 ToString ( argument ), https://tc39.es/ecma262/#sec-tostring
-ThrowCompletionOr<ByteString> Value::to_byte_string(VM& vm) const
-{
-    return TRY(to_string(vm)).to_byte_string();
-}
-
 ThrowCompletionOr<Utf16String> Value::to_utf16_string(VM& vm) const
 {
     if (is_string())
@@ -505,19 +491,19 @@ ThrowCompletionOr<Value> Value::to_primitive_slow_case(VM& vm, PreferredType pre
 
         // b. If exoticToPrim is not undefined, then
         if (exotic_to_primitive) {
-            auto hint = [&]() -> ByteString {
+            auto hint = [&]() -> String {
                 switch (preferred_type) {
                 // i. If preferredType is not present, let hint be "default".
                 case PreferredType::Default:
-                    return "default";
+                    return "default"_string;
                 // ii. Else if preferredType is string, let hint be "string".
                 case PreferredType::String:
-                    return "string";
+                    return "string"_string;
                 // iii. Else,
                 // 1. Assert: preferredType is number.
                 // 2. Let hint be "number".
                 case PreferredType::Number:
-                    return "number";
+                    return "number"_string;
                 default:
                     VERIFY_NOT_REACHED();
                 }
@@ -715,7 +701,7 @@ ThrowCompletionOr<Value> Value::to_number_slow_case(VM& vm) const
         return Value(as_bool() ? 1 : 0);
     // 6. If argument is a String, return StringToNumber(argument).
     case STRING_TAG:
-        return string_to_number(as_string().byte_string());
+        return string_to_number(as_string());
     // 7. Assert: argument is an Object.
     case OBJECT_TAG: {
         // 8. Let primValue be ? ToPrimitive(argument, number).
@@ -769,7 +755,7 @@ ThrowCompletionOr<NonnullGCPtr<BigInt>> Value::to_bigint(VM& vm) const
         return primitive.as_bigint();
     case STRING_TAG: {
         // 1. Let n be ! StringToBigInt(prim).
-        auto bigint = string_to_bigint(vm, primitive.as_string().byte_string());
+        auto bigint = string_to_bigint(vm, primitive.as_string());
 
         // 2. If n is undefined, throw a SyntaxError exception.
         if (!bigint.has_value())
@@ -899,7 +885,7 @@ ThrowCompletionOr<PropertyKey> Value::to_property_key(VM& vm) const
     }
 
     // 3. Return ! ToString(key).
-    return MUST(key.to_byte_string(vm));
+    return MUST(key.to_string(vm));
 }
 
 // 7.1.6 ToInt32 ( argument ), https://tc39.es/ecma262/#sec-toint32
@@ -2205,7 +2191,7 @@ bool same_value_non_number(Value lhs, Value rhs)
     // 5. If x is a String, then
     if (lhs.is_string()) {
         // a. If x and y are exactly the same sequence of code units (same length and same code units at corresponding indices), return true; otherwise, return false.
-        return lhs.as_string().byte_string() == rhs.as_string().byte_string();
+        return lhs.as_string() == rhs.as_string();
     }
 
     // 3. If x is undefined, return true.
@@ -2286,7 +2272,7 @@ ThrowCompletionOr<bool> is_loosely_equal(VM& vm, Value lhs, Value rhs)
     // 7. If Type(x) is BigInt and Type(y) is String, then
     if (lhs.is_bigint() && rhs.is_string()) {
         // a. Let n be StringToBigInt(y).
-        auto bigint = string_to_bigint(vm, rhs.as_string().byte_string());
+        auto bigint = string_to_bigint(vm, rhs.as_string());
 
         // b. If n is undefined, return false.
         if (!bigint.has_value())
@@ -2367,8 +2353,8 @@ ThrowCompletionOr<TriState> is_less_than(VM& vm, Value lhs, Value rhs, bool left
 
     // 3. If px is a String and py is a String, then
     if (x_primitive.is_string() && y_primitive.is_string()) {
-        auto x_string = x_primitive.as_string().byte_string();
-        auto y_string = y_primitive.as_string().byte_string();
+        auto x_string = x_primitive.as_string();
+        auto y_string = y_primitive.as_string();
 
         Utf8View x_code_points { x_string };
         Utf8View y_code_points { y_string };
@@ -2403,7 +2389,7 @@ ThrowCompletionOr<TriState> is_less_than(VM& vm, Value lhs, Value rhs, bool left
     // a. If px is a BigInt and py is a String, then
     if (x_primitive.is_bigint() && y_primitive.is_string()) {
         // i. Let ny be StringToBigInt(py).
-        auto y_bigint = string_to_bigint(vm, y_primitive.as_string().byte_string());
+        auto y_bigint = string_to_bigint(vm, y_primitive.as_string());
 
         // ii. If ny is undefined, return undefined.
         if (!y_bigint.has_value())
@@ -2418,7 +2404,7 @@ ThrowCompletionOr<TriState> is_less_than(VM& vm, Value lhs, Value rhs, bool left
     // b. If px is a String and py is a BigInt, then
     if (x_primitive.is_string() && y_primitive.is_bigint()) {
         // i. Let nx be StringToBigInt(px).
-        auto x_bigint = string_to_bigint(vm, x_primitive.as_string().byte_string());
+        auto x_bigint = string_to_bigint(vm, x_primitive.as_string());
 
         // ii. If nx is undefined, return undefined.
         if (!x_bigint.has_value())

@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/TypeCasts.h>
+#include <AK/String.h>
 #include <LibJS/Runtime/AbstractOperations.h>
 #include <LibJS/Runtime/Accessor.h>
 #include <LibJS/Runtime/Array.h>
@@ -25,7 +25,7 @@ namespace JS {
 
 JS_DEFINE_ALLOCATOR(Object);
 
-static HashMap<GCPtr<Object const>, HashMap<DeprecatedFlyString, Object::IntrinsicAccessor>> s_intrinsics;
+static HashMap<GCPtr<Object const>, HashMap<FlyString, Object::IntrinsicAccessor>> s_intrinsics;
 
 // 10.1.12 OrdinaryObjectCreate ( proto [ , additionalInternalSlotsList ] ), https://tc39.es/ecma262/#sec-ordinaryobjectcreate
 NonnullGCPtr<Object> Object::create(Realm& realm, Object* prototype)
@@ -1101,7 +1101,7 @@ ThrowCompletionOr<MarkedVector<Value>> Object::internal_own_property_keys() cons
     // 2. For each own property key P of O such that P is an array index, in ascending numeric index order, do
     for (auto& entry : m_indexed_properties) {
         // a. Add P as the last element of keys.
-        keys.append(PrimitiveString::create(vm, ByteString::number(entry.index())));
+        keys.append(PrimitiveString::create(vm, MUST(String::number(entry.index()))));
     }
 
     // 3. For each own property key P of O such that Type(P) is String and P is not an array index, in ascending chronological order of property creation, do
@@ -1398,7 +1398,7 @@ Optional<Completion> Object::enumerate_object_properties(Function<Optional<Compl
     //    * Enumerating the properties of the target object includes enumerating properties of its prototype, and the prototype of the prototype, and so on, recursively.
     //    * A property of a prototype is not processed if it has the same name as a property that has already been processed.
 
-    HashTable<DeprecatedFlyString> visited;
+    HashTable<FlyString> visited;
 
     auto const* target = this;
     while (target) {
@@ -1406,7 +1406,7 @@ Optional<Completion> Object::enumerate_object_properties(Function<Optional<Compl
         for (auto& key : own_keys) {
             if (!key.is_string())
                 continue;
-            DeprecatedFlyString property_key = key.as_string().byte_string();
+            FlyString property_key = key.as_string();
             if (visited.contains(property_key))
                 continue;
             auto descriptor = TRY(target->internal_get_own_property(property_key));

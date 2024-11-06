@@ -8,7 +8,6 @@
 
 #include "Token.h"
 
-#include <AK/ByteString.h>
 #include <AK/HashMap.h>
 #include <AK/String.h>
 #include <AK/StringView.h>
@@ -21,7 +20,7 @@ public:
 
     Token next();
 
-    ByteString const& source() const { return m_source; }
+    String const& source() const { return m_source; }
     String const& filename() const { return m_filename; }
 
     void disallow_html_comments() { m_allow_html_comments = false; }
@@ -58,7 +57,7 @@ private:
 
     TokenType consume_regex_literal();
 
-    ByteString m_source;
+    String m_source;
     size_t m_position { 0 };
     Token m_current_token;
     char m_current_char { 0 };
@@ -80,12 +79,12 @@ private:
 
     Optional<size_t> m_hit_invalid_unicode;
 
-    static HashMap<DeprecatedFlyString, TokenType> s_keywords;
+    static HashMap<FlyString, TokenType> s_keywords;
 
     struct ParsedIdentifiers : public RefCounted<ParsedIdentifiers> {
         // Resolved identifiers must be kept alive for the duration of the parsing stage, otherwise
         // the only references to these strings are deleted by the Token destructor.
-        HashTable<DeprecatedFlyString> identifiers;
+        HashTable<FlyString> identifiers;
     };
 
     RefPtr<ParsedIdentifiers> m_parsed_identifiers;

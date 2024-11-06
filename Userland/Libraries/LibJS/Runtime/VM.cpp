@@ -117,7 +117,7 @@ VM::VM(OwnPtr<CustomData> custom_data, ErrorMessages error_messages)
     };
 
     host_get_supported_import_attributes = [&] {
-        return Vector<ByteString> { "type" };
+        return Vector<String> { "type"_string };
     };
 
     // 19.2.1.2 HostEnsureCanCompileStrings ( calleeRealm, parameterStrings, bodyString, direct ), https://tc39.es/ecma262/#sec-hostensurecancompilestrings
@@ -258,7 +258,7 @@ void VM::gather_roots(HashMap<Cell*, HeapRoot>& roots)
 }
 
 // 9.1.2.1 GetIdentifierReference ( env, name, strict ), https://tc39.es/ecma262/#sec-getidentifierreference
-ThrowCompletionOr<Reference> VM::get_identifier_reference(Environment* environment, DeprecatedFlyString name, bool strict, size_t hops)
+ThrowCompletionOr<Reference> VM::get_identifier_reference(Environment* environment, FlyString name, bool strict, size_t hops)
 {
     // 1. If env is the value null, then
     if (!environment) {
@@ -292,7 +292,7 @@ ThrowCompletionOr<Reference> VM::get_identifier_reference(Environment* environme
 }
 
 // 9.4.2 ResolveBinding ( name [ , env ] ), https://tc39.es/ecma262/#sec-resolvebinding
-ThrowCompletionOr<Reference> VM::resolve_binding(DeprecatedFlyString const& name, Environment* environment)
+ThrowCompletionOr<Reference> VM::resolve_binding(FlyString const& name, Environment* environment)
 {
     // 1. If env is not present or if env is undefined, then
     if (!environment) {
@@ -504,7 +504,7 @@ ScriptOrModule VM::get_active_script_or_module() const
     return m_execution_context_stack[0]->script_or_module;
 }
 
-VM::StoredModule* VM::get_stored_module(ImportedModuleReferrer const&, ByteString const& filename, ByteString const&)
+VM::StoredModule* VM::get_stored_module(ImportedModuleReferrer const&, String const& filename, String const&)
 {
     // Note the spec says:
     // If this operation is called multiple times with the same (referrer, specifier) pair and it performs
@@ -561,7 +561,7 @@ ThrowCompletionOr<void> VM::link_and_eval_module(CyclicModule& module)
     return {};
 }
 
-static ByteString resolve_module_filename(StringView filename, StringView module_type)
+static String resolve_module_filename(StringView filename, StringView module_type)
 {
     auto extensions = Vector<StringView, 2> { "js"sv, "mjs"sv };
     if (module_type == "json"sv)
@@ -569,14 +569,14 @@ static ByteString resolve_module_filename(StringView filename, StringView module
     if (!FileSystem::exists(filename)) {
         for (auto extension : extensions) {
             // import "./foo" -> import "./foo.ext"
-            auto resolved_filepath = ByteString::formatted("{}.{}", filename, extension);
+            auto resolved_filepath = MUST(String::formatted("{}.{}", filename, extension));
             if (FileSystem::exists(resolved_filepath))
                 return resolved_filepath;
         }
     } else if (FileSystem::is_directory(filename)) {
         for (auto extension : extensions) {
             // import "./foo" -> import "./foo/index.ext"
-            auto resolved_filepath = LexicalPath::join(filename, ByteString::formatted("index.{}", extension)).string();
+            auto resolved_filepath = LexicalPath::join(filename, MUST(String::formatted("index.{}", extension))).string();
             if (FileSystem::exists(resolved_filepath))
                 return resolved_filepath;
         }
@@ -611,7 +611,7 @@ void VM::load_imported_module(ImportedModuleReferrer referrer, ModuleRequest con
         return;
     }
 
-    ByteString module_type;
+    String module_type;
     for (auto& attribute : module_request.attributes) {
         if (attribute.key == "type"sv) {
             module_type = attribute.value;
@@ -648,15 +648,15 @@ void VM::load_imported_module(ImportedModuleReferrer referrer, ModuleRequest con
     dbgln_if(JS_MODULE_DEBUG, "[JS MODULE] resolved filename: '{}'", filename);
 
 #if JS_MODULE_DEBUG
-    ByteString referencing_module_string = referrer.visit(
-        [&](Empty) -> ByteString {
-            return ".";
+    String referencing_module_string = referrer.visit(
+        [&](Empty) -> String {
+            return "."_string;
         },
         [&](auto& script_or_module) {
             if constexpr (IsSame<Script*, decltype(script_or_module)>) {
-                return ByteString::formatted("Script @ {}", script_or_module.ptr());
+                return MUST(String::formatted("Script @ {}", script_or_module.ptr()));
             }
-            return ByteString::formatted("Module @ {}", script_or_module.ptr());
+            return MUST(String::formatted("Module @ {}", script_or_module.ptr()));
         });
 
     dbgln_if(JS_MODULE_DEBUG, "[JS MODULE] load_imported_module({}, {})", referencing_module_string, filename);
@@ -707,14 +707,14 @@ void VM::load_imported_module(ImportedModuleReferrer referrer, ModuleRequest con
 
         if (module_or_errors.is_error()) {
             VERIFY(module_or_errors.error().size() > 0);
-            return throw_completion<SyntaxError>(module_or_errors.error().first().to_byte_string());
+            return throw_completion<SyntaxError>(MUST(module_or_errors.error().first().to_string()));
         }
 
         auto module = module_or_errors.release_value();
         m_loaded_modules.empend(
             referrer,
             module->filename(),
-            ByteString {}, // Null type
+            ""_string, // Null type
             make_handle<Module>(*module),
             true);
 

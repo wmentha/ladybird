@@ -160,11 +160,11 @@ ThrowCompletionOr<NonnullGCPtr<ECMAScriptFunctionObject>> FunctionConstructor::c
     }
 
     // 14. Let bodyParseString be the string-concatenation of 0x000A (LINE FEED), bodyString, and 0x000A (LINE FEED).
-    auto body_parse_string = ByteString::formatted("\n{}\n", body_string);
+    auto body_parse_string = MUST(String::formatted("\n{}\n", body_string));
 
     // 15. Let sourceString be the string-concatenation of prefix, " anonymous(", P, 0x000A (LINE FEED), ") {", bodyParseString, and "}".
     // 16. Let sourceText be StringToCodePoints(sourceString).
-    auto source_text = ByteString::formatted("{} anonymous({}\n) {{{}}}", prefix, parameters_string, body_parse_string);
+    auto source_text = MUST(String::formatted("{} anonymous({}\n) {{{}}}", prefix, parameters_string, body_parse_string));
 
     u8 parse_options = FunctionNodeParseOptions::CheckForFunctionAndName;
     if (kind == FunctionKind::Async || kind == FunctionKind::AsyncGenerator)

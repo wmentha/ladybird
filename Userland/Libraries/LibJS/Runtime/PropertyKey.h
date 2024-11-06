@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <AK/DeprecatedFlyString.h>
 #include <AK/FlyString.h>
 #include <LibJS/Heap/Handle.h>
 #include <LibJS/Runtime/Completion.h>
@@ -36,7 +35,7 @@ public:
             return PropertyKey { value.as_symbol() };
         if (value.is_integral_number() && value.as_double() >= 0 && value.as_double() < NumericLimits<u32>::max())
             return static_cast<u32>(value.as_double());
-        return TRY(value.to_byte_string(vm));
+        return TRY(value.to_string(vm));
     }
 
     PropertyKey() = default;
@@ -49,7 +48,7 @@ public:
         VERIFY(index >= 0);
         if constexpr (NumericLimits<T>::max() >= NumericLimits<u32>::max()) {
             if (index >= NumericLimits<u32>::max()) {
-                m_string = ByteString::number(index);
+                m_string = String::number(index);
                 m_type = Type::String;
                 m_string_may_be_number = false;
                 return;
@@ -60,25 +59,19 @@ public:
         m_number = index;
     }
 
-    PropertyKey(char const* chars)
+    PropertyKey(String const& string)
         : m_type(Type::String)
-        , m_string(DeprecatedFlyString(chars))
-    {
-    }
-
-    PropertyKey(ByteString const& string)
-        : m_type(Type::String)
-        , m_string(DeprecatedFlyString(string))
+        , m_string(string)
     {
     }
 
     PropertyKey(FlyString const& string)
         : m_type(Type::String)
-        , m_string(string.to_deprecated_fly_string())
+        , m_string(string)
     {
     }
 
-    PropertyKey(DeprecatedFlyString string, StringMayBeNumber string_may_be_number = StringMayBeNumber::Yes)
+    PropertyKey(FlyString string, StringMayBeNumber string_may_be_number = StringMayBeNumber::Yes)
         : m_string_may_be_number(string_may_be_number == StringMayBeNumber::Yes)
         , m_type(Type::String)
         , m_string(move(string))
@@ -157,7 +150,7 @@ public:
         return m_number;
     }
 
-    DeprecatedFlyString const& as_string() const
+    FlyString const& as_string() const
     {
         VERIFY(is_string());
         return m_string;
@@ -169,13 +162,13 @@ public:
         return m_symbol;
     }
 
-    ByteString to_string() const
+    String to_string() const
     {
         VERIFY(is_valid());
         VERIFY(!is_symbol());
         if (is_string())
             return as_string();
-        return ByteString::number(as_number());
+        return String::number(as_number());
     }
 
     StringOrSymbol to_string_or_symbol() const
@@ -191,7 +184,7 @@ private:
     bool m_string_may_be_number { true };
     Type m_type { Type::Invalid };
     u32 m_number { 0 };
-    DeprecatedFlyString m_string;
+    FlyString m_string;
     Handle<Symbol> m_symbol;
 };
 

@@ -58,7 +58,7 @@ static Value property_key_to_value(VM& vm, PropertyKey const& property_key)
         return PrimitiveString::create(vm, property_key.as_string());
 
     VERIFY(property_key.is_number());
-    return PrimitiveString::create(vm, ByteString::number(property_key.as_number()));
+    return PrimitiveString::create(vm, MUST(String::number(property_key.as_number())));
 }
 
 // 10.5.1 [[GetPrototypeOf]] ( ), https://tc39.es/ecma262/#sec-proxy-object-internal-methods-and-internal-slots-getprototypeof
@@ -910,7 +910,7 @@ void ProxyObject::visit_edges(Cell::Visitor& visitor)
     visitor.visit(m_handler);
 }
 
-DeprecatedFlyString const& ProxyObject::name() const
+FlyString const& ProxyObject::name() const
 {
     VERIFY(is_function());
     return static_cast<FunctionObject&>(*m_target).name();
