@@ -232,11 +232,11 @@ void Editor::get_terminal_size()
     m_num_lines = ws.ws_row;
 }
 
-void Editor::add_to_history(ByteString const& line)
+void Editor::add_to_history(String const& line)
 {
     if (line.is_empty())
         return;
-    ByteString histcontrol = getenv("HISTCONTROL");
+    String histcontrol = getenv("HISTCONTROL");
     auto ignoredups = histcontrol == "ignoredups" || histcontrol == "ignoreboth";
     auto ignorespace = histcontrol == "ignorespace" || histcontrol == "ignoreboth";
     if (ignoredups && !m_history.is_empty() && line == m_history.last().entry)
@@ -272,7 +272,7 @@ ErrorOr<Vector<Editor::HistoryEntry>> Editor::try_load_history(StringView path)
     return history;
 }
 
-bool Editor::load_history(ByteString const& path)
+bool Editor::load_history(String const& path)
 {
     auto history_or_error = try_load_history(path);
     if (history_or_error.is_error())
@@ -324,7 +324,7 @@ static void merge(It0&& begin0, It0 const& end0, It1&& begin1, It1 const& end1, 
     }
 }
 
-bool Editor::save_history(ByteString const& path)
+bool Editor::save_history(String const& path)
 {
     // Note: Use a dummy entry to simplify merging.
     Vector<HistoryEntry> final_history { { "", 0 } };
@@ -347,7 +347,7 @@ bool Editor::save_history(ByteString const& path)
     // Skip the dummy entry:
     for (auto iter = final_history.begin() + 1; iter != final_history.end(); ++iter) {
         auto const& entry = *iter;
-        auto buffer = ByteString::formatted("{}::{}\n\n", entry.timestamp, entry.entry);
+        auto buffer = MUST(String::formatted("{}::{}\n\n", entry.timestamp, entry.entry));
         auto maybe_error = file->write_until_depleted(buffer.bytes());
         if (maybe_error.is_error())
             return false;
@@ -375,7 +375,7 @@ void Editor::insert(Utf32View const& string)
         insert(string.code_points()[i]);
 }
 
-void Editor::insert(ByteString const& string)
+void Editor::insert(String const& string)
 {
     for (auto ch : Utf8View { string })
         insert(ch);
@@ -397,7 +397,7 @@ void Editor::insert(u32 const cp)
 {
     StringBuilder builder;
     builder.append(Utf32View(&cp, 1));
-    auto str = builder.to_byte_string();
+    auto str = MUST(builder.to_string());
     if (m_pending_chars.try_append(str.characters(), str.length()).is_error())
         return;
 
@@ -427,7 +427,7 @@ void Editor::register_key_input_callback(KeyBinding const& binding)
         return register_key_input_callback(binding.keys, move(internal_function));
     }
 
-    return register_key_input_callback(binding.keys, [binding = ByteString(binding.binding)](auto& editor) {
+    return register_key_input_callback(binding.keys, [binding = String(binding.binding)](auto& editor) {
         editor.insert(binding);
         return false;
     });
@@ -737,7 +737,7 @@ ErrorOr<void> Editor::really_quit_event_loop()
     return {};
 }
 
-auto Editor::get_line(ByteString const& prompt) -> Result<ByteString, Editor::Error>
+auto Editor::get_line(String const& prompt) -> Result<String, Editor::Error>
 {
     initialize();
     m_is_editing = true;
@@ -761,7 +761,7 @@ auto Editor::get_line(ByteString const& prompt) -> Result<ByteString, Editor::Er
         }
         restore();
         if (line) {
-            ByteString result { line, (size_t)line_length, Chomp };
+            String result { line, (size_t)line_length, Chomp };
             free(line);
             return result;
         }
@@ -821,7 +821,7 @@ auto Editor::get_line(ByteString const& prompt) -> Result<ByteString, Editor::Er
     if (loop.exec() == Retry)
         return get_line(prompt);
 
-    return m_input_error.has_value() ? Result<ByteString, Editor::Error> { m_input_error.value() } : Result<ByteString, Editor::Error> { m_returned_line };
+    return m_input_error.has_value() ? Result<String, Editor::Error> { m_input_error.value() } : Result<String, Editor::Error> { m_returned_line };
 }
 
 ErrorOr<void> Editor::try_update_once()
@@ -978,7 +978,7 @@ ErrorOr<void> Editor::handle_read_event()
         case InputState::CSIExpectFinal: {
             m_state = m_previous_free_state;
             auto is_in_paste = m_state == InputState::Paste;
-            for (auto& parameter : ByteString::copy(csi_parameter_bytes).split(';')) {
+            for (auto& parameter : String::copy(csi_parameter_bytes).split(';')) {
                 if (auto value = parameter.to_number<unsigned>(); value.has_value())
                     csi_parameters.append(value.value());
                 else
@@ -1567,14 +1567,14 @@ ErrorOr<void> Editor::refresh_display()
             dbgln("Drawn Spans:");
             for (auto& sentry : m_drawn_spans.m_spans_starting) {
                 for (auto& entry : sentry.value) {
-                    dbgln("{}-{}: {}", sentry.key, entry.key, entry.value.to_byte_string());
+                    dbgln("{}-{}: {}", sentry.key, entry.key, MUST(entry.value.to_string()));
                 }
             }
             dbgln("==========================================================================");
             dbgln("Current Spans:");
             for (auto& sentry : m_current_spans.m_spans_starting) {
                 for (auto& entry : sentry.value) {
-                    dbgln("{}-{}: {}", sentry.key, entry.key, entry.value.to_byte_string());
+                    dbgln("{}-{}: {}", sentry.key, entry.key, MUST(entry.value.to_string()));
                 }
             }
         }
@@ -1648,7 +1648,7 @@ ErrorOr<void> Editor::reposition_cursor(Stream& stream, bool to_end)
 
 ErrorOr<void> VT::move_absolute(u32 row, u32 col, Stream& stream)
 {
-    return stream.write_until_depleted(ByteString::formatted("\033[{};{}H", row, col));
+    return stream.write_until_depleted(MUST(String::formatted("\033[{};{}H", row, col)));
 }
 
 ErrorOr<void> VT::move_relative(int row, int col, Stream& stream)
@@ -1665,9 +1665,9 @@ ErrorOr<void> VT::move_relative(int row, int col, Stream& stream)
         col = -col;
 
     if (row > 0)
-        TRY(stream.write_until_depleted(ByteString::formatted("\033[{}{}", row, x_op)));
+        TRY(stream.write_until_depleted(MUST(String::formatted("\033[{}{}", row, x_op))));
     if (col > 0)
-        TRY(stream.write_until_depleted(ByteString::formatted("\033[{}{}", col, y_op)));
+        TRY(stream.write_until_depleted(MUST(String::formatted("\033[{}{}", col, y_op))));
 
     return {};
 }
@@ -1697,36 +1697,36 @@ Style Editor::find_applicable_style(size_t offset) const
     return style;
 }
 
-ByteString Style::Background::to_vt_escape() const
+String Style::Background::to_vt_escape() const
 {
     if (is_default())
         return "";
 
     if (m_is_rgb) {
-        return ByteString::formatted("\e[48;2;{};{};{}m", m_rgb_color[0], m_rgb_color[1], m_rgb_color[2]);
+        return MUST(String::formatted("\e[48;2;{};{};{}m", m_rgb_color[0], m_rgb_color[1], m_rgb_color[2]));
     } else {
-        return ByteString::formatted("\e[{}m", (u8)m_xterm_color + 40);
+        return MUST(String::formatted("\e[{}m", (u8)m_xterm_color + 40));
     }
 }
 
-ByteString Style::Foreground::to_vt_escape() const
+String Style::Foreground::to_vt_escape() const
 {
     if (is_default())
         return "";
 
     if (m_is_rgb) {
-        return ByteString::formatted("\e[38;2;{};{};{}m", m_rgb_color[0], m_rgb_color[1], m_rgb_color[2]);
+        return MUST(String::formatted("\e[38;2;{};{};{}m", m_rgb_color[0], m_rgb_color[1], m_rgb_color[2]));
     } else {
-        return ByteString::formatted("\e[{}m", (u8)m_xterm_color + 30);
+        return MUST(String::formatted("\e[{}m", (u8)m_xterm_color + 30));
     }
 }
 
-ByteString Style::Hyperlink::to_vt_escape(bool starting) const
+String Style::Hyperlink::to_vt_escape(bool starting) const
 {
     if (is_empty())
         return "";
 
-    return ByteString::formatted("\e]8;;{}\e\\", starting ? m_link : ByteString::empty());
+    return MUST(String::formatted("\e]8;;{}\e\\", starting ? m_link : ""_string));
 }
 
 void Style::unify_with(Style const& other, bool prefer_other)
@@ -1755,7 +1755,7 @@ void Style::unify_with(Style const& other, bool prefer_other)
     m_is_empty &= other.m_is_empty;
 }
 
-ByteString Style::to_byte_string() const
+String Style::to_string() const
 {
     StringBuilder builder;
     builder.append("Style { "sv);
@@ -1802,19 +1802,19 @@ ByteString Style::to_byte_string() const
 
     builder.append('}');
 
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 ErrorOr<void> VT::apply_style(Style const& style, Stream& stream, bool is_starting)
 {
     if (is_starting) {
-        TRY(stream.write_until_depleted(ByteString::formatted("\033[{};{};{}m{}{}{}",
+        TRY(stream.write_until_depleted(MUST(String::formatted("\033[{};{};{}m{}{}{}",
             style.bold() ? 1 : 22,
             style.underline() ? 4 : 24,
             style.italic() ? 3 : 23,
             style.background().to_vt_escape(),
             style.foreground().to_vt_escape(),
-            style.hyperlink().to_vt_escape(true))));
+            style.hyperlink().to_vt_escape(true)))));
     } else {
         TRY(stream.write_until_depleted(style.hyperlink().to_vt_escape(false)));
     }
@@ -1829,7 +1829,7 @@ ErrorOr<void> VT::clear_lines(size_t count_above, size_t count_below, Stream& st
     } else {
         // Go down count_below lines.
         if (count_below > 0)
-            TRY(stream.write_until_depleted(ByteString::formatted("\033[{}B", count_below)));
+            TRY(stream.write_until_depleted(MUST(String::formatted("\033[{}B", count_below))));
         // Then clear lines going upwards.
         for (size_t i = count_below + count_above; i > 0; --i) {
             TRY(stream.write_until_depleted("\033[2K"sv));
@@ -2220,11 +2220,11 @@ Result<Vector<size_t, 2>, Editor::Error> Editor::vt_dsr()
     return Vector<size_t, 2> { row, col };
 }
 
-ByteString Editor::line(size_t up_to_index) const
+String Editor::line(size_t up_to_index) const
 {
     StringBuilder builder;
     builder.append(Utf32View { m_buffer.data(), min(m_buffer.size(), up_to_index) });
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 void Editor::remove_at_index(size_t index)
@@ -2346,11 +2346,11 @@ bool Editor::Spans::contains_up_to_offset(Spans const& other, size_t offset) con
                     if constexpr (LINE_EDITOR_DEBUG) {
                         dbgln("Compare for {}-{} failed, no entry", entry.key, left_entry.key);
                         for (auto& x : entry.value)
-                            dbgln("Have: {}-{} = {}", entry.key, x.key, x.value.to_byte_string());
+                            dbgln("Have: {}-{} = {}", entry.key, x.key, MUST(x.value.to_string()));
                     }
                     return false;
                 } else if (value_it->value != left_entry.value) {
-                    dbgln_if(LINE_EDITOR_DEBUG, "Compare for {}-{} failed, different values: {} != {}", entry.key, left_entry.key, value_it->value.to_byte_string(), left_entry.value.to_byte_string());
+                    dbgln_if(LINE_EDITOR_DEBUG, "Compare for {}-{1} failed, different values: {} != {}", entry.key, left_entry.key, MUST(value_it->value.to_string()), MUST(left_entry.value.to_string()));
                     return false;
                 }
             }

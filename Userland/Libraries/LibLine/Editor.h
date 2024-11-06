@@ -9,12 +9,12 @@
 
 #include <AK/BinarySearch.h>
 #include <AK/ByteBuffer.h>
-#include <AK/ByteString.h>
 #include <AK/Function.h>
 #include <AK/HashMap.h>
 #include <AK/OwnPtr.h>
 #include <AK/RedBlackTree.h>
 #include <AK/Result.h>
+#include <AK/String.h>
 #include <AK/Traits.h>
 #include <AK/Utf32View.h>
 #include <AK/Utf8View.h>
@@ -44,7 +44,7 @@ struct KeyBinding {
         InternalFunction,
         Insertion,
     } kind { Kind::InternalFunction };
-    ByteString binding;
+    String binding;
 };
 
 struct Configuration {
@@ -69,7 +69,7 @@ struct Configuration {
     };
 
     struct DefaultTextEditor {
-        ByteString command;
+        String command;
     };
 
     Configuration()
@@ -99,7 +99,7 @@ struct Configuration {
     SignalHandler m_signal_mode { SignalHandler::WithSignalHandlers };
     OperationMode operation_mode { OperationMode::Unset };
     Vector<KeyBinding> keybindings;
-    ByteString m_default_text_editor {};
+    String m_default_text_editor {};
     bool enable_bracketed_paste { false };
 };
 
@@ -152,15 +152,15 @@ public:
 
     ~Editor();
 
-    Result<ByteString, Error> get_line(ByteString const& prompt);
+    Result<String, Error> get_line(String const& prompt);
 
     void initialize();
 
     void refetch_default_termios();
 
-    void add_to_history(ByteString const& line);
-    bool load_history(ByteString const& path);
-    bool save_history(ByteString const& path);
+    void add_to_history(String const& line);
+    bool load_history(String const& path);
+    bool save_history(String const& path);
     auto const& history() const { return m_history; }
     bool is_history_dirty() const { return m_history_dirty; }
 
@@ -202,11 +202,11 @@ public:
     }
     Vector<u32, 1024> const& buffer() const { return m_buffer; }
     u32 buffer_at(size_t pos) const { return m_buffer.at(pos); }
-    ByteString line() const { return line(m_buffer.size()); }
-    ByteString line(size_t up_to_index) const;
+    String line() const { return line(m_buffer.size()); }
+    String line(size_t up_to_index) const;
 
     // Only makes sense inside a character_input callback or on_* callback.
-    void set_prompt(ByteString const& prompt)
+    void set_prompt(String const& prompt)
     {
         if (m_cached_prompt_valid)
             m_old_prompt_metrics = m_cached_prompt_metrics;
@@ -216,7 +216,7 @@ public:
     }
 
     void clear_line();
-    void insert(ByteString const&);
+    void insert(String const&);
     void insert(StringView);
     void insert(Utf8View&);
     void insert(Utf32View const&);
@@ -324,7 +324,7 @@ private:
         m_prompt_lines_at_suggestion_initiation = 0;
         m_refresh_needed = true;
         m_input_error.clear();
-        m_returned_line = ByteString::empty();
+        m_returned_line = ""_string;
         m_chars_touched_in_the_middle = 0;
         m_drawn_end_of_line_offset = 0;
         m_drawn_spans = {};
@@ -426,7 +426,7 @@ private:
     ByteBuffer m_pending_chars;
     Vector<char, 512> m_incomplete_data;
     Optional<Error> m_input_error;
-    ByteString m_returned_line;
+    String m_returned_line;
 
     size_t m_cursor { 0 };
     size_t m_drawn_cursor { 0 };
@@ -454,7 +454,7 @@ private:
     OwnPtr<SuggestionDisplay> m_suggestion_display;
     Vector<u32, 32> m_remembered_suggestion_static_data;
 
-    ByteString m_new_prompt;
+    String m_new_prompt;
 
     SuggestionManager m_suggestion_manager;
 
@@ -478,7 +478,7 @@ private:
 
     // FIXME: This should be something more take_first()-friendly.
     struct HistoryEntry {
-        ByteString entry;
+        String entry;
         time_t timestamp;
     };
     Vector<HistoryEntry> m_history;

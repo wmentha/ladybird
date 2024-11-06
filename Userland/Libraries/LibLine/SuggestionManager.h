@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Forward.h>
 #include <AK/String.h>
 #include <AK/Utf32View.h>
@@ -24,7 +23,7 @@ public:
     static constexpr ForSearchTag ForSearch {};
 
     // Intentionally not explicit. (To allow suggesting bare strings)
-    CompletionSuggestion(ByteString const& completion)
+    CompletionSuggestion(String const& completion)
         : CompletionSuggestion(completion, ""sv, {})
     {
     }
@@ -118,7 +117,7 @@ public:
 
     void reset()
     {
-        m_last_shown_suggestion = ByteString::empty();
+        m_last_shown_suggestion = ""_string;
         m_last_shown_suggestion_display_length = 0;
         m_suggestions.clear();
         m_last_displayed_suggestion_index = 0;
@@ -131,7 +130,7 @@ private:
     }
 
     Vector<CompletionSuggestion> m_suggestions;
-    CompletionSuggestion m_last_shown_suggestion { ByteString::empty() };
+    CompletionSuggestion m_last_shown_suggestion { ""_string };
     size_t m_last_shown_suggestion_display_length { 0 };
     bool m_last_shown_suggestion_was_complete { false };
     mutable size_t m_next_suggestion_index { 0 };

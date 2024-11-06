@@ -33,7 +33,7 @@ void Editor::search_forwards()
     ScopedValueRollback inline_search_cursor_rollback { m_inline_search_cursor };
     StringBuilder builder;
     builder.append(Utf32View { m_buffer.data(), m_inline_search_cursor });
-    auto search_phrase = builder.to_byte_string();
+    auto search_phrase = MUST(builder.to_string());
     if (m_search_offset_state == SearchOffsetState::Backwards)
         --m_search_offset;
     if (m_search_offset > 0) {
@@ -60,7 +60,7 @@ void Editor::search_backwards()
     ScopedValueRollback inline_search_cursor_rollback { m_inline_search_cursor };
     StringBuilder builder;
     builder.append(Utf32View { m_buffer.data(), m_inline_search_cursor });
-    auto search_phrase = builder.to_byte_string();
+    auto search_phrase = MUST(builder.to_string());
     if (m_search_offset_state == SearchOffsetState::Forwards)
         ++m_search_offset;
     if (search(search_phrase, true)) {
@@ -317,7 +317,7 @@ void Editor::enter_search()
 
             StringBuilder builder;
             builder.append(Utf32View { search_editor.buffer().data(), search_editor.buffer().size() });
-            if (!search(builder.to_byte_string(), false, false)) {
+            if (!search(MUST(builder.to_string()), false, false)) {
                 m_chars_touched_in_the_middle = m_buffer.size();
                 m_refresh_needed = true;
                 m_buffer.clear();
