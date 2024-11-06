@@ -339,10 +339,10 @@ PcmSampleFormat FFmpegLoaderPlugin::pcm_format()
     return PcmSampleFormat::Float32;
 }
 
-ByteString FFmpegLoaderPlugin::format_name()
+String FFmpegLoaderPlugin::format_name()
 {
     if (!m_format_context)
-        return "unknown";
+        return "unknown"_string;
     return m_format_context->iformat->name;
 }
 

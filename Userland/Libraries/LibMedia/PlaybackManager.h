@@ -63,11 +63,11 @@ public:
 
     bool is_empty() const { return m_data.has<Empty>(); }
 
-    ByteString debug_string() const
+    String debug_string() const
     {
         if (is_error())
-            return ByteString::formatted("{} at {}ms", error().string_literal(), timestamp().to_milliseconds());
-        return ByteString::formatted("frame at {}ms", timestamp().to_milliseconds());
+            return MUST(String::formatted("{} at {}ms", error().string_literal(), timestamp().to_milliseconds()));
+        return MUST(String::formatted("frame at {}ms", timestamp().to_milliseconds()));
     }
 
 private:

@@ -475,11 +475,11 @@ static DecoderErrorOr<NonnullRefPtr<TrackEntry>> parse_track_entry(Streamer& str
             dbgln_if(MATROSKA_TRACE_DEBUG, "Read TrackType attribute: {}", to_underlying(track_entry->track_type()));
             break;
         case TRACK_LANGUAGE_ID:
-            track_entry->set_language(DECODER_TRY_ALLOC(String::from_byte_string(TRY_READ(streamer.read_string()))));
+            track_entry->set_language(DECODER_TRY_ALLOC(TRY_READ(streamer.read_string())));
             dbgln_if(MATROSKA_TRACE_DEBUG, "Read Track's Language attribute: {}", track_entry->language());
             break;
         case TRACK_CODEC_ID:
-            track_entry->set_codec_id(DECODER_TRY_ALLOC(String::from_byte_string(TRY_READ(streamer.read_string()))));
+            track_entry->set_codec_id(DECODER_TRY_ALLOC(TRY_READ(streamer.read_string())));
             dbgln_if(MATROSKA_TRACE_DEBUG, "Read Track's CodecID attribute: {}", track_entry->codec_id());
             break;
         case TRACK_CODEC_PRIVATE: {
@@ -995,13 +995,13 @@ DecoderErrorOr<void> SampleIterator::seek_to_cue_point(CuePoint const& cue_point
     return {};
 }
 
-ErrorOr<ByteString> Streamer::read_string()
+ErrorOr<String> Streamer::read_string()
 {
     auto string_length = TRY(read_variable_size_integer());
     if (remaining() < string_length)
         return Error::from_string_literal("String length extends past the end of the stream");
     auto string_data = data_as_chars();
-    auto string_value = ByteString(string_data, strnlen(string_data, string_length));
+    auto string_value = String(string_data, strnlen(string_data, string_length));
     TRY(read_raw_octets(string_length));
     return string_value;
 }

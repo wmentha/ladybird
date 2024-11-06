@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <AK/DeprecatedFlyString.h>
 #include <AK/Error.h>
+#include <AK/FlyString.h>
 #include <errno.h>
 
 namespace Audio {
@@ -28,20 +28,20 @@ struct LoaderError {
     Category category { Category::Unknown };
     // Binary index: where in the file the error occurred.
     size_t index { 0 };
-    DeprecatedFlyString description { ByteString::empty() };
+    FlyString description { ""_fly_string };
 
     constexpr LoaderError() = default;
-    LoaderError(Category category, size_t index, DeprecatedFlyString description)
+    LoaderError(Category category, size_t index, FlyString description)
         : category(category)
         , index(index)
         , description(move(description))
     {
     }
-    LoaderError(DeprecatedFlyString description)
+    LoaderError(FlyString description)
         : description(move(description))
     {
     }
-    LoaderError(Category category, DeprecatedFlyString description)
+    LoaderError(Category category, FlyString description)
         : category(category)
         , description(move(description))
     {
@@ -54,7 +54,7 @@ struct LoaderError {
     {
         if (error.is_errno()) {
             auto code = error.code();
-            description = ByteString::formatted("{} ({})", strerror(code), code);
+            description = MUST(String::formatted("{} ({})", strerror(code), code));
             if (code == EBADF || code == EBUSY || code == EEXIST || code == EIO || code == EISDIR || code == ENOENT || code == ENOMEM || code == EPIPE)
                 category = Category::IO;
         } else {

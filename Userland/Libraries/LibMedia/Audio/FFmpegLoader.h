@@ -49,7 +49,7 @@ public:
     virtual u32 sample_rate() override;
     virtual u16 num_channels() override;
     virtual PcmSampleFormat pcm_format() override;
-    virtual ByteString format_name() override;
+    virtual String format_name() override;
 
 private:
     MaybeLoaderError initialize();

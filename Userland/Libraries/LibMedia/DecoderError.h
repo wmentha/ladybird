@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Error.h>
 #include <AK/Format.h>
 #include <AK/SourceLocation.h>
+#include <AK/String.h>
 #include <LibMedia/Forward.h>
 #include <errno.h>
 
@@ -43,7 +43,7 @@ public:
     static DecoderError format(DecoderErrorCategory category, CheckedFormatString<Parameters...>&& format_string, Parameters const&... parameters)
     {
         AK::VariadicFormatParams<AK::AllowDebugOnlyFormatters::No, Parameters...> variadic_format_params { parameters... };
-        return DecoderError::with_description(category, ByteString::vformatted(format_string.view(), variadic_format_params));
+        return DecoderError::with_description(category, String::vformatted(format_string.view(), variadic_format_params));
     }
 
     static DecoderError from_source_location(DecoderErrorCategory category, StringView description, SourceLocation location = SourceLocation::current())
@@ -66,14 +66,14 @@ public:
     StringView string_literal() const { return m_description; }
 
 private:
-    DecoderError(DecoderErrorCategory category, ByteString description)
+    DecoderError(DecoderErrorCategory category, String description)
         : m_category(category)
         , m_description(move(description))
     {
     }
 
     DecoderErrorCategory m_category { DecoderErrorCategory::Unknown };
-    ByteString m_description;
+    String m_description;
 };
 
 #define DECODER_TRY(category, expression)                                                  \
