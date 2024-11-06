@@ -668,7 +668,7 @@ bool Regex<Parser>::attempt_rewrite_entire_match_as_substring_search(BasicBlockL
         state.instruction_position += opcode.size();
     }
 
-    parser_result.optimization_data.pure_substring_search = final_string.to_byte_string();
+    parser_result.optimization_data.pure_substring_search = MUST(final_string.to_string());
     return true;
 }
 
@@ -1077,20 +1077,20 @@ void Optimizer::append_alternation(ByteCode& target, Span<ByteCode> alternatives
 
     if constexpr (REGEX_DEBUG) {
         Function<void(decltype(trie)&, size_t)> print_tree = [&](decltype(trie)& node, size_t indent = 0) mutable {
-            ByteString name = "(no ip)";
-            ByteString insn;
+            String name = "(no ip)"_string;
+            String insn;
             if (node.has_metadata()) {
-                name = ByteString::formatted(
+                name = MUST(String::formatted(
                     "{}@{} ({} node{})",
                     node.metadata_value().first().instruction_position,
                     node.metadata_value().first().alternative_index,
                     node.metadata_value().size(),
-                    node.metadata_value().size() == 1 ? "" : "s");
+                    node.metadata_value().size() == 1 ? "" : "s"));
 
                 MatchState state;
                 state.instruction_position = node.metadata_value().first().instruction_position;
                 auto& opcode = alternatives[node.metadata_value().first().alternative_index].get_opcode(state);
-                insn = ByteString::formatted("{} {}", opcode.to_byte_string(), opcode.arguments_string());
+                insn = MUST(String::formatted("{} {}", opcode.to_string(), opcode.arguments_string()));
             }
             dbgln("{:->{}}| {} -- {}", "", indent * 2, name, insn);
             for (auto& child : node.children())

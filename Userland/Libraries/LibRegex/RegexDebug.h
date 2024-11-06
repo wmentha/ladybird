@@ -54,19 +54,19 @@ public:
         fflush(m_file);
     }
 
-    void print_opcode(ByteString const& system, OpCode& opcode, MatchState& state, size_t recursion = 0, bool newline = true) const
+    void print_opcode(String const& system, OpCode& opcode, MatchState& state, size_t recursion = 0, bool newline = true) const
     {
         out(m_file, "{:15} | {:5} | {:9} | {:35} | {:30} | {:20}",
             system.characters(),
             state.instruction_position,
             recursion,
-            opcode.to_byte_string().characters(),
+            opcode.to_string().characters(),
             opcode.arguments_string().characters(),
-            ByteString::formatted("ip: {:3},   sp: {:3}", state.instruction_position, state.string_position));
+            MUST(String::formatted("ip: {:3},   sp: {:3}", state.instruction_position, state.string_position)));
         if (newline)
             outln();
         if (newline && is<OpCode_Compare>(opcode)) {
-            for (auto& line : to<OpCode_Compare>(opcode).variable_arguments_to_byte_string())
+            for (auto& line : to<OpCode_Compare>(opcode).variable_arguments_to_string())
                 outln(m_file, "{:15} | {:5} | {:9} | {:35} | {:30} | {:20}", "", "", "", "", line, "");
         }
     }
@@ -84,10 +84,10 @@ public:
             builder.appendff(", next ip: {}", state.instruction_position + opcode.size());
         }
 
-        outln(m_file, " | {:20}", builder.to_byte_string());
+        outln(m_file, " | {:20}", MUST(builder.to_string()));
 
         if (is<OpCode_Compare>(opcode)) {
-            for (auto& line : to<OpCode_Compare>(opcode).variable_arguments_to_byte_string(input)) {
+            for (auto& line : to<OpCode_Compare>(opcode).variable_arguments_to_string(input)) {
                 outln(m_file, "{:15} | {:5} | {:9} | {:35} | {:30} | {:20}", "", "", "", "", line, "");
             }
         }
@@ -103,7 +103,7 @@ public:
         for (size_t i = 0; i < length; ++i) {
             builder.append('=');
         }
-        auto str = builder.to_byte_string();
+        auto str = MUST(builder.to_string());
         VERIFY(!str.is_empty());
 
         outln(m_file, "{}", str);
@@ -114,11 +114,11 @@ public:
             builder.append('-');
         }
         builder.append('\n');
-        m_debug_stripline = builder.to_byte_string();
+        m_debug_stripline = MUST(builder.to_string());
     }
 
 private:
-    ByteString m_debug_stripline;
+    String m_debug_stripline;
     FILE* m_file;
 };
 

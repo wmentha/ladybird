@@ -5,8 +5,8 @@
  */
 
 #include <AK/BumpAllocator.h>
-#include <AK/ByteString.h>
 #include <AK/Debug.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <LibRegex/RegexMatcher.h>
 #include <LibRegex/RegexParser.h>
@@ -32,7 +32,7 @@ regex::Parser::Result Regex<Parser>::parse_pattern(StringView pattern, typename 
 
 template<typename Parser>
 struct CacheKey {
-    ByteString pattern;
+    String pattern;
     typename ParserTraits<Parser>::OptionsType options;
 
     bool operator==(CacheKey const& other) const
@@ -49,7 +49,7 @@ static size_t s_cached_bytecode_size = 0;
 static constexpr auto MaxRegexCachedBytecodeSize = 1 * MiB;
 
 template<class Parser>
-Regex<Parser>::Regex(ByteString pattern, typename ParserTraits<Parser>::OptionsType regex_options)
+Regex<Parser>::Regex(String pattern, typename ParserTraits<Parser>::OptionsType regex_options)
     : pattern_value(move(pattern))
 {
     if (auto cache_entry = s_parser_cache<Parser>.get({ pattern_value, regex_options }); cache_entry.has_value()) {
@@ -74,7 +74,7 @@ Regex<Parser>::Regex(ByteString pattern, typename ParserTraits<Parser>::OptionsT
 }
 
 template<class Parser>
-Regex<Parser>::Regex(regex::Parser::Result parse_result, ByteString pattern, typename ParserTraits<Parser>::OptionsType regex_options)
+Regex<Parser>::Regex(regex::Parser::Result parse_result, String pattern, typename ParserTraits<Parser>::OptionsType regex_options)
     : pattern_value(move(pattern))
     , parser_result(move(parse_result))
 {
@@ -116,7 +116,7 @@ typename ParserTraits<Parser>::OptionsType Regex<Parser>::options() const
 }
 
 template<class Parser>
-ByteString Regex<Parser>::error_string(Optional<ByteString> message) const
+String Regex<Parser>::error_string(Optional<String> message) const
 {
     StringBuilder eb;
     eb.append("Error during parsing of regular expression:\n"sv);
@@ -125,7 +125,7 @@ ByteString Regex<Parser>::error_string(Optional<ByteString> message) const
         eb.append(' ');
 
     eb.appendff("^---- {}", message.value_or(get_error_string(parser_result.error)));
-    return eb.to_byte_string();
+    return MUST(eb.to_string());
 }
 
 template<typename Parser>
@@ -198,9 +198,9 @@ RegexResult Matcher<Parser>::match(Vector<RegexStringView> const& views, Optiona
 
         VERIFY(start_position + state.string_position - start_position <= input.view.length());
         if (input.regex_options.has_flag_set(AllFlags::StringCopyMatches)) {
-            state.matches.mutable_at(input.match_index) = { input.view.substring_view(start_position, state.string_position - start_position).to_byte_string(), input.line, start_position, input.global_offset + start_position };
+            state.matches.mutable_at(input.match_index) = { MUST(input.view.substring_from_byte_offset(start_position, state.string_position - start_position)), input.line, start_position, input.global_offset + start_position };
         } else { // let the view point to the original string ...
-            state.matches.mutable_at(input.match_index) = { input.view.substring_view(start_position, state.string_position - start_position), input.line, start_position, input.global_offset + start_position };
+            state.matches.mutable_at(input.match_index) = { MUST(input.view.substring_from_byte_offset(start_position, state.string_position - start_position)), input.line, start_position, input.global_offset + start_position };
         }
     };
 
@@ -299,7 +299,7 @@ RegexResult Matcher<Parser>::match(Vector<RegexStringView> const& views, Optiona
                 }
 
                 dbgln_if(REGEX_DEBUG, "state.string_position={}, view_index={}", state.string_position, view_index);
-                dbgln_if(REGEX_DEBUG, "[match] Found a match (length={}): '{}'", state.string_position - view_index, input.view.substring_view(view_index, state.string_position - view_index));
+                dbgln_if(REGEX_DEBUG, "[match] Found a match (length={}): '{}'", state.string_position - view_index, MUST(input.view.substring_from_byte_offset(view_index, state.string_position - view_index)));
 
                 ++match_count;
 
@@ -455,9 +455,9 @@ bool Matcher<Parser>::execute(MatchInput const& input, MatchState& state, size_t
         if (needle.length() + state.string_position > input.view.length())
             return false;
 
-        auto haystack = input.view.string_view().substring_view(state.string_position);
+        auto haystack = MUST(input.view.string_view().substring_from_byte_offset(state.string_position));
         if (input.regex_options.has_flag_set(AllFlags::Insensitive)) {
-            if (!haystack.substring_view(0, needle.length()).equals_ignoring_ascii_case(needle))
+            if (MUST(!haystack.substring_from_byte_offset(0, needle.length())).equals_ignoring_ascii_case(needle))
                 return false;
         } else {
             if (!haystack.starts_with(needle))

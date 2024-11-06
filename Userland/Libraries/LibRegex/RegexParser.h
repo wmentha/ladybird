@@ -53,11 +53,11 @@ public:
         size_t match_length_minimum;
         Error error;
         Token error_token;
-        Vector<DeprecatedFlyString> capture_groups;
+        Vector<FlyString> capture_groups;
         AllOptions options;
 
         struct {
-            Optional<ByteString> pure_substring_search;
+            Optional<String> pure_substring_search;
             bool only_start_of_line = false;
         } optimization_data {};
     };
@@ -87,7 +87,7 @@ protected:
     ALWAYS_INLINE bool match_ordinary_characters();
     ALWAYS_INLINE Token consume();
     ALWAYS_INLINE Token consume(TokenType type, Error error);
-    ALWAYS_INLINE bool consume(ByteString const&);
+    ALWAYS_INLINE bool consume(String const&);
     ALWAYS_INLINE Optional<u32> consume_escaped_code_point(bool unicode);
     ALWAYS_INLINE bool try_skip(StringView);
     ALWAYS_INLINE bool lookahead_any(StringView);
@@ -116,7 +116,7 @@ protected:
         size_t repetition_mark_count { 0 };
         AllOptions regex_options;
         HashMap<int, size_t> capture_group_minimum_lengths;
-        HashMap<DeprecatedFlyString, NamedCaptureGroup> named_capture_groups;
+        HashMap<FlyString, NamedCaptureGroup> named_capture_groups;
 
         explicit ParserState(Lexer& lexer)
             : lexer(lexer)
@@ -239,7 +239,7 @@ private:
     };
     StringView read_digits_as_string(ReadDigitsInitialZeroState initial_zero = ReadDigitsInitialZeroState::Allow, bool hex = false, int max_count = -1, int min_count = -1);
     Optional<unsigned> read_digits(ReadDigitsInitialZeroState initial_zero = ReadDigitsInitialZeroState::Allow, bool hex = false, int max_count = -1, int min_count = -1);
-    DeprecatedFlyString read_capture_group_specifier(bool take_starting_angle_bracket = false);
+    FlyString read_capture_group_specifier(bool take_starting_angle_bracket = false);
 
     struct Script {
         Unicode::Script script {};

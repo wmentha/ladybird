@@ -82,21 +82,21 @@ private:
 template<class Parser>
 class Regex final {
 public:
-    ByteString pattern_value;
+    String pattern_value;
     regex::Parser::Result parser_result;
     OwnPtr<Matcher<Parser>> matcher { nullptr };
     mutable size_t start_offset { 0 };
 
     static regex::Parser::Result parse_pattern(StringView pattern, typename ParserTraits<Parser>::OptionsType regex_options = {});
 
-    explicit Regex(ByteString pattern, typename ParserTraits<Parser>::OptionsType regex_options = {});
-    Regex(regex::Parser::Result parse_result, ByteString pattern, typename ParserTraits<Parser>::OptionsType regex_options = {});
+    explicit Regex(String pattern, typename ParserTraits<Parser>::OptionsType regex_options = {});
+    Regex(regex::Parser::Result parse_result, String pattern, typename ParserTraits<Parser>::OptionsType regex_options = {});
     ~Regex() = default;
     Regex(Regex&&);
     Regex& operator=(Regex&&);
 
     typename ParserTraits<Parser>::OptionsType options() const;
-    ByteString error_string(Optional<ByteString> message = {}) const;
+    String error_string(Optional<String> message = {}) const;
 
     RegexResult match(RegexStringView view, Optional<typename ParserTraits<Parser>::OptionsType> regex_options = {}) const
     {
@@ -112,7 +112,7 @@ public:
         return matcher->match(views, regex_options);
     }
 
-    ByteString replace(RegexStringView view, StringView replacement_pattern, Optional<typename ParserTraits<Parser>::OptionsType> regex_options = {}) const
+    String replace(RegexStringView view, StringView replacement_pattern, Optional<typename ParserTraits<Parser>::OptionsType> regex_options = {}) const
     {
         if (!matcher || parser_result.error != Error::NoError)
             return {};
@@ -121,11 +121,11 @@ public:
         size_t start_offset = 0;
         RegexResult result = matcher->match(view, regex_options);
         if (!result.success)
-            return view.to_byte_string();
+            return MUST(view.to_string());
 
         for (size_t i = 0; i < result.matches.size(); ++i) {
             auto& match = result.matches[i];
-            builder.append(view.substring_view(start_offset, match.global_offset - start_offset).to_byte_string());
+            builder.append(MUST(view.substring_from_byte_offset(start_offset, match.global_offset - start_offset)));
             start_offset = match.global_offset + match.view.length();
             GenericLexer lexer(replacement_pattern);
             while (!lexer.is_eof()) {
@@ -136,7 +136,7 @@ public:
                     }
                     auto number = lexer.consume_while(isdigit);
                     if (auto index = number.to_number<unsigned>(); index.has_value() && result.n_capture_groups >= index.value()) {
-                        builder.append(result.capture_group_matches[i][index.value() - 1].view.to_byte_string());
+                        builder.append(result.capture_group_matches[i][index.value() - 1].view);
                     } else {
                         builder.appendff("\\{}", number);
                     }
@@ -146,9 +146,9 @@ public:
             }
         }
 
-        builder.append(view.substring_view(start_offset, view.length() - start_offset).to_byte_string());
+        builder.append(MUST(view.substring_from_byte_offset(start_offset, view.length() - start_offset)));
 
-        return builder.to_byte_string();
+        return MUST(builder.to_string());
     }
 
     // FIXME: replace(Vector<RegexStringView> const , ...)

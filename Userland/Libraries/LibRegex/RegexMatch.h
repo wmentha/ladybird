@@ -10,12 +10,12 @@
 #include "RegexOptions.h"
 #include <AK/Error.h>
 
-#include <AK/ByteString.h>
 #include <AK/COWVector.h>
-#include <AK/DeprecatedFlyString.h>
+#include <AK/FlyString.h>
 #include <AK/HashMap.h>
 #include <AK/MemMem.h>
 #include <AK/RedBlackTree.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringView.h>
 #include <AK/Utf16View.h>
@@ -29,11 +29,6 @@ namespace regex {
 class RegexStringView {
 public:
     RegexStringView() = default;
-
-    RegexStringView(ByteString const& string)
-        : m_view(string.view())
-    {
-    }
 
     RegexStringView(String const& string)
         : m_view(string.bytes_as_string_view())
@@ -59,8 +54,6 @@ public:
         : m_view(view)
     {
     }
-
-    explicit RegexStringView(ByteString&&) = delete;
 
     bool is_string_view() const
     {
@@ -149,14 +142,14 @@ public:
         return view;
     }
 
-    RegexStringView construct_as_same(Span<u32> data, Optional<ByteString>& optional_string_storage, Utf16Data& optional_utf16_storage) const
+    RegexStringView construct_as_same(Span<u32> data, Optional<String>& optional_string_storage, Utf16Data& optional_utf16_storage) const
     {
         auto view = m_view.visit(
             [&]<typename T>(T const&) {
                 StringBuilder builder;
                 for (auto ch : data)
                     builder.append(ch); // Note: The type conversion is intentional.
-                optional_string_storage = builder.to_byte_string();
+                optional_string_storage = MUST(builder.to_string());
                 return RegexStringView { T { *optional_string_storage } };
             },
             [&](Utf32View) {
@@ -264,19 +257,6 @@ public:
         return view;
     }
 
-    ByteString to_byte_string() const
-    {
-        return m_view.visit(
-            [](StringView view) { return view.to_byte_string(); },
-            [](Utf16View view) { return view.to_byte_string(Utf16View::AllowInvalidCodeUnits::Yes).release_value_but_fixme_should_propagate_errors(); },
-            [](auto& view) {
-                StringBuilder builder;
-                for (auto it = view.begin(); it != view.end(); ++it)
-                    builder.append_code_point(*it);
-                return builder.to_byte_string();
-            });
-    }
-
     ErrorOr<String> to_string() const
     {
         return m_view.visit(
@@ -350,29 +330,11 @@ public:
             });
     }
 
-    bool operator==(char const* cstring) const
-    {
-        return m_view.visit(
-            [&](Utf32View) { return to_byte_string() == cstring; },
-            [&](Utf16View) { return to_byte_string() == cstring; },
-            [&](Utf8View const& view) { return view.as_string() == cstring; },
-            [&](StringView view) { return view == cstring; });
-    }
-
-    bool operator==(ByteString const& string) const
-    {
-        return m_view.visit(
-            [&](Utf32View) { return to_byte_string() == string; },
-            [&](Utf16View) { return to_byte_string() == string; },
-            [&](Utf8View const& view) { return view.as_string() == string; },
-            [&](StringView view) { return view == string; });
-    }
-
     bool operator==(StringView string) const
     {
         return m_view.visit(
-            [&](Utf32View) { return to_byte_string() == string; },
-            [&](Utf16View) { return to_byte_string() == string; },
+            [&](Utf32View) { return to_string() == string; },
+            [&](Utf16View) { return to_string() == string; },
             [&](Utf8View const& view) { return view.as_string() == string; },
             [&](StringView view) { return view == string; });
     }
@@ -383,25 +345,25 @@ public:
             [&](Utf32View view) {
                 return view.length() == other.length() && __builtin_memcmp(view.code_points(), other.code_points(), view.length() * sizeof(u32)) == 0;
             },
-            [&](Utf16View) { return to_byte_string() == RegexStringView { other }.to_byte_string(); },
-            [&](Utf8View const& view) { return view.as_string() == RegexStringView { other }.to_byte_string(); },
-            [&](StringView view) { return view == RegexStringView { other }.to_byte_string(); });
+            [&](Utf16View) { return to_string() == RegexStringView { other }.to_string(); },
+            [&](Utf8View const& view) { return view.as_string() == RegexStringView { other }.to_string(); },
+            [&](StringView view) { return view == RegexStringView { other }.to_string(); });
     }
 
     bool operator==(Utf16View const& other) const
     {
         return m_view.visit(
-            [&](Utf32View) { return to_byte_string() == RegexStringView { other }.to_byte_string(); },
+            [&](Utf32View) { return to_string() == RegexStringView { other }.to_string(); },
             [&](Utf16View const& view) { return view == other; },
-            [&](Utf8View const& view) { return view.as_string() == RegexStringView { other }.to_byte_string(); },
-            [&](StringView view) { return view == RegexStringView { other }.to_byte_string(); });
+            [&](Utf8View const& view) { return view.as_string() == RegexStringView { other }.to_string(); },
+            [&](StringView view) { return view == RegexStringView { other }.to_string(); });
     }
 
     bool operator==(Utf8View const& other) const
     {
         return m_view.visit(
-            [&](Utf32View) { return to_byte_string() == other.as_string(); },
-            [&](Utf16View) { return to_byte_string() == other.as_string(); },
+            [&](Utf32View) { return to_string() == other.as_string(); },
+            [&](Utf16View) { return to_string() == other.as_string(); },
             [&](Utf8View const& view) { return view.as_string() == other.as_string(); },
             [&](StringView view) { return other.as_string() == view; });
     }
@@ -477,7 +439,7 @@ private:
 
 class Match final {
 private:
-    Optional<DeprecatedFlyString> string;
+    Optional<FlyString> string;
 
 public:
     Match() = default;
@@ -492,7 +454,7 @@ public:
     {
     }
 
-    Match(ByteString string_, size_t const line_, size_t const column_, size_t const global_offset_)
+    Match(String string_, size_t const line_, size_t const column_, size_t const global_offset_)
         : string(move(string_))
         , view(string.value().view())
         , line(line_)
@@ -522,7 +484,7 @@ public:
     }
 
     RegexStringView view {};
-    Optional<DeprecatedFlyString> capture_group_name {};
+    Optional<FlyString> capture_group_name {};
     size_t line { 0 };
     size_t column { 0 };
     size_t global_offset { 0 };
@@ -572,7 +534,7 @@ template<>
 struct AK::Formatter<regex::RegexStringView> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, regex::RegexStringView value)
     {
-        auto string = value.to_byte_string();
+        auto string = MUST(value.to_string());
         return Formatter<StringView>::format(builder, string);
     }
 };

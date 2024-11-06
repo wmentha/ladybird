@@ -260,7 +260,7 @@ ALWAYS_INLINE ExecutionResult OpCode_CheckBegin::execute(MatchInput const& input
             return true;
 
         if (input.regex_options.has_flag_set(AllFlags::Multiline) && input.regex_options.has_flag_set(AllFlags::Internal_ConsiderNewline)) {
-            auto input_view = input.view.substring_view(state.string_position - 1, 1)[0];
+            auto input_view = MUST(input.view.substring_from_byte_offset(state.string_position - 1, 1))[0];
             return input_view == '\r' || input_view == '\n' || input_view == LineSeparator || input_view == ParagraphSeparator;
         }
 
@@ -313,7 +313,7 @@ ALWAYS_INLINE ExecutionResult OpCode_CheckEnd::execute(MatchInput const& input, 
             return true;
 
         if (input.regex_options.has_flag_set(AllFlags::Multiline) && input.regex_options.has_flag_set(AllFlags::Internal_ConsiderNewline)) {
-            auto input_view = input.view.substring_view(state.string_position, 1)[0];
+            auto input_view = MUST(input.view.substring_from_byte_offset(state.string_position, 1))[0];
             return input_view == '\r' || input_view == '\n' || input_view == LineSeparator || input_view == ParagraphSeparator;
         }
 
@@ -378,10 +378,10 @@ ALWAYS_INLINE ExecutionResult OpCode_SaveRightCaptureGroup::execute(MatchInput c
 
     VERIFY(start_position + length <= input.view.length());
 
-    auto view = input.view.substring_view(start_position, length);
+    auto view = MUST(input.view.substring_from_byte_offset(start_position, length));
 
     if (input.regex_options & AllFlags::StringCopyMatches) {
-        match = { view.to_byte_string(), input.line, start_position, input.global_offset + start_position }; // create a copy of the original string
+        match = { MUST(String::from_utf8(view)), input.line, start_position, input.global_offset + start_position }; // create a copy of the original string
     } else {
         match = { view, input.line, start_position, input.global_offset + start_position }; // take view to original string
     }
@@ -403,10 +403,10 @@ ALWAYS_INLINE ExecutionResult OpCode_SaveRightNamedCaptureGroup::execute(MatchIn
 
     VERIFY(start_position + length <= input.view.length());
 
-    auto view = input.view.substring_view(start_position, length);
+    auto view = MUST(input.view.substring_from_byte_offset(start_position, length));
 
     if (input.regex_options & AllFlags::StringCopyMatches) {
-        match = { view.to_byte_string(), name(), input.line, start_position, input.global_offset + start_position }; // create a copy of the original string
+        match = { MUST(String::from_utf8(view)), name(), input.line, start_position, input.global_offset + start_position }; // create a copy of the original string
     } else {
         match = { view, name(), input.line, start_position, input.global_offset + start_position }; // take view to original string
     }
@@ -487,7 +487,7 @@ ALWAYS_INLINE ExecutionResult OpCode_Compare::execute(MatchInput const& input, M
             if (input.view.length() <= state.string_position)
                 return ExecutionResult::Failed_ExecuteLowPrioForks;
 
-            auto input_view = input.view.substring_view(state.string_position, 1)[0];
+            auto input_view = MUST(input.view.substring_from_byte_offset(state.string_position, 1))[0];
             auto is_equivalent_to_newline = input_view == '\n'
                 || (input.regex_options.has_flag_set(AllFlags::Internal_ECMA262DotSemantics)
                         ? (input_view == '\r' || input_view == LineSeparator || input_view == ParagraphSeparator)
@@ -510,7 +510,7 @@ ALWAYS_INLINE ExecutionResult OpCode_Compare::execute(MatchInput const& input, M
             if (input.view.length() < state.string_position + length)
                 return ExecutionResult::Failed_ExecuteLowPrioForks;
 
-            Optional<ByteString> str;
+            Optional<String> str;
             Utf16Data utf16;
             Vector<u32> data;
             data.ensure_capacity(length);
@@ -708,7 +708,7 @@ ALWAYS_INLINE void OpCode_Compare::compare_char(MatchInput const& input, MatchSt
 
     // FIXME: Figure out how to do this if unicode() without performing a substring split first.
     auto input_view = input.view.unicode()
-        ? input.view.substring_view(state.string_position, 1)[0]
+        ? MUST(input.view.substring_from_byte_offset(state.string_position, 1))[0]
         : input.view.code_unit_at(state.string_position_in_code_units);
 
     bool equal;
@@ -754,7 +754,7 @@ ALWAYS_INLINE bool OpCode_Compare::compare_string(MatchInput const& input, Match
         return !inverse_matched;
     }
 
-    auto subject = input.view.substring_view(state.string_position, str.length());
+    auto subject = MUST(input.view.substring_from_byte_offset(state.string_position, str.length()));
     bool equals;
     if (input.regex_options & AllFlags::Insensitive)
         equals = subject.equals_ignoring_case(str);
@@ -899,9 +899,9 @@ ALWAYS_INLINE void OpCode_Compare::compare_script_extension(MatchInput const& in
     }
 }
 
-ByteString OpCode_Compare::arguments_string() const
+String OpCode_Compare::arguments_string() const
 {
-    return ByteString::formatted("argc={}, args={} ", arguments_count(), arguments_size());
+    return MUST(String::formatted("argc={}, args={} ", arguments_count(), arguments_size()));
 }
 
 Vector<CompareTypeAndValuePair> OpCode_Compare::flat_compares() const
@@ -947,16 +947,16 @@ Vector<CompareTypeAndValuePair> OpCode_Compare::flat_compares() const
     return result;
 }
 
-Vector<ByteString> OpCode_Compare::variable_arguments_to_byte_string(Optional<MatchInput const&> input) const
+Vector<String> OpCode_Compare::variable_arguments_to_string(Optional<MatchInput const&> input) const
 {
-    Vector<ByteString> result;
+    Vector<String> result;
 
     size_t offset { state().instruction_position + 3 };
     RegexStringView const& view = ((input.has_value()) ? input.value().view : StringView {});
 
     for (size_t i = 0; i < arguments_count(); ++i) {
         auto compare_type = (CharacterCompareType)m_bytecode->at(offset++);
-        result.empend(ByteString::formatted("type={} [{}]", (size_t)compare_type, character_compare_type_name(compare_type)));
+        result.empend(MUST(String::formatted("type={} [{}]", (size_t)compare_type, character_compare_type_name(compare_type))));
 
         auto string_start_offset = state().string_position_before_match;
 
@@ -964,39 +964,39 @@ Vector<ByteString> OpCode_Compare::variable_arguments_to_byte_string(Optional<Ma
             auto ch = m_bytecode->at(offset++);
             auto is_ascii = is_ascii_printable(ch);
             if (is_ascii)
-                result.empend(ByteString::formatted(" value='{:c}'", static_cast<char>(ch)));
+                result.empend(MUST(String::formatted(" value='{:c}'", static_cast<char>(ch))));
             else
-                result.empend(ByteString::formatted(" value={:x}", ch));
+                result.empend(MUST(String::formatted(" value={:x}", ch)));
 
             if (!view.is_null() && view.length() > string_start_offset) {
                 if (is_ascii) {
-                    result.empend(ByteString::formatted(
+                    result.empend(MUST(String::formatted(
                         " compare against: '{}'",
-                        view.substring_view(string_start_offset, string_start_offset > view.length() ? 0 : 1).to_byte_string()));
+                        MUST(view.substring_from_byte_offset(string_start_offset, string_start_offset > view.length() ? 0 : 1)))));
                 } else {
-                    auto str = view.substring_view(string_start_offset, string_start_offset > view.length() ? 0 : 1).to_byte_string();
+                    auto str = MUST(view.substring_from_byte_offset(string_start_offset, string_start_offset > view.length() ? 0 : 1));
                     u8 buf[8] { 0 };
                     __builtin_memcpy(buf, str.characters(), min(str.length(), sizeof(buf)));
-                    result.empend(ByteString::formatted(" compare against: {:x},{:x},{:x},{:x},{:x},{:x},{:x},{:x}",
-                        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]));
+                    result.empend(MUST(String::formatted(" compare against: {:x},{:x},{:x},{:x},{:x},{:x},{:x},{:x}",
+                        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7])));
                 }
             }
         } else if (compare_type == CharacterCompareType::Reference) {
             auto ref = m_bytecode->at(offset++);
-            result.empend(ByteString::formatted(" number={}", ref));
+            result.empend(MUST(String::formatted(" number={}", ref)));
             if (input.has_value()) {
                 if (state().capture_group_matches.size() > input->match_index) {
                     auto& match = state().capture_group_matches[input->match_index];
                     if (match.size() > ref) {
                         auto& group = match[ref];
-                        result.empend(ByteString::formatted(" left={}", group.left_column));
-                        result.empend(ByteString::formatted(" right={}", group.left_column + group.view.length_in_code_units()));
-                        result.empend(ByteString::formatted(" contents='{}'", group.view));
+                        result.empend(MUST(String::formatted(" left={}", group.left_column)));
+                        result.empend(MUST(String::formatted(" right={}", group.left_column + group.view.length_in_code_units())));
+                        result.empend(MUST(String::formatted(" contents='{}'", group.view)));
                     } else {
-                        result.empend(ByteString::formatted(" (invalid ref, max={})", match.size() - 1));
+                        result.empend(MUST(String::formatted(" (invalid ref, max={})", match.size() - 1)));
                     }
                 } else {
-                    result.empend(ByteString::formatted(" (invalid index {}, max={})", input->match_index, state().capture_group_matches.size() - 1));
+                    result.empend(MUST(String::formatted(" (invalid index {}, max={})", input->match_index, state().capture_group_matches.size() - 1)));
                 }
             }
         } else if (compare_type == CharacterCompareType::String) {
@@ -1004,42 +1004,42 @@ Vector<ByteString> OpCode_Compare::variable_arguments_to_byte_string(Optional<Ma
             StringBuilder str_builder;
             for (size_t i = 0; i < length; ++i)
                 str_builder.append(m_bytecode->at(offset++));
-            result.empend(ByteString::formatted(" value=\"{}\"", str_builder.string_view().substring_view(0, length)));
+            result.empend(MUST(String::formatted(" value=\"{}\"", str_builder.string_view().substring_from_byte_offset(0, length))));
             if (!view.is_null() && view.length() > state().string_position)
-                result.empend(ByteString::formatted(
+                result.empend(MUST(String::formatted(
                     " compare against: \"{}\"",
-                    input.value().view.substring_view(string_start_offset, string_start_offset + length > view.length() ? 0 : length).to_byte_string()));
+                    MUST(input.value().view.substring_from_byte_offset(string_start_offset, string_start_offset + length > view.length() ? 0 : length)))));
         } else if (compare_type == CharacterCompareType::CharClass) {
             auto character_class = (CharClass)m_bytecode->at(offset++);
-            result.empend(ByteString::formatted(" ch_class={} [{}]", (size_t)character_class, character_class_name(character_class)));
+            result.empend(MUST(String::formatted(" ch_class={} [{}]", (size_t)character_class, character_class_name(character_class))));
             if (!view.is_null() && view.length() > state().string_position)
-                result.empend(ByteString::formatted(
+                result.empend(MUST(String::formatted(
                     " compare against: '{}'",
-                    input.value().view.substring_view(string_start_offset, state().string_position > view.length() ? 0 : 1).to_byte_string()));
+                    MUST(input.value().view.substring_from_byte_offset(string_start_offset, state().string_position > view.length() ? 0 : 1)))));
         } else if (compare_type == CharacterCompareType::CharRange) {
             auto value = (CharRange)m_bytecode->at(offset++);
-            result.empend(ByteString::formatted(" ch_range={:x}-{:x}", value.from, value.to));
+            result.empend(MUST(String::formatted(" ch_range={:x}-{:x}", value.from, value.to)));
             if (!view.is_null() && view.length() > state().string_position)
-                result.empend(ByteString::formatted(
+                result.empend(MUST(String::formatted(
                     " compare against: '{}'",
-                    input.value().view.substring_view(string_start_offset, state().string_position > view.length() ? 0 : 1).to_byte_string()));
+                    MUST(input.value().view.substring_from_byte_offset(string_start_offset, state().string_position > view.length() ? 0 : 1)))));
         } else if (compare_type == CharacterCompareType::LookupTable) {
             auto count = m_bytecode->at(offset++);
             for (size_t j = 0; j < count; ++j) {
                 auto range = (CharRange)m_bytecode->at(offset++);
-                result.append(ByteString::formatted(" {:x}-{:x}", range.from, range.to));
+                result.append(MUST(String::formatted(" {:x}-{:x}", range.from, range.to)));
             }
             if (!view.is_null() && view.length() > state().string_position)
-                result.empend(ByteString::formatted(
+                result.empend(MUST(String::formatted(
                     " compare against: '{}'",
-                    input.value().view.substring_view(string_start_offset, state().string_position > view.length() ? 0 : 1).to_byte_string()));
+                    MUST(input.value().view.substring_from_byte_offset(string_start_offset, state().string_position > view.length() ? 0 : 1)))));
         } else if (compare_type == CharacterCompareType::GeneralCategory
             || compare_type == CharacterCompareType::Property
             || compare_type == CharacterCompareType::Script
             || compare_type == CharacterCompareType::ScriptExtension) {
 
             auto value = m_bytecode->at(offset++);
-            result.empend(ByteString::formatted(" value={}", value));
+            result.empend(MUST(String::formatted(" value={}", value)));
         }
     }
     return result;
