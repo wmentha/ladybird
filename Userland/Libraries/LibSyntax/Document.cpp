@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Debug.h>
 #include <AK/QuickSort.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/Utf8View.h>
 #include <AK/Vector.h>
@@ -65,11 +65,11 @@ size_t TextDocumentLine::leading_spaces() const
     return count;
 }
 
-ByteString TextDocumentLine::to_utf8() const
+String TextDocumentLine::to_utf8() const
 {
     StringBuilder builder;
     builder.append(view());
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 TextDocumentLine::TextDocumentLine(Document& document)
