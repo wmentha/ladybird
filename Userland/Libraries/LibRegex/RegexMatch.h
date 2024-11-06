@@ -6,10 +6,7 @@
 
 #pragma once
 
-#include "Forward.h"
-#include "RegexOptions.h"
 #include <AK/Error.h>
-
 #include <AK/COWVector.h>
 #include <AK/FlyString.h>
 #include <AK/HashMap.h>
@@ -23,6 +20,8 @@
 #include <AK/Utf8View.h>
 #include <AK/Variant.h>
 #include <AK/Vector.h>
+#include <LibRegex/Forward.h>
+#include <LibRegex/RegexOptions.h>
 
 namespace regex {
 

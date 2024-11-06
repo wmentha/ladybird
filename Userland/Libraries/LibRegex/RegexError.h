@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include "RegexDefs.h"
 #include <AK/StringView.h>
 #include <AK/Types.h>
+#include <LibRegex/RegexDefs.h>
 
 namespace regex {
 

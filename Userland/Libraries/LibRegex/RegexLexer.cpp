@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "RegexLexer.h"
 #include <AK/Assertions.h>
 #include <AK/Debug.h>
 #include <AK/Format.h>
+#include <LibRegex/RegexLexer.h>
 #include <stdio.h>
 
 namespace regex {

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Forward.h"
+#include <LibRegex/Forward.h>
 #include <AK/Vector.h>
 
 namespace regex {

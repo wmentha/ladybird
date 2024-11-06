@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "RegexByteCode.h"
-#include "RegexDebug.h"
 #include <AK/BinarySearch.h>
 #include <AK/CharacterTypes.h>
 #include <AK/StringBuilder.h>
+#include <LibRegex/RegexByteCode.h>
+#include <LibRegex/RegexDebug.h>
 #include <LibUnicode/CharacterTypes.h>
 
 // U+2028 LINE SEPARATOR

@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "RegexParser.h"
-#include "RegexDebug.h"
 #include <AK/AnyOf.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Debug.h>
@@ -17,6 +15,8 @@
 #include <AK/StringUtils.h>
 #include <AK/TemporaryChange.h>
 #include <AK/Utf16View.h>
+#include <LibRegex/RegexDebug.h>
+#include <LibRegex/RegexParser.h>
 #include <LibUnicode/CharacterTypes.h>
 
 namespace regex {

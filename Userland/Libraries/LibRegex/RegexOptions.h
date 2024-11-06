@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "RegexDefs.h"
 #include <AK/Types.h>
+#include <LibRegex/RegexDefs.h>
 #include <stdio.h>
 
 namespace regex {

@@ -6,15 +6,14 @@
 
 #pragma once
 
-#include "RegexByteCode.h"
-#include "RegexError.h"
-#include "RegexLexer.h"
-#include "RegexOptions.h"
-
 #include <AK/Forward.h>
 #include <AK/StringBuilder.h>
 #include <AK/Types.h>
 #include <AK/Vector.h>
+#include <LibRegex/RegexByteCode.h>
+#include <LibRegex/RegexError.h>
+#include <LibRegex/RegexLexer.h>
+#include <LibRegex/RegexOptions.h>
 #include <LibUnicode/Forward.h>
 
 namespace regex {

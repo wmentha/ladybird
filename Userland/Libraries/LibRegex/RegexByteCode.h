@@ -6,10 +6,6 @@
 
 #pragma once
 
-#include "RegexBytecodeStreamOptimizer.h"
-#include "RegexMatch.h"
-#include "RegexOptions.h"
-
 #include <AK/Concepts.h>
 #include <AK/DisjointChunks.h>
 #include <AK/Forward.h>
@@ -20,6 +16,9 @@
 #include <AK/TypeCasts.h>
 #include <AK/Types.h>
 #include <AK/Vector.h>
+#include <LibRegex/RegexBytecodeStreamOptimizer.h>
+#include <LibRegex/RegexMatch.h>
+#include <LibRegex/RegexOptions.h>
 #include <LibUnicode/Forward.h>
 
 namespace regex {
