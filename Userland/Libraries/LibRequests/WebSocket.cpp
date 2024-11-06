@@ -25,12 +25,12 @@ void WebSocket::set_ready_state(ReadyState ready_state)
     m_ready_state = ready_state;
 }
 
-ByteString WebSocket::subprotocol_in_use()
+String WebSocket::subprotocol_in_use()
 {
     return m_subprotocol;
 }
 
-void WebSocket::set_subprotocol_in_use(ByteString subprotocol)
+void WebSocket::set_subprotocol_in_use(String subprotocol)
 {
     m_subprotocol = move(subprotocol);
 }
@@ -45,7 +45,7 @@ void WebSocket::send(StringView text_message)
     send(ByteBuffer::copy(text_message.bytes()).release_value_but_fixme_should_propagate_errors(), true);
 }
 
-void WebSocket::close(u16 code, ByteString reason)
+void WebSocket::close(u16 code, String reason)
 {
     m_client->async_websocket_close(m_websocket_id, code, move(reason));
 }
@@ -68,7 +68,7 @@ void WebSocket::did_error(Badge<RequestClient>, i32 error_code)
         on_error((WebSocket::Error)error_code);
 }
 
-void WebSocket::did_close(Badge<RequestClient>, u16 code, ByteString reason, bool was_clean)
+void WebSocket::did_close(Badge<RequestClient>, u16 code, String reason, bool was_clean)
 {
     if (on_close)
         on_close(code, move(reason), was_clean);

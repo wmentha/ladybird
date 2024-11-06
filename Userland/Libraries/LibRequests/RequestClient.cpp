@@ -27,7 +27,7 @@ void RequestClient::ensure_connection(URL::URL const& url, ::RequestServer::Cach
     async_ensure_connection(url, cache_level);
 }
 
-RefPtr<Request> RequestClient::start_request(ByteString const& method, URL::URL const& url, HTTP::HeaderMap const& request_headers, ReadonlyBytes request_body, Core::ProxyData const& proxy_data)
+RefPtr<Request> RequestClient::start_request(String const& method, URL::URL const& url, HTTP::HeaderMap const& request_headers, ReadonlyBytes request_body, Core::ProxyData const& proxy_data)
 {
     auto body_result = ByteBuffer::copy(request_body);
     if (body_result.is_error())
@@ -61,7 +61,7 @@ bool RequestClient::stop_request(Badge<Request>, Request& request)
     return IPCProxy::stop_request(request.id());
 }
 
-bool RequestClient::set_certificate(Badge<Request>, Request& request, ByteString certificate, ByteString key)
+bool RequestClient::set_certificate(Badge<Request>, Request& request, String certificate, String key)
 {
     if (!m_requests.contains(request.id()))
         return false;
@@ -94,7 +94,7 @@ void RequestClient::certificate_requested(i32 request_id)
     }
 }
 
-RefPtr<WebSocket> RequestClient::websocket_connect(const URL::URL& url, ByteString const& origin, Vector<ByteString> const& protocols, Vector<ByteString> const& extensions, HTTP::HeaderMap const& request_headers)
+RefPtr<WebSocket> RequestClient::websocket_connect(const URL::URL& url, String const& origin, Vector<String> const& protocols, Vector<String> const& extensions, HTTP::HeaderMap const& request_headers)
 {
     auto websocket_id = m_next_websocket_id++;
     IPCProxy::async_websocket_connect(websocket_id, url, origin, protocols, extensions, request_headers);
@@ -124,7 +124,7 @@ void RequestClient::websocket_errored(i64 websocket_id, i32 message)
         maybe_connection.value()->did_error({}, message);
 }
 
-void RequestClient::websocket_closed(i64 websocket_id, u16 code, ByteString const& reason, bool clean)
+void RequestClient::websocket_closed(i64 websocket_id, u16 code, String const& reason, bool clean)
 {
     auto maybe_connection = m_websockets.get(websocket_id);
     if (maybe_connection.has_value())
@@ -140,7 +140,7 @@ void RequestClient::websocket_ready_state_changed(i64 websocket_id, u32 ready_st
     }
 }
 
-void RequestClient::websocket_subprotocol(i64 websocket_id, ByteString const& subprotocol)
+void RequestClient::websocket_subprotocol(i64 websocket_id, String const& subprotocol)
 {
     auto maybe_connection = m_websockets.get(websocket_id);
     if (maybe_connection.has_value()) {

@@ -8,10 +8,10 @@
 
 #include <AK/Badge.h>
 #include <AK/ByteBuffer.h>
-#include <AK/ByteString.h>
 #include <AK/Function.h>
 #include <AK/MemoryStream.h>
 #include <AK/RefCounted.h>
+#include <AK/String.h>
 #include <AK/WeakPtr.h>
 #include <LibCore/Notifier.h>
 #include <LibHTTP/HeaderMap.h>
@@ -25,8 +25,8 @@ class RequestClient;
 class Request : public RefCounted<Request> {
 public:
     struct CertificateAndKey {
-        ByteString certificate;
-        ByteString key;
+        String certificate;
+        String key;
     };
 
     static NonnullRefPtr<Request> create_from_id(Badge<RequestClient>, RequestClient& client, i32 request_id)
