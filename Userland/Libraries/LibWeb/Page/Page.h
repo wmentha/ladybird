@@ -178,7 +178,7 @@ public:
         bool has_user_agent_controls { false };
         bool is_looping { false };
     };
-    void did_request_media_context_menu(UniqueNodeID media_id, CSSPixelPoint, ByteString const& target, unsigned modifiers, MediaContextMenu);
+    void did_request_media_context_menu(UniqueNodeID media_id, CSSPixelPoint, String const& target, unsigned modifiers, MediaContextMenu);
     WebIDL::ExceptionOr<void> toggle_media_play_state();
     void toggle_media_mute_state();
     WebIDL::ExceptionOr<void> toggle_media_loop_state();
@@ -309,7 +309,7 @@ public:
     virtual void paint_next_frame() = 0;
     virtual void process_screenshot_requests() = 0;
     virtual void paint(DevicePixelRect const&, Painting::BackingStore&, PaintOptions = {}) = 0;
-    virtual void page_did_change_title(ByteString const&) { }
+    virtual void page_did_change_title(String const&) { }
     virtual void page_did_change_url(URL::URL const&) { }
     virtual void page_did_request_navigate_back() { }
     virtual void page_did_request_navigate_forward() { }
@@ -326,14 +326,14 @@ public:
     virtual void page_did_finish_loading(URL::URL const&) { }
     virtual void page_did_request_cursor_change(Gfx::StandardCursor) { }
     virtual void page_did_request_context_menu(CSSPixelPoint) { }
-    virtual void page_did_request_link_context_menu(CSSPixelPoint, URL::URL const&, [[maybe_unused]] ByteString const& target, [[maybe_unused]] unsigned modifiers) { }
-    virtual void page_did_request_image_context_menu(CSSPixelPoint, URL::URL const&, [[maybe_unused]] ByteString const& target, [[maybe_unused]] unsigned modifiers, Gfx::Bitmap const*) { }
-    virtual void page_did_request_media_context_menu(CSSPixelPoint, [[maybe_unused]] ByteString const& target, [[maybe_unused]] unsigned modifiers, Page::MediaContextMenu) { }
-    virtual void page_did_click_link(URL::URL const&, [[maybe_unused]] ByteString const& target, [[maybe_unused]] unsigned modifiers) { }
-    virtual void page_did_middle_click_link(URL::URL const&, [[maybe_unused]] ByteString const& target, [[maybe_unused]] unsigned modifiers) { }
-    virtual void page_did_request_tooltip_override(CSSPixelPoint, ByteString const&) { }
+    virtual void page_did_request_link_context_menu(CSSPixelPoint, URL::URL const&, [[maybe_unused]] String const& target, [[maybe_unused]] unsigned modifiers) { }
+    virtual void page_did_request_image_context_menu(CSSPixelPoint, URL::URL const&, [[maybe_unused]] String const& target, [[maybe_unused]] unsigned modifiers, Gfx::Bitmap const*) { }
+    virtual void page_did_request_media_context_menu(CSSPixelPoint, [[maybe_unused]] String const& target, [[maybe_unused]] unsigned modifiers, Page::MediaContextMenu) { }
+    virtual void page_did_click_link(URL::URL const&, [[maybe_unused]] String const& target, [[maybe_unused]] unsigned modifiers) { }
+    virtual void page_did_middle_click_link(URL::URL const&, [[maybe_unused]] String const& target, [[maybe_unused]] unsigned modifiers) { }
+    virtual void page_did_request_tooltip_override(CSSPixelPoint, String const&) { }
     virtual void page_did_stop_tooltip_override() { }
-    virtual void page_did_enter_tooltip_area(ByteString const&) { }
+    virtual void page_did_enter_tooltip_area(String const&) { }
     virtual void page_did_leave_tooltip_area() { }
     virtual void page_did_hover_link(URL::URL const&) { }
     virtual void page_did_unhover_link() { }

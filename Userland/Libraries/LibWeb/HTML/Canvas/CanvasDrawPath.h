@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/StringView.h>
 #include <LibWeb/HTML/Path2D.h>
 
 namespace Web::HTML {

@@ -25,7 +25,7 @@ public:
     virtual ~Script() override;
 
     URL::URL const& base_url() const { return m_base_url; }
-    ByteString const& filename() const { return m_filename; }
+    String const& filename() const { return m_filename; }
 
     JS::Realm& realm() { return m_realm; }
     EnvironmentSettingsObject& settings_object();
@@ -37,7 +37,7 @@ public:
     void set_parse_error(JS::Value value) { m_parse_error = value; }
 
 protected:
-    Script(URL::URL base_url, ByteString filename, JS::Realm&);
+    Script(URL::URL base_url, String filename, JS::Realm&);
 
     virtual void visit_edges(Visitor&) override;
 
@@ -45,7 +45,7 @@ private:
     virtual void visit_host_defined_self(JS::Cell::Visitor&) override;
 
     URL::URL m_base_url;
-    ByteString m_filename;
+    String m_filename;
     JS::NonnullGCPtr<JS::Realm> m_realm;
 
     // https://html.spec.whatwg.org/multipage/webappapis.html#concept-script-parse-error

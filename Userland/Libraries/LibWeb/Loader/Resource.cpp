@@ -54,7 +54,7 @@ void Resource::for_each_client(Function<void(ResourceClient&)> callback)
     }
 }
 
-static Optional<ByteString> encoding_from_content_type(ByteString const& content_type)
+static Optional<String> encoding_from_content_type(String const& content_type)
 {
     auto offset = content_type.find("charset="sv);
     if (offset.has_value()) {
@@ -69,7 +69,7 @@ static Optional<ByteString> encoding_from_content_type(ByteString const& content
     return {};
 }
 
-static ByteString mime_type_from_content_type(ByteString const& content_type)
+static String mime_type_from_content_type(String const& content_type)
 {
     auto offset = content_type.find(';');
     if (offset.has_value())
@@ -120,7 +120,7 @@ void Resource::did_load(Badge<ResourceLoader>, ReadonlyBytes data, HTTP::HeaderM
     });
 }
 
-void Resource::did_fail(Badge<ResourceLoader>, ByteString const& error, ReadonlyBytes data, HTTP::HeaderMap const& headers, Optional<u32> status_code)
+void Resource::did_fail(Badge<ResourceLoader>, String const& error, ReadonlyBytes data, HTTP::HeaderMap const& headers, Optional<u32> status_code)
 {
     m_error = error;
     m_encoded_data = ByteBuffer::copy(data).release_value_but_fixme_should_propagate_errors();

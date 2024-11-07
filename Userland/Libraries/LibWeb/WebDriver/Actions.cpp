@@ -105,7 +105,7 @@ static Optional<ActionObject::Origin> determine_origin(ActionsOptions const& act
 
     if (origin->is_object()) {
         if (actions_options.is_element_origin(origin->as_object()))
-            return MUST(String::from_byte_string(extract_web_element_reference(origin->as_object())));
+            return extract_web_element_reference(origin->as_object());
     }
 
     return {};
@@ -554,7 +554,7 @@ static ErrorOr<Vector<ActionObject>, WebDriver::Error> process_input_source_acti
 
     // 3. Let id be the result of getting the property "id" from action sequence.
     // 4. If id is undefined or is not a String, return error with error code invalid argument.
-    auto const id = MUST(String::from_byte_string(TRY(get_property(action_sequence, "id"sv))));
+    auto const id = TRY(get_property(action_sequence, "id"sv));
 
     // 5. If type is equal to "pointer", let parameters data be the result of getting the property "parameters" from
     //    action sequence. Then let parameters be the result of trying to process pointer parameters with argument
@@ -1239,11 +1239,11 @@ static ErrorOr<void, WebDriver::Error> dispatch_pointer_move_action(ActionObject
 
     // 5. If x is less than 0 or greater than the width of the viewport in CSS pixels, then return error with error code move target out of bounds.
     if (coordinates.x() < 0 || coordinates.x() > viewport.width())
-        return WebDriver::Error::from_code(WebDriver::ErrorCode::MoveTargetOutOfBounds, ByteString::formatted("Coordinates {} are out of bounds", coordinates));
+        return WebDriver::Error::from_code(WebDriver::ErrorCode::MoveTargetOutOfBounds, MUST(String::formatted("Coordinates {} are out of bounds", coordinates)));
 
     // 6. If y is less than 0 or greater than the height of the viewport in CSS pixels, then return error with error code move target out of bounds.
     if (coordinates.y() < 0 || coordinates.y() > viewport.height())
-        return WebDriver::Error::from_code(WebDriver::ErrorCode::MoveTargetOutOfBounds, ByteString::formatted("Coordinates {} are out of bounds", coordinates));
+        return WebDriver::Error::from_code(WebDriver::ErrorCode::MoveTargetOutOfBounds, MUST(String::formatted("Coordinates {} are out of bounds", coordinates)));
 
     // 7. Let duration be equal to action object's duration property if it is not undefined, or tick duration otherwise.
     [[maybe_unused]] auto duration = action_object.duration.value_or(tick_duration);

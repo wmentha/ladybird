@@ -167,7 +167,7 @@ JS::NonnullGCPtr<InternalAnimationTimeline> Internals::create_internal_animation
 void Internals::simulate_drag_start(double x, double y, String const& name, String const& contents)
 {
     Vector<HTML::SelectedFile> files;
-    files.empend(name.to_byte_string(), MUST(ByteBuffer::copy(contents.bytes())));
+    files.empend(name.to_string(), MUST(ByteBuffer::copy(contents.bytes())));
 
     auto& page = internals_page();
 

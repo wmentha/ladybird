@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Optional.h>
+#include <AK/StringView.h>
 #include <LibWeb/HTML/TextMetrics.h>
 
 namespace Web::HTML {

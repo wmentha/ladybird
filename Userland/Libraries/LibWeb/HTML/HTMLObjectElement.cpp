@@ -285,7 +285,7 @@ void HTMLObjectElement::resource_did_load()
         // FIXME: For now, ignore application/ MIME types as we cannot render yet them anyways. We will need to implement the MIME type sniffing
         //        algorithm in order to map all unknown MIME types to "application/octet-stream".
         else if (auto type = resource()->mime_type(); !type.starts_with("application/"sv))
-            tentative_type = MUST(String::from_byte_string(type));
+            tentative_type = type;
 
         // 2. If tentative type is not application/octet-stream, then let resource type be tentative type and jump to the step below labeled handler.
         if (tentative_type.has_value() && tentative_type != "application/octet-stream"sv)
@@ -293,11 +293,11 @@ void HTMLObjectElement::resource_did_load()
     }
 
     // FIXME: 5. If applying the URL parser algorithm to the URL of the specified resource (after any redirects) results in a URL record whose path component matches a pattern that a plugin supports, then let resource type be the type that that plugin can handle.
-    run_object_representation_handler_steps(resource_type.has_value() ? resource_type->to_byte_string() : ByteString::empty());
+    run_object_representation_handler_steps(resource_type.has_value() ? resource_type : ""_string);
 }
 
 // https://html.spec.whatwg.org/multipage/iframe-embed-object.html#the-object-element:plugin-11
-void HTMLObjectElement::run_object_representation_handler_steps(Optional<ByteString> resource_type)
+void HTMLObjectElement::run_object_representation_handler_steps(Optional<String> resource_type)
 {
     // 4.9. Handler: Handle the content as given by the first of the following cases that matches:
 

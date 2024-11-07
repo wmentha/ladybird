@@ -58,10 +58,10 @@ ScriptFetchOptions default_script_fetch_options()
 }
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#module-type-from-module-request
-ByteString module_type_from_module_request(JS::ModuleRequest const& module_request)
+String module_type_from_module_request(JS::ModuleRequest const& module_request)
 {
     // 1. Let moduleType be "javascript".
-    ByteString module_type = "javascript"sv;
+    String module_type = "javascript"_string;
 
     // 2. If moduleRequest.[[Attributes]] has a Record entry such that entry.[[Key]] is "type", then:
     for (auto const& entry : module_request.attributes) {
@@ -70,7 +70,7 @@ ByteString module_type_from_module_request(JS::ModuleRequest const& module_reque
 
         // 1. If entry.[[Value]] is "javascript", then set moduleType to null.
         if (entry.value == "javascript"sv)
-            module_type = nullptr;
+            module_type = ""_string;
         // 2. Otherwise, set moduleType to entry.[[Value]].
         else
             module_type = entry.value;
@@ -82,7 +82,7 @@ ByteString module_type_from_module_request(JS::ModuleRequest const& module_reque
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#resolve-a-module-specifier
 // https://whatpr.org/html/9893/webappapis.html#resolve-a-module-specifier
-WebIDL::ExceptionOr<URL::URL> resolve_module_specifier(Optional<Script&> referring_script, ByteString const& specifier)
+WebIDL::ExceptionOr<URL::URL> resolve_module_specifier(Optional<Script&> referring_script, String const& specifier)
 {
     // 1. Let settingsObject and baseURL be null.
     Optional<EnvironmentSettingsObject&> settings_object;
@@ -158,7 +158,7 @@ WebIDL::ExceptionOr<URL::URL> resolve_module_specifier(Optional<Script&> referri
 }
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#resolving-an-imports-match
-WebIDL::ExceptionOr<Optional<URL::URL>> resolve_imports_match(ByteString const& normalized_specifier, Optional<URL::URL> as_url, ModuleSpecifierMap const& specifier_map)
+WebIDL::ExceptionOr<Optional<URL::URL>> resolve_imports_match(String const& normalized_specifier, Optional<URL::URL> as_url, ModuleSpecifierMap const& specifier_map)
 {
     // 1. For each specifierKey → resolutionResult of specifierMap:
     for (auto const& [specifier_key, resolution_result] : specifier_map) {
@@ -225,7 +225,7 @@ WebIDL::ExceptionOr<Optional<URL::URL>> resolve_imports_match(ByteString const& 
 }
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#resolving-a-url-like-module-specifier
-Optional<URL::URL> resolve_url_like_module_specifier(ByteString const& specifier, URL::URL const& base_url)
+Optional<URL::URL> resolve_url_like_module_specifier(String const& specifier, URL::URL const& base_url)
 {
     // 1. If specifier starts with "/", "./", or "../", then:
     if (specifier.starts_with("/"sv) || specifier.starts_with("./"sv) || specifier.starts_with("../"sv)) {
@@ -315,7 +315,7 @@ WebIDL::ExceptionOr<String> resolve_a_module_integrity_metadata(const URL::URL& 
 
     // 3. If map's integrity[url] does not exist, then return the empty string.
     // 4. Return map's integrity[url].
-    return MUST(String::from_byte_string(map.integrity().get(url).value_or("")));
+    return map.integrity().get(url).value_or("");
 }
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#fetch-a-classic-script
@@ -373,7 +373,7 @@ WebIDL::ExceptionOr<void> fetch_classic_script(JS::NonnullGCPtr<HTMLScriptElemen
         //    options, and muted errors.
         // FIXME: Pass options.
         auto response_url = response->url().value_or({});
-        auto script = ClassicScript::create(response_url.to_byte_string(), source_text, settings_object.realm(), response_url, 1, muted_errors);
+        auto script = ClassicScript::create(response_url.to_string(), source_text, settings_object.realm(), response_url, 1, muted_errors);
 
         // 8. Run onComplete given script.
         on_complete->function()(script);
@@ -443,7 +443,7 @@ WebIDL::ExceptionOr<void> fetch_classic_worker_script(URL::URL const& url, Envir
         // 5. Let script be the result of creating a classic script using sourceText, settingsObject's realm,
         //    response's URL, and the default classic script fetch options.
         auto response_url = response->url().value_or({});
-        auto script = ClassicScript::create(response_url.to_byte_string(), source_text, settings_object.realm(), response_url);
+        auto script = ClassicScript::create(response_url.to_string(), source_text, settings_object.realm(), response_url);
 
         // 6. Run onComplete given script.
         on_complete->function()(script);
@@ -534,7 +534,7 @@ WebIDL::ExceptionOr<JS::NonnullGCPtr<ClassicScript>> fetch_a_classic_worker_impo
 
     // 10. Let script be the result of creating a classic script given sourceText, settingsObject's realm, response's URL, the default classic script fetch options, and mutedErrors.
     auto response_url = response->url().value_or({});
-    auto script = ClassicScript::create(response_url.to_byte_string(), source_text, settings_object.realm(), response_url, 1, muted_errors);
+    auto script = ClassicScript::create(response_url.to_string(), source_text, settings_object.realm(), response_url, 1, muted_errors);
 
     // 11. Return script.
     return script;
@@ -712,7 +712,7 @@ void fetch_descendants_of_a_module_script(JS::Realm& realm, JavaScriptModuleScri
 }
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#fetch-destination-from-module-type
-Fetch::Infrastructure::Request::Destination fetch_destination_from_module_type(Fetch::Infrastructure::Request::Destination default_destination, ByteString const& module_type)
+Fetch::Infrastructure::Request::Destination fetch_destination_from_module_type(Fetch::Infrastructure::Request::Destination default_destination, String const& module_type)
 {
     // 1. If moduleType is "json", then return "json".
     if (module_type == "json"sv)
@@ -741,7 +741,7 @@ void fetch_single_module_script(JS::Realm& realm,
     OnFetchScriptComplete on_complete)
 {
     // 1. Let moduleType be "javascript".
-    ByteString module_type = "javascript"sv;
+    auto module_type = "javascript"_string;
 
     // 2. If moduleRequest was given, then set moduleType to the result of running the module type from module request steps given moduleRequest.
     if (module_request.has_value())
@@ -875,7 +875,7 @@ void fetch_external_module_script_graph(JS::Realm& realm, URL::URL const& url, E
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#fetch-an-inline-module-script-graph
 // https://whatpr.org/html/9893/webappapis.html#fetch-an-inline-module-script-graph
-void fetch_inline_module_script_graph(JS::Realm& realm, ByteString const& filename, ByteString const& source_text, URL::URL const& base_url, EnvironmentSettingsObject& settings_object, OnFetchScriptComplete on_complete)
+void fetch_inline_module_script_graph(JS::Realm& realm, String const& filename, String const& source_text, URL::URL const& base_url, EnvironmentSettingsObject& settings_object, OnFetchScriptComplete on_complete)
 {
     // 1. Disallow further import maps given settingsObject's realm.
     disallow_further_import_maps(settings_object.realm());

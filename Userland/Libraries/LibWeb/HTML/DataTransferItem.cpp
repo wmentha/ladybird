@@ -139,14 +139,11 @@ JS::GCPtr<FileAPI::File> DataTransferItem::get_as_file() const
     // 3. Return a new File object representing the actual data of the item represented by the DataTransferItem object.
     auto blob = FileAPI::Blob::create(realm, item.data, item.type_string);
 
-    // FIXME: The FileAPI should use ByteString for file names.
-    auto file_name = MUST(String::from_byte_string(item.file_name));
-
     // FIXME: Fill in other fields (e.g. last_modified).
     FileAPI::FilePropertyBag options {};
     options.type = item.type_string;
 
-    return MUST(FileAPI::File::create(realm, { JS::make_handle(blob) }, file_name, move(options)));
+    return MUST(FileAPI::File::create(realm, { JS::make_handle(blob) }, item.file_name, move(options)));
 }
 
 // https://wicg.github.io/entries-api/#dom-datatransferitem-webkitgetasentry

@@ -237,7 +237,7 @@ void HTMLParser::run(HTMLTokenizer::StopAtInsertionPoint stop_at_insertion_point
 void HTMLParser::run(const URL::URL& url, HTMLTokenizer::StopAtInsertionPoint stop_at_insertion_point)
 {
     m_document->set_url(url);
-    m_document->set_source(MUST(String::from_byte_string(m_tokenizer.source())));
+    m_document->set_source(m_tokenizer.source());
     run(stop_at_insertion_point);
     the_end(*m_document, this);
     m_document->detach_parser({});
@@ -4476,7 +4476,7 @@ JS::NonnullGCPtr<HTMLParser> HTMLParser::create_for_scripting(DOM::Document& doc
 JS::NonnullGCPtr<HTMLParser> HTMLParser::create_with_uncertain_encoding(DOM::Document& document, ByteBuffer const& input, Optional<MimeSniff::MimeType> maybe_mime_type)
 {
     if (document.has_encoding())
-        return document.heap().allocate_without_realm<HTMLParser>(document, input, document.encoding().value().to_byte_string());
+        return document.heap().allocate_without_realm<HTMLParser>(document, input, document.encoding().value());
     auto encoding = run_encoding_sniffing_algorithm(document, input, maybe_mime_type);
     dbgln_if(HTML_PARSER_DEBUG, "The encoding sniffing algorithm returned encoding '{}'", encoding);
     return document.heap().allocate_without_realm<HTMLParser>(document, input, encoding);
@@ -4873,7 +4873,7 @@ Optional<Color> parse_legacy_color_value(StringView string_view)
     if (string_view.is_empty())
         return {};
 
-    ByteString input = string_view;
+    String input = MUST(String::from_utf8(string_view));
 
     // 2. Strip leading and trailing ASCII whitespace from input.
     input = input.trim(Infra::ASCII_WHITESPACE);
@@ -4914,7 +4914,7 @@ Optional<Color> parse_legacy_color_value(StringView string_view)
     }
 
     // 6. Replace any code points greater than U+FFFF in input (i.e., any characters that are not in the basic multilingual plane) with "00".
-    auto replace_non_basic_multilingual_code_points = [](StringView string) -> ByteString {
+    auto replace_non_basic_multilingual_code_points = [](StringView string) -> String {
         StringBuilder builder;
         for (auto code_point : Utf8View { string }) {
             if (code_point > 0xFFFF)
@@ -4922,7 +4922,7 @@ Optional<Color> parse_legacy_color_value(StringView string_view)
             else
                 builder.append_code_point(code_point);
         }
-        return builder.to_byte_string();
+        return MUST(builder.to_string());
     };
     input = replace_non_basic_multilingual_code_points(input);
 
@@ -4935,7 +4935,7 @@ Optional<Color> parse_legacy_color_value(StringView string_view)
         input = input.substring(1);
 
     // 9. Replace any character in input that is not an ASCII hex digit with U+0030 (0).
-    auto replace_non_ascii_hex = [](StringView string) -> ByteString {
+    auto replace_non_ascii_hex = [](StringView string) -> String {
         StringBuilder builder;
         for (auto code_point : Utf8View { string }) {
             if (is_ascii_hex_digit(code_point))
@@ -4943,7 +4943,7 @@ Optional<Color> parse_legacy_color_value(StringView string_view)
             else
                 builder.append_code_point('0');
         }
-        return builder.to_byte_string();
+        return MUST(builder.to_string());
     };
     input = replace_non_ascii_hex(input);
 
@@ -4952,7 +4952,7 @@ Optional<Color> parse_legacy_color_value(StringView string_view)
     builder.append(input);
     while (builder.length() == 0 || (builder.length() % 3 != 0))
         builder.append_code_point('0');
-    input = builder.to_byte_string();
+    input = MUST(builder.to_string());
 
     // 11. Split input into three strings of equal code point length, to obtain three components. Let length be the code point length that all of those components have (one third the code point length of input).
     auto length = input.length() / 3;

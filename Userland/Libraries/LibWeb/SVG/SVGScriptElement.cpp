@@ -66,7 +66,7 @@ void SVGScriptElement::process_the_script_element()
     // FIXME: Support non-inline scripts.
     auto base_url = document().base_url();
 
-    m_script = HTML::ClassicScript::create(m_document->url().to_byte_string(), inline_script, realm(), base_url, m_source_line_number);
+    m_script = HTML::ClassicScript::create(m_document->url().to_string(), inline_script, realm(), base_url, m_source_line_number);
     (void)m_script->run();
 }
 

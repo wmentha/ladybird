@@ -7,7 +7,6 @@
 #pragma once
 
 #include <AK/ByteBuffer.h>
-#include <AK/ByteString.h>
 #include <AK/FlyString.h>
 #include <AK/NonnullRefPtr.h>
 #include <AK/RefCounted.h>
@@ -31,7 +30,7 @@ struct DragDataStoreItem {
     String type_string;
 
     ByteBuffer data;
-    ByteString file_name;
+    String file_name;
 };
 
 // https://html.spec.whatwg.org/multipage/dnd.html#drag-data-store

@@ -361,7 +361,7 @@ MediaPaintable::DispatchEventOfSameName MediaPaintable::handle_mousemove(Badge<E
                 set_volume(media_element, *cached_layout_boxes.volume_scrub_rect, position_adjusted_by_scroll_offset);
 
                 auto volume = static_cast<u8>(media_element.volume() * 100.0);
-                document().page().client().page_did_request_tooltip_override({ position_adjusted_by_scroll_offset.x(), cached_layout_boxes.volume_scrub_rect->y() + scroll_offset.y() }, ByteString::formatted("{}%", volume));
+                document().page().client().page_did_request_tooltip_override({ position_adjusted_by_scroll_offset.x(), cached_layout_boxes.volume_scrub_rect->y() + scroll_offset.y() }, MUST(String::formatted("{}%", volume)));
             }
 
             break;

@@ -33,7 +33,7 @@ ErrorOr<String> load_error_page(URL::URL const& url, StringView error_message)
     auto template_file = TRY(Core::Resource::load_from_uri("resource://ladybird/templates/error.html"sv));
     StringBuilder builder;
     SourceGenerator generator { builder, '%', '%' };
-    generator.set("failed_url", url.to_byte_string());
+    generator.set("failed_url", url.to_string());
     generator.set("error_message", escape_html_entities(error_message));
     generator.append(template_file->data());
     return TRY(String::from_utf8(generator.as_string_view()));
@@ -44,7 +44,7 @@ ErrorOr<String> load_file_directory_page(URL::URL const& url)
     // Generate HTML contents entries table
     auto lexical_path = LexicalPath(URL::percent_decode(url.serialize_path()));
     Core::DirIterator dt(lexical_path.string(), Core::DirIterator::Flags::SkipParentAndBaseDir);
-    Vector<ByteString> names;
+    Vector<String> names;
     while (dt.has_next())
         names.append(dt.next_path());
     quick_sort(names);
@@ -62,7 +62,7 @@ ErrorOr<String> load_file_directory_page(URL::URL const& url)
             contents.appendff("<td><span class=\"{}\"></span></td>", is_directory ? "folder" : "file");
             contents.appendff("<td><a href=\"file://{}\">{}</a></td><td>&nbsp;</td>"sv, path, name);
             contents.appendff("<td>{:10}</td><td>&nbsp;</td>", is_directory ? "-"_string : human_readable_size(st.st_size));
-            contents.appendff("<td>{}</td>"sv, Core::DateTime::from_timestamp(st.st_mtime).to_byte_string());
+            contents.appendff("<td>{}</td>"sv, Core::DateTime::from_timestamp(st.st_mtime).to_string());
             contents.append("</tr>\n"sv);
         }
     }
@@ -75,7 +75,7 @@ ErrorOr<String> load_file_directory_page(URL::URL const& url)
     SourceGenerator generator { builder, '%', '%' };
     generator.set("path", escape_html_entities(lexical_path.string()));
     generator.set("parent_url", TRY(String::formatted("file://{}", escape_html_entities(lexical_path.parent().string()))));
-    generator.set("contents", contents.to_byte_string());
+    generator.set("contents", contents.to_string());
     generator.append(template_file->data());
     return TRY(String::from_utf8(generator.as_string_view()));
 }

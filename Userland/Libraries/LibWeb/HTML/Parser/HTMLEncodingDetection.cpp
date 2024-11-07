@@ -35,7 +35,7 @@ bool prescan_skip_whitespace_and_slashes(ByteBuffer const& input, size_t& positi
 }
 
 // https://html.spec.whatwg.org/multipage/urls-and-fetching.html#algorithm-for-extracting-a-character-encoding-from-a-meta-element
-Optional<StringView> extract_character_encoding_from_meta_element(ByteString const& string)
+Optional<StringView> extract_character_encoding_from_meta_element(String const& string)
 {
     // Checking for "charset" is case insensitive, as is getting an encoding.
     // Therefore, stick to lowercase from the start for simplicity.
@@ -246,7 +246,7 @@ value:
 }
 
 // https://html.spec.whatwg.org/multipage/parsing.html#prescan-a-byte-stream-to-determine-its-encoding
-Optional<ByteString> run_prescan_byte_stream_algorithm(DOM::Document& document, ByteBuffer const& input)
+Optional<String> run_prescan_byte_stream_algorithm(DOM::Document& document, ByteBuffer const& input)
 {
     // https://html.spec.whatwg.org/multipage/parsing.html#prescan-a-byte-stream-to-determine-its-encoding
 
@@ -254,10 +254,10 @@ Optional<ByteString> run_prescan_byte_stream_algorithm(DOM::Document& document, 
     if (!prescan_should_abort(input, 5)) {
         // A sequence of bytes starting with: 0x3C, 0x0, 0x3F, 0x0, 0x78, 0x0
         if (input[0] == 0x3C && input[1] == 0x00 && input[2] == 0x3F && input[3] == 0x00 && input[4] == 0x78 && input[5] == 0x00)
-            return "utf-16le";
+            return "utf-16le"_string;
         // A sequence of bytes starting with: 0x0, 0x3C, 0x0, 0x3F, 0x0, 0x78
         if (input[0] == 0x00 && input[1] == 0x3C && input[2] == 0x00 && input[3] == 0x3F && input[4] == 0x00 && input[5] == 0x78)
-            return "utf-16be";
+            return "utf-16be"_string;
     }
 
     for (size_t position = 0; !prescan_should_abort(input, position); ++position) {
@@ -281,7 +281,7 @@ Optional<ByteString> run_prescan_byte_stream_algorithm(DOM::Document& document, 
             Vector<FlyString> attribute_list {};
             bool got_pragma = false;
             Optional<bool> need_pragma {};
-            Optional<ByteString> charset {};
+            Optional<String> charset {};
 
             while (true) {
                 auto attribute = prescan_get_attribute(document, input, position);
@@ -295,7 +295,7 @@ Optional<ByteString> run_prescan_byte_stream_algorithm(DOM::Document& document, 
                 if (attribute_name == "http-equiv") {
                     got_pragma = attribute->value() == "content-type";
                 } else if (attribute_name == "content") {
-                    auto encoding = extract_character_encoding_from_meta_element(attribute->value().to_byte_string());
+                    auto encoding = extract_character_encoding_from_meta_element(attribute->value().to_string());
                     if (encoding.has_value() && !charset.has_value()) {
                         charset = encoding.value();
                         need_pragma = true;
@@ -303,7 +303,7 @@ Optional<ByteString> run_prescan_byte_stream_algorithm(DOM::Document& document, 
                 } else if (attribute_name == "charset") {
                     auto maybe_charset = TextCodec::get_standardized_encoding(attribute->value());
                     if (maybe_charset.has_value()) {
-                        charset = Optional<ByteString> { maybe_charset };
+                        charset = Optional<String> { maybe_charset };
                         need_pragma = { false };
                     }
                 }
@@ -312,9 +312,9 @@ Optional<ByteString> run_prescan_byte_stream_algorithm(DOM::Document& document, 
             if (!need_pragma.has_value() || (need_pragma.value() && !got_pragma) || !charset.has_value())
                 continue;
             if (charset.value() == "UTF-16BE/LE")
-                return "UTF-8";
+                return "UTF-8"_string;
             else if (charset.value() == "x-user-defined")
-                return "windows-1252";
+                return "windows-1252"_string;
             else
                 return charset.value();
         } else if (!prescan_should_abort(input, position + 3) && input[position] == '<'
@@ -337,7 +337,7 @@ Optional<ByteString> run_prescan_byte_stream_algorithm(DOM::Document& document, 
 }
 
 // https://encoding.spec.whatwg.org/#bom-sniff
-Optional<ByteString> run_bom_sniff(ByteBuffer const& input)
+Optional<String> run_bom_sniff(ByteBuffer const& input)
 {
     if (input.size() >= 3) {
         // 1. Let BOM be the result of peeking 3 bytes from ioQueue, converted to a byte sequence.
@@ -347,20 +347,20 @@ Optional<ByteString> run_bom_sniff(ByteBuffer const& input)
         // 0xFE 0xFF        UTF-16BE
         // 0xFF 0xFE 	    UTF-16LE
         if (input[0] == 0xEF && input[1] == 0xBB && input[2] == 0xBF) {
-            return "UTF-8";
+            return "UTF-8"_string;
         }
         if (input[0] == 0xFE && input[1] == 0xFF) {
-            return "UTF-16BE";
+            return "UTF-16BE_string";
         }
         if (input[0] == 0xFF && input[1] == 0xFE) {
-            return "UTF-16LE";
+            return "UTF-16LE"_string;
         }
     }
     return {};
 }
 
 // https://html.spec.whatwg.org/multipage/parsing.html#determining-the-character-encoding
-ByteString run_encoding_sniffing_algorithm(DOM::Document& document, ByteBuffer const& input, Optional<MimeSniff::MimeType> maybe_mime_type)
+String run_encoding_sniffing_algorithm(DOM::Document& document, ByteBuffer const& input, Optional<MimeSniff::MimeType> maybe_mime_type)
 {
     // 1. If the result of BOM sniffing is an encoding, return that encoding with confidence certain.
     // FIXME: There is no concept of decoding certainty yet.
@@ -404,13 +404,13 @@ ByteString run_encoding_sniffing_algorithm(DOM::Document& document, ByteBuffer c
     //    character encoding, and that encoding is a supported encoding, then return that encoding, with the confidence tentative. [UNIVCHARDET]
     if (!Utf8View(StringView(input)).validate()) {
         // FIXME: As soon as Locale is supported, this should sometimes return a different encoding based on the locale.
-        return "windows-1252";
+        return "windows-1252"_string;
     }
 
     // 9. Otherwise, return an implementation-defined or user-specified default character encoding, with the confidence tentative.
     //    In controlled environments or in environments where the encoding of documents can be prescribed (for example, for user agents intended for dedicated use in new
     //    networks), the comprehensive UTF-8 encoding is suggested.
-    return "UTF-8";
+    return "UTF-8"_string;
 }
 
 }

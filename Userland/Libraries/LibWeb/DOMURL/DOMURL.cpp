@@ -175,7 +175,7 @@ WebIDL::ExceptionOr<String> DOMURL::href() const
     auto& vm = realm().vm();
 
     // The href getter steps and the toJSON() method steps are to return the serialization of this’s URL.
-    return TRY_OR_THROW_OOM(vm, String::from_byte_string(m_url.serialize()));
+    return TRY_OR_THROW_OOM(vm, m_url.serialize());
 }
 
 // https://url.spec.whatwg.org/#dom-url-tojson
@@ -184,7 +184,7 @@ WebIDL::ExceptionOr<String> DOMURL::to_json() const
     auto& vm = realm().vm();
 
     // The href getter steps and the toJSON() method steps are to return the serialization of this’s URL.
-    return TRY_OR_THROW_OOM(vm, String::from_byte_string(m_url.serialize()));
+    return TRY_OR_THROW_OOM(vm, m_url.serialize());
 }
 
 // https://url.spec.whatwg.org/#ref-for-dom-url-href②
@@ -218,7 +218,7 @@ WebIDL::ExceptionOr<String> DOMURL::origin() const
     auto& vm = realm().vm();
 
     // The origin getter steps are to return the serialization of this’s URL’s origin. [HTML]
-    return TRY_OR_THROW_OOM(vm, String::from_byte_string(m_url.origin().serialize()));
+    return TRY_OR_THROW_OOM(vm, m_url.origin().serialize());
 }
 
 // https://url.spec.whatwg.org/#dom-url-protocol

@@ -436,7 +436,7 @@ void HTMLScriptElement::prepare_script()
         if (m_script_type == ScriptType::Classic) {
             // 1. Let script be the result of creating a classic script using source text, settings object's realm, base URL, and options.
             // FIXME: Pass options.
-            auto script = ClassicScript::create(m_document->url().to_byte_string(), source_text, settings_object.realm(), base_url, m_source_line_number);
+            auto script = ClassicScript::create(m_document->url().to_string(), source_text, settings_object.realm(), base_url, m_source_line_number);
 
             // 2. Mark as ready el given script.
             mark_as_ready(Result(move(script)));
@@ -456,7 +456,7 @@ void HTMLScriptElement::prepare_script()
 
             // 2. Fetch an inline module script graph, given source text, base URL, settings object, options, and with the following steps given result:
             // FIXME: Pass options
-            fetch_inline_module_script_graph(realm(), m_document->url().to_byte_string(), source_text.to_byte_string(), base_url, document().relevant_settings_object(), steps);
+            fetch_inline_module_script_graph(realm(), m_document->url().to_string(), source_text.to_string(), base_url, document().relevant_settings_object(), steps);
         }
         // -> "importmap"
         else if (m_script_type == ScriptType::ImportMap) {
@@ -476,7 +476,7 @@ void HTMLScriptElement::prepare_script()
                 verify_cast<Window>(global).set_import_maps_allowed(false);
 
             // 3. Let result be the result of creating an import map parse result given source text and base URL.
-            auto result = ImportMapParseResult::create(realm(), source_text.to_byte_string(), base_url);
+            auto result = ImportMapParseResult::create(realm(), source_text.to_string(), base_url);
 
             // 4. Mark as ready el given result.
             mark_as_ready(Result(move(result)));

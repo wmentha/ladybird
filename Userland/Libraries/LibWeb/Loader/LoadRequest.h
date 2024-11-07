@@ -34,8 +34,8 @@ public:
     const URL::URL& url() const { return m_url; }
     void set_url(const URL::URL& url) { m_url = url; }
 
-    ByteString const& method() const { return m_method; }
-    void set_method(ByteString const& method) { m_method = method; }
+    String const& method() const { return m_method; }
+    void set_method(String const& method) { m_method = method; }
 
     ByteBuffer const& body() const { return m_body; }
     void set_body(ByteBuffer body) { m_body = move(body); }
@@ -50,7 +50,7 @@ public:
     {
         auto body_hash = string_hash((char const*)m_body.data(), m_body.size());
         auto body_and_headers_hash = pair_int_hash(body_hash, m_headers.hash());
-        auto url_and_method_hash = pair_int_hash(m_url.to_byte_string().hash(), m_method.hash());
+        auto url_and_method_hash = pair_int_hash(m_url.to_string().hash(), m_method.hash());
         return pair_int_hash(body_and_headers_hash, url_and_method_hash);
     }
 
@@ -68,16 +68,16 @@ public:
         return m_url == other.m_url && m_method == other.m_method && m_body == other.m_body;
     }
 
-    void set_header(ByteString const& name, ByteString const& value) { m_headers.set(name, value); }
-    ByteString header(ByteString const& name) const { return m_headers.get(name).value_or({}); }
+    void set_header(String const& name, String const& value) { m_headers.set(name, value); }
+    String header(String const& name) const { return m_headers.get(name).value_or({}); }
 
-    HashMap<ByteString, ByteString, CaseInsensitiveStringTraits> const& headers() const { return m_headers; }
+    HashMap<String, String, CaseInsensitiveStringTraits> const& headers() const { return m_headers; }
 
 private:
     int m_id { 0 };
     URL::URL m_url;
-    ByteString m_method { "GET" };
-    HashMap<ByteString, ByteString, CaseInsensitiveStringTraits> m_headers;
+    String m_method { "GET"_string };
+    HashMap<String, String, CaseInsensitiveStringTraits> m_headers;
     ByteBuffer m_body;
     Core::ElapsedTimer m_load_timer;
     JS::Handle<Page> m_page;

@@ -7,6 +7,7 @@
  */
 
 #include "CounterStyleValue.h"
+#include <AK/StringUtils.h>
 #include <LibWeb/CSS/Enums.h>
 #include <LibWeb/CSS/Keyword.h>
 #include <LibWeb/CSS/Serialize.h>
@@ -75,14 +76,14 @@ static String generate_a_counter_representation(CSSStyleValue const& counter_sty
                     return MUST(String::formatted("{}", value));
                 case ListStyleType::LowerAlpha:
                 case ListStyleType::LowerLatin:
-                    return MUST(String::from_byte_string(ByteString::bijective_base_from(value - 1).to_lowercase()));
+                    return MUST(AK::StringUtils::bijective_base_from(value - 1).to_lowercase());
                 case ListStyleType::UpperAlpha:
                 case ListStyleType::UpperLatin:
-                    return MUST(String::from_byte_string(ByteString::bijective_base_from(value - 1)));
+                    return AK::StringUtils::bijective_base_from::bijective_base_from(value - 1);
                 case ListStyleType::LowerRoman:
-                    return MUST(String::from_byte_string(ByteString::roman_number_from(value).to_lowercase()));
+                    return MUST(AK::StringUtils::bijective_base_from::roman_number_from(value).to_lowercase());
                 case ListStyleType::UpperRoman:
-                    return MUST(String::from_byte_string(ByteString::roman_number_from(value)));
+                    return SAK::StringUtils::bijective_base_from::roman_number_from(value);
                 default:
                     break;
                 }

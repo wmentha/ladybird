@@ -22,7 +22,7 @@
 namespace Web::WebDriver {
 
 // https://w3c.github.io/webdriver/#dfn-execute-a-function-body
-JS::ThrowCompletionOr<JS::Value> execute_a_function_body(HTML::BrowsingContext const& browsing_context, ByteString const& body, ReadonlySpan<JS::Value> parameters)
+JS::ThrowCompletionOr<JS::Value> execute_a_function_body(HTML::BrowsingContext const& browsing_context, String const& body, ReadonlySpan<JS::Value> parameters)
 {
     // 1. Let window be the associated window of the current browsing context’s active document.
     auto window = browsing_context.active_document()->window();
@@ -31,7 +31,7 @@ JS::ThrowCompletionOr<JS::Value> execute_a_function_body(HTML::BrowsingContext c
 }
 
 // https://w3c.github.io/webdriver/#dfn-execute-a-function-body
-JS::ThrowCompletionOr<JS::Value> execute_a_function_body(HTML::Window const& window, ByteString const& body, ReadonlySpan<JS::Value> parameters, JS::GCPtr<JS::Object> environment_override_object)
+JS::ThrowCompletionOr<JS::Value> execute_a_function_body(HTML::Window const& window, String const& body, ReadonlySpan<JS::Value> parameters, JS::GCPtr<JS::Object> environment_override_object)
 {
     auto& realm = window.realm();
 
@@ -45,11 +45,11 @@ JS::ThrowCompletionOr<JS::Value> execute_a_function_body(HTML::Window const& win
     if (environment_override_object)
         scope = JS::new_object_environment(*environment_override_object, true, &global_scope);
 
-    auto source_text = ByteString::formatted(
+    auto source_text = MUST(String::formatted(
         R"~~~(function() {{
             {}
         }})~~~",
-        body);
+        body));
 
     auto parser = JS::Parser { JS::Lexer { source_text } };
     auto function_expression = parser.parse_function_node<JS::FunctionExpression>();
@@ -95,7 +95,7 @@ JS::ThrowCompletionOr<JS::Value> execute_a_function_body(HTML::Window const& win
     return completion;
 }
 
-void execute_script(HTML::BrowsingContext const& browsing_context, ByteString body, JS::MarkedVector<JS::Value> arguments, Optional<u64> const& timeout_ms, JS::NonnullGCPtr<OnScriptComplete> on_complete)
+void execute_script(HTML::BrowsingContext const& browsing_context, String body, JS::MarkedVector<JS::Value> arguments, Optional<u64> const& timeout_ms, JS::NonnullGCPtr<OnScriptComplete> on_complete)
 {
     auto const* document = browsing_context.active_document();
     auto& realm = document->realm();
@@ -152,7 +152,7 @@ void execute_script(HTML::BrowsingContext const& browsing_context, ByteString bo
     WebIDL::react_to_promise(promise, reaction_steps, reaction_steps);
 }
 
-void execute_async_script(HTML::BrowsingContext const& browsing_context, ByteString body, JS::MarkedVector<JS::Value> arguments, Optional<u64> const& timeout_ms, JS::NonnullGCPtr<OnScriptComplete> on_complete)
+void execute_async_script(HTML::BrowsingContext const& browsing_context, String body, JS::MarkedVector<JS::Value> arguments, Optional<u64> const& timeout_ms, JS::NonnullGCPtr<OnScriptComplete> on_complete)
 {
     auto const* document = browsing_context.active_document();
     auto& realm = document->realm();

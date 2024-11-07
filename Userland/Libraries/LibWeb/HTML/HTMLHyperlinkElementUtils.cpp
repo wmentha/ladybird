@@ -50,7 +50,7 @@ String HTMLHyperlinkElementUtils::origin() const
         return String {};
 
     // 3. Return the serialization of this element's url's origin.
-    return MUST(String::from_byte_string(m_url->origin().serialize()));
+    return m_url->origin().serialize()
 }
 
 // https://html.spec.whatwg.org/multipage/links.html#dom-hyperlink-protocol
@@ -419,7 +419,7 @@ String HTMLHyperlinkElementUtils::href() const
         return href_content_attribute.release_value();
 
     // 5. Return url, serialized.
-    return MUST(String::from_byte_string(url->serialize()));
+    return url->serialize()
 }
 
 // https://html.spec.whatwg.org/multipage/links.html#dom-hyperlink-href
@@ -433,7 +433,7 @@ WebIDL::ExceptionOr<void> HTMLHyperlinkElementUtils::set_href(String href)
 void HTMLHyperlinkElementUtils::update_href()
 {
     // To update href, set the element's href content attribute's value to the element's url, serialized.
-    MUST(set_hyperlink_element_utils_href(MUST(String::from_byte_string(m_url->serialize()))));
+    MUST(set_hyperlink_element_utils_href(m_url->serialize()))
 }
 
 bool HTMLHyperlinkElementUtils::cannot_navigate() const

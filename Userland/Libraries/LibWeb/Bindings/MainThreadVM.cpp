@@ -391,7 +391,7 @@ ErrorOr<void> initialize_main_thread_vm(HTML::EventLoop::Type type)
 
             // 2. Let url be the result of resolving a module specifier given moduleScript and specifier.
             auto url = TRY(Bindings::throw_dom_exception_if_needed(vm, [&] {
-                return HTML::resolve_module_specifier(*module_script, specifier_string.to_byte_string());
+                return HTML::resolve_module_specifier(*module_script, specifier_string);
             }));
 
             // 3. Return the serialization of url.
@@ -513,7 +513,7 @@ ErrorOr<void> initialize_main_thread_vm(HTML::EventLoop::Type type)
             auto completion = [&]() -> JS::ThrowCompletionOr<JS::NonnullGCPtr<JS::Module>> {
                 // 2. If moduleScript is null, then set completion to Completion Record { [[Type]]: throw, [[Value]]: a new TypeError, [[Target]]: empty }.
                 if (!module_script) {
-                    return JS::throw_completion(JS::TypeError::create(realm, ByteString::formatted("Loading imported module '{}' failed.", module_request.module_specifier)));
+                    return JS::throw_completion(JS::TypeError::create(realm, MUST(String::formatted("Loading imported module '{}' failed.", module_request.module_specifier))));
                 }
                 // 3. Otherwise, if moduleScript's parse error is not null, then:
                 else if (!module_script->parse_error().is_null()) {

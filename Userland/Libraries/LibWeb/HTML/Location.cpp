@@ -103,7 +103,7 @@ WebIDL::ExceptionOr<String> Location::href() const
         return WebIDL::SecurityError::create(realm(), "Location's relevant document is not same origin-domain with the entry settings object's origin"_string);
 
     // 2. Return this's url, serialized.
-    return TRY_OR_THROW_OOM(vm, String::from_byte_string(url().serialize()));
+    return TRY_OR_THROW_OOM(vm, url().serialize());
 }
 
 // https://html.spec.whatwg.org/multipage/history.html#the-location-interface:dom-location-href-2
@@ -118,7 +118,7 @@ WebIDL::ExceptionOr<void> Location::set_href(String const& new_href)
         return {};
 
     // FIXME: 2. Let url be the result of encoding-parsing a URL given the given value, relative to the entry settings object.
-    auto href_url = window.associated_document().parse_url(new_href.to_byte_string());
+    auto href_url = window.associated_document().parse_url(new_href.to_string());
 
     // 3. If url is failure, then throw a "SyntaxError" DOMException.
     if (!href_url.is_valid())
@@ -141,7 +141,7 @@ WebIDL::ExceptionOr<String> Location::origin() const
         return WebIDL::SecurityError::create(realm(), "Location's relevant document is not same origin-domain with the entry settings object's origin"_string);
 
     // 2. Return the serialization of this's url's origin.
-    return TRY_OR_THROW_OOM(vm, String::from_byte_string(url().origin().serialize()));
+    return TRY_OR_THROW_OOM(vm, url().origin().serialize());
 }
 
 // https://html.spec.whatwg.org/multipage/history.html#dom-location-protocol

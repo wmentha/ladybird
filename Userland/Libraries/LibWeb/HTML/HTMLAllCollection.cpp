@@ -211,7 +211,7 @@ Variant<JS::NonnullGCPtr<DOM::HTMLCollection>, JS::NonnullGCPtr<DOM::Element>, E
     }
 
     // 2. Return the result of getting the "all"-named element(s) from collection given nameOrIndex.
-    return get_the_all_named_elements(MUST(FlyString::from_deprecated_fly_string(name_or_index.as_string())));
+    return get_the_all_named_elements(name_or_index.as_string());
 }
 
 Optional<JS::Value> HTMLAllCollection::item_value(size_t index) const

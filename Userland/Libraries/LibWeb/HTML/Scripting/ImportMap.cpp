@@ -16,7 +16,7 @@
 namespace Web::HTML {
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#parse-an-import-map-string
-WebIDL::ExceptionOr<ImportMap> parse_import_map_string(JS::Realm& realm, ByteString const& input, URL::URL base_url)
+WebIDL::ExceptionOr<ImportMap> parse_import_map_string(JS::Realm& realm, String const& input, URL::URL base_url)
 {
     HTML::TemporaryExecutionContext execution_context { realm };
 
@@ -92,7 +92,7 @@ WebIDL::ExceptionOr<ImportMap> parse_import_map_string(JS::Realm& realm, ByteStr
 }
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#normalizing-a-specifier-key
-WebIDL::ExceptionOr<Optional<DeprecatedFlyString>> normalise_specifier_key(JS::Realm& realm, DeprecatedFlyString specifier_key, URL::URL base_url)
+WebIDL::ExceptionOr<Optional<FlyString>> normalise_specifier_key(JS::Realm& realm, FlyString specifier_key, URL::URL base_url)
 {
     // 1. If specifierKey is the empty string, then:
     if (specifier_key.is_empty()) {
@@ -102,7 +102,7 @@ WebIDL::ExceptionOr<Optional<DeprecatedFlyString>> normalise_specifier_key(JS::R
             TRY_OR_THROW_OOM(realm.vm(), String::formatted("Specifier keys may not be empty")));
 
         // 2. Return null.
-        return Optional<DeprecatedFlyString> {};
+        return Optional<FlyString> {};
     }
 
     // 2. Let url be the result of resolving a URL-like module specifier, given specifierKey and baseURL.
@@ -148,7 +148,7 @@ WebIDL::ExceptionOr<ModuleSpecifierMap> sort_and_normalise_module_specifier_map(
         }
 
         // 4. Let addressURL be the result of resolving a URL-like module specifier given value and baseURL.
-        auto address_url = resolve_url_like_module_specifier(value.as_string().byte_string(), base_url);
+        auto address_url = resolve_url_like_module_specifier(value.as_string(), base_url);
 
         // 5. If addressURL is null, then:
         if (!address_url.has_value()) {
@@ -261,7 +261,7 @@ WebIDL::ExceptionOr<ModuleIntegrityMap> normalize_module_integrity_map(JS::Realm
         }
 
         // 4. Set normalized[resolvedURL] to value.
-        normalised.set(resolved_url.release_value(), value.as_string().byte_string());
+        normalised.set(resolved_url.release_value(), value.as_string());
     }
 
     // 3. Return normalized.

@@ -69,9 +69,9 @@ void Job::visit_edges(JS::Cell::Visitor& visitor)
 
 // FIXME: Does this need to be a 'user agent' level thing? Or can we have one per renderer process?
 // https://w3c.github.io/ServiceWorker/#dfn-scope-to-job-queue-map
-static HashMap<ByteString, JobQueue>& scope_to_job_queue_map()
+static HashMap<String, JobQueue>& scope_to_job_queue_map()
 {
-    static HashMap<ByteString, JobQueue> map;
+    static HashMap<String, JobQueue> map;
     return map;
 }
 
@@ -284,16 +284,16 @@ static void update(JS::VM& vm, JS::NonnullGCPtr<Job> job)
             auto const& scope_url = registration.scope_url();
 
             // 12. Let maxScopeString be null.
-            auto max_scope_string = Optional<ByteString> {};
+            auto max_scope_string = Optional<String> {};
 
-            auto join_paths_with_slash = [](URL::URL const& url) -> ByteString {
+            auto join_paths_with_slash = [](URL::URL const& url) -> String {
                 StringBuilder builder;
                 builder.append('/');
                 for (auto const& component : url.paths()) {
                     builder.append(component);
                     builder.append('/');
                 }
-                return builder.to_byte_string();
+                return MUST(builder.to_string());
             };
 
             // 13. If serviceWorkerAllowed is null, then:

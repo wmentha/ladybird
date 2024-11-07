@@ -19,7 +19,7 @@ extern StringView s_xhtml_unified_dtd;
 
 namespace Web {
 
-ErrorOr<Variant<ByteString, Vector<XML::MarkupDeclaration>>> resolve_xml_resource(XML::SystemID const&, Optional<XML::PublicID> const& public_id)
+ErrorOr<Variant<String, Vector<XML::MarkupDeclaration>>> resolve_xml_resource(XML::SystemID const&, Optional<XML::PublicID> const& public_id)
 {
     static Optional<Vector<XML::MarkupDeclaration>> s_parsed_xhtml_unified_dtd;
     if (!public_id.has_value())
@@ -42,7 +42,7 @@ ErrorOr<Variant<ByteString, Vector<XML::MarkupDeclaration>>> resolve_xml_resourc
         auto parser = XML::Parser(s_xhtml_unified_dtd, XML::Parser::Options {});
         auto result = parser.parse_external_subset();
         if (result.is_error()) // We can't really recover from this, so just return the source and let libxml handle it.
-            return ByteString { s_xhtml_unified_dtd };
+            return String::from_utf8(s_xhtml_unified_dtd);
         s_parsed_xhtml_unified_dtd = result.release_value();
     }
 
@@ -57,9 +57,9 @@ XMLDocumentBuilder::XMLDocumentBuilder(DOM::Document& document, XMLScriptingSupp
     m_namespace_stack.append({ m_namespace, 1 });
 }
 
-void XMLDocumentBuilder::set_source(ByteString source)
+void XMLDocumentBuilder::set_source(String source)
 {
-    m_document->set_source(MUST(String::from_byte_string(source)));
+    m_document->set_source(source);
 }
 
 void XMLDocumentBuilder::set_doctype(XML::Doctype doctype)
@@ -69,17 +69,17 @@ void XMLDocumentBuilder::set_doctype(XML::Doctype doctype)
     }
 
     auto document_type = DOM::DocumentType::create(m_document);
-    auto name = MUST(AK::String::from_byte_string(doctype.type));
+    auto name = doctype.type;
     document_type->set_name(name);
 
     if (doctype.external_id.has_value()) {
         auto external_id = doctype.external_id.release_value();
 
-        auto system_id = MUST(AK::String::from_byte_string(external_id.system_id.system_literal));
+        auto system_id = external_id.system_id.system_literal;
         document_type->set_system_id(system_id);
 
         if (external_id.public_id.has_value()) {
-            auto public_id = MUST(AK::String::from_byte_string(external_id.public_id.release_value().public_literal));
+            auto public_id = external_id.public_id.release_value().public_literal;
             document_type->set_public_id(public_id);
         }
     }
@@ -87,7 +87,7 @@ void XMLDocumentBuilder::set_doctype(XML::Doctype doctype)
     m_document->insert_before(document_type, m_document->first_child(), false);
 }
 
-void XMLDocumentBuilder::element_start(const XML::Name& name, HashMap<XML::Name, ByteString> const& attributes)
+void XMLDocumentBuilder::element_start(const XML::Name& name, HashMap<XML::Name, String> const& attributes)
 {
     if (m_has_error)
         return;
@@ -96,12 +96,12 @@ void XMLDocumentBuilder::element_start(const XML::Name& name, HashMap<XML::Name,
     if (auto it = attributes.find("xmlns"); it != attributes.end()) {
         found_explicit_namespace = true;
         m_namespace_stack.append({ m_namespace, 1 });
-        m_namespace = MUST(FlyString::from_deprecated_fly_string(it->value));
+        m_namespace = it->value;
     } else {
         m_namespace_stack.last().depth += 1;
     }
 
-    if (name == HTML::TagNames::html.to_deprecated_fly_string() && m_namespace != Namespace::HTML) {
+    if (name == MUST(HTML::TagNames::html.to_string()) && m_namespace != Namespace::HTML) {
         // HTML / 2.1.3 XML compatibility: https://html.spec.whatwg.org/#xml
         //     To ease migration from HTML to XML, user agents conforming to this specification will place elements in HTML
         //     in the http://www.w3.org/1999/xhtml namespace, at least for the purposes of the DOM and CSS.
@@ -113,7 +113,7 @@ void XMLDocumentBuilder::element_start(const XML::Name& name, HashMap<XML::Name,
         m_namespace = Namespace::HTML;
     }
 
-    auto node = DOM::create_element(m_document, MUST(FlyString::from_deprecated_fly_string(name)), m_namespace).release_value_but_fixme_should_propagate_errors();
+    auto node = DOM::create_element(m_document, name), m_namespace).release_value_but_fixme_should_propagate_errors();
 
     // When an XML parser with XML scripting support enabled creates a script element,
     // it must have its parser document set and its "force async" flag must be unset.
@@ -136,7 +136,7 @@ void XMLDocumentBuilder::element_start(const XML::Name& name, HashMap<XML::Name,
             auto name = attribute.key;
             if (!name.is_one_of("xmlns:"sv, "xmlns:xmlns"sv)) {
                 // The prefix xmlns is used only to declare namespace bindings and is by definition bound to the namespace name http://www.w3.org/2000/xmlns/.
-                MUST(node->set_attribute_ns(Namespace::XMLNS, MUST(FlyString::from_deprecated_fly_string(name)), MUST(String::from_byte_string(attribute.value))));
+                MUST(node->set_attribute_ns(Namespace::XMLNS, name, attribute.value));
             } else {
                 m_has_error = true;
             }
@@ -145,7 +145,7 @@ void XMLDocumentBuilder::element_start(const XML::Name& name, HashMap<XML::Name,
                 m_has_error = true;
             }
         }
-        MUST(node->set_attribute(MUST(FlyString::from_deprecated_fly_string(attribute.key)), MUST(String::from_byte_string(attribute.value))));
+        MUST(node->set_attribute(attribute.key, attribute.value));
     }
 
     m_current_node = node.ptr();

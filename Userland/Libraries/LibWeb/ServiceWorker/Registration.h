@@ -62,7 +62,7 @@ private:
     //        This can't possibly be true. The association is the other way around.
 
     bool m_navigation_preload_enabled = { false }; // https://w3c.github.io/ServiceWorker/#service-worker-registration-navigation-preload-enabled-flag
-    ByteString m_navigation_preload_header_value;  // https://w3c.github.io/ServiceWorker/#service-worker-registration-navigation-preload-header-value
+    String m_navigation_preload_header_value;  // https://w3c.github.io/ServiceWorker/#service-worker-registration-navigation-preload-header-value
 };
 
 }

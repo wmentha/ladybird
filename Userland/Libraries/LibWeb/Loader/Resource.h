@@ -47,7 +47,7 @@ public:
     bool is_loaded() const { return m_state == State::Loaded; }
     bool is_failed() const { return m_state == State::Failed; }
 
-    ByteString const& error() const { return m_error; }
+    String const& error() const { return m_error; }
 
     bool has_encoded_data() const { return !m_encoded_data.is_empty(); }
 
@@ -62,13 +62,13 @@ public:
     void unregister_client(Badge<ResourceClient>, ResourceClient&);
 
     bool has_encoding() const { return m_encoding.has_value(); }
-    Optional<ByteString> const& encoding() const { return m_encoding; }
-    ByteString const& mime_type() const { return m_mime_type; }
+    Optional<String> const& encoding() const { return m_encoding; }
+    String const& mime_type() const { return m_mime_type; }
 
     void for_each_client(Function<void(ResourceClient&)>);
 
     void did_load(Badge<ResourceLoader>, ReadonlyBytes data, HTTP::HeaderMap const&, Optional<u32> status_code);
-    void did_fail(Badge<ResourceLoader>, ByteString const& error, ReadonlyBytes data, HTTP::HeaderMap const&, Optional<u32> status_code);
+    void did_fail(Badge<ResourceLoader>, String const& error, ReadonlyBytes data, HTTP::HeaderMap const&, Optional<u32> status_code);
 
 protected:
     explicit Resource(Type, LoadRequest const&);
@@ -81,10 +81,10 @@ private:
     ByteBuffer m_encoded_data;
     Type m_type { Type::Generic };
     State m_state { State::Pending };
-    ByteString m_error;
-    Optional<ByteString> m_encoding;
+    String m_error;
+    Optional<String> m_encoding;
 
-    ByteString m_mime_type;
+    String m_mime_type;
     HTTP::HeaderMap m_response_headers;
     Optional<u32> m_status_code;
     HashTable<ResourceClient*> m_clients;

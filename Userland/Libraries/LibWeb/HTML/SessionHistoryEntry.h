@@ -72,8 +72,8 @@ public:
     [[nodiscard]] Optional<PolicyContainer> const& policy_container() const { return m_policy_container; }
     void set_policy_container(Optional<PolicyContainer> policy_container) { m_policy_container = move(policy_container); }
 
-    [[nodiscard]] Optional<ByteString> const& browsing_context_name() const { return m_browsing_context_name; }
-    void set_browsing_context_name(Optional<ByteString> browsing_context_name) { m_browsing_context_name = move(browsing_context_name); }
+    [[nodiscard]] Optional<String> const& browsing_context_name() const { return m_browsing_context_name; }
+    void set_browsing_context_name(Optional<String> browsing_context_name) { m_browsing_context_name = move(browsing_context_name); }
 
     [[nodiscard]] JS::GCPtr<BrowsingContext> original_source_browsing_context() const { return m_original_source_browsing_context; }
     void set_original_source_browsing_context(JS::GCPtr<BrowsingContext> original_source_browsing_context) { m_original_source_browsing_context = original_source_browsing_context; }
@@ -117,7 +117,7 @@ private:
     // FIXME: scroll position data, which is scroll position data for the document's restorable scrollable regions
 
     // browsing context name, a browsing context name or null, initially null
-    Optional<ByteString> m_browsing_context_name;
+    Optional<String> m_browsing_context_name;
 
     // https://html.spec.whatwg.org/multipage/browsing-the-web.html#she-other
     // FIXME: persisted user state, which is implementation-defined, initially null

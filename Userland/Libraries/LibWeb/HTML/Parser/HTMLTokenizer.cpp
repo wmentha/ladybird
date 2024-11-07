@@ -2802,11 +2802,11 @@ HTMLTokenizer::HTMLTokenizer()
     m_source_positions.empend(0u, 0u);
 }
 
-HTMLTokenizer::HTMLTokenizer(StringView input, ByteString const& encoding)
+HTMLTokenizer::HTMLTokenizer(StringView input, String const& encoding)
 {
     auto decoder = TextCodec::decoder_for(encoding);
     VERIFY(decoder.has_value());
-    m_decoded_input = decoder->to_utf8(input).release_value_but_fixme_should_propagate_errors().to_byte_string();
+    m_decoded_input = decoder->to_utf8(input);
     m_utf8_view = Utf8View(m_decoded_input);
     m_utf8_iterator = m_utf8_view.begin();
     m_prev_utf8_iterator = m_utf8_view.begin();
@@ -2820,10 +2820,10 @@ void HTMLTokenizer::insert_input_at_insertion_point(StringView input)
 
     // FIXME: Implement a InputStream to handle insertion_point and iterators.
     StringBuilder builder {};
-    builder.append(m_decoded_input.substring_view(0, m_insertion_point.position));
+    builder.append(m_decoded_input.substring_from_byte_offset(0, m_insertion_point.position));
     builder.append(input);
-    builder.append(m_decoded_input.substring_view(m_insertion_point.position));
-    m_decoded_input = builder.to_byte_string();
+    builder.append(m_decoded_input.substring_from_byte_offset(m_insertion_point.position));
+    m_decoded_input = MUST(builder.to_string());
 
     m_utf8_view = Utf8View(m_decoded_input);
     m_utf8_iterator = m_utf8_view.iterator_at_byte_offset(utf8_iterator_byte_offset);
@@ -2861,7 +2861,7 @@ void HTMLTokenizer::switch_to(Badge<HTMLParser>, State new_state)
 void HTMLTokenizer::will_emit(HTMLToken& token)
 {
     if (token.is_start_tag())
-        m_last_emitted_start_tag_name = token.tag_name().to_deprecated_fly_string();
+        m_last_emitted_start_tag_name = token.tag_name();
 
     auto is_start_or_end_tag = token.type() == HTMLToken::Type::StartTag || token.type() == HTMLToken::Type::EndTag;
     token.set_end_position({}, nth_last_position(is_start_or_end_tag ? 1 : 0));
@@ -2875,7 +2875,7 @@ bool HTMLTokenizer::current_end_tag_token_is_appropriate() const
     VERIFY(m_current_token.is_end_tag());
     if (!m_last_emitted_start_tag_name.has_value())
         return false;
-    return m_current_token.tag_name().to_deprecated_fly_string() == m_last_emitted_start_tag_name.value();
+    return m_current_token.tag_name() == m_last_emitted_start_tag_name.value();
 }
 
 bool HTMLTokenizer::consumed_as_part_of_an_attribute() const

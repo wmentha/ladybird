@@ -11,7 +11,7 @@ namespace Web::ServiceWorker {
 
 struct RegistrationKey {
     StorageAPI::StorageKey key;
-    ByteString serialized_scope_url;
+    String serialized_scope_url;
 
     bool operator==(RegistrationKey const&) const = default;
 };
@@ -56,7 +56,7 @@ Optional<Registration&> Registration::get(StorageAPI::StorageKey const& key, Opt
     // FIXME: What does this mean? Do we need a mutex? does it need to be 'locked' at the UA level?
 
     // 2. Let scopeString be the empty string.
-    ByteString scope_string;
+    String scope_string;
 
     // 3. If scope is not null, set scopeString to serialized scope with the exclude fragment flag set.
     if (scope.has_value())
@@ -110,7 +110,7 @@ template<>
 struct Traits<Web::ServiceWorker::RegistrationKey> : public DefaultTraits<Web::ServiceWorker::RegistrationKey> {
     static unsigned hash(Web::ServiceWorker::RegistrationKey const& key)
     {
-        return pair_int_hash(Traits<Web::StorageAPI::StorageKey>::hash(key.key), Traits<ByteString>::hash(key.serialized_scope_url));
+        return pair_int_hash(Traits<Web::StorageAPI::StorageKey>::hash(key.key), Traits<String>::hash(key.serialized_scope_url));
     }
 };
 }

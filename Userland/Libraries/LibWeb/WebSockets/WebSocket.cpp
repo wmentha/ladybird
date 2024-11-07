@@ -124,13 +124,9 @@ ErrorOr<void> WebSocket::establish_web_socket_connection(URL::URL& url_record, V
 
     auto* window_or_worker = dynamic_cast<HTML::WindowOrWorkerGlobalScopeMixin*>(&client.global_object());
     VERIFY(window_or_worker);
-    auto origin_string = MUST(window_or_worker->origin()).to_byte_string();
+    auto origin_string = MUST(window_or_worker->origin()).to_string();
 
-    Vector<ByteString> protcol_byte_strings;
-    for (auto const& protocol : protocols)
-        TRY(protcol_byte_strings.try_append(protocol.to_byte_string()));
-
-    m_websocket = ResourceLoader::the().request_client().websocket_connect(url_record, origin_string, protcol_byte_strings);
+    m_websocket = ResourceLoader::the().request_client().websocket_connect(url_record, origin_string, protocols);
 
     m_websocket->on_open = [weak_this = make_weak_ptr<WebSocket>()] {
         if (!weak_this)
@@ -148,7 +144,7 @@ ErrorOr<void> WebSocket::establish_web_socket_connection(URL::URL& url_record, V
         if (!weak_this)
             return;
         auto& websocket = const_cast<WebSocket&>(*weak_this);
-        websocket.on_close(code, String::from_byte_string(reason).release_value_but_fixme_should_propagate_errors(), was_clean);
+        websocket.on_close(code, reason, was_clean);
     };
     m_websocket->on_error = [weak_this = make_weak_ptr<WebSocket>()](auto) {
         if (!weak_this)
@@ -183,7 +179,7 @@ WebIDL::ExceptionOr<String> WebSocket::protocol() const
 {
     if (!m_websocket)
         return String {};
-    return TRY_OR_THROW_OOM(vm(), String::from_byte_string(m_websocket->subprotocol_in_use()));
+    return TRY_OR_THROW_OOM(vm(), m_websocket->subprotocol_in_use());
 }
 
 // https://websockets.spec.whatwg.org/#dom-websocket-close
@@ -209,7 +205,7 @@ WebIDL::ExceptionOr<void> WebSocket::close(Optional<u16> code, Optional<String> 
     // -> Otherwise
     // NOTE: All of these are handled by the WebSocket Protocol when calling close()
     // FIXME: LibProtocol does not yet support sending empty Close messages, so we use default values for now
-    m_websocket->close(code.value_or(1000), reason.value_or(String {}).to_byte_string());
+    m_websocket->close(code.value_or(1000), reason.value_or(String {}).to_string());
     return {};
 }
 
@@ -277,7 +273,7 @@ void WebSocket::on_message(ByteBuffer message, bool is_text)
     if (m_websocket->ready_state() != Requests::WebSocket::ReadyState::Open)
         return;
     if (is_text) {
-        auto text_message = ByteString(ReadonlyBytes(message));
+        auto text_message = String::from_utf8_without_validation(ReadonlyBytes(message));
         HTML::MessageEventInit event_init;
         event_init.data = JS::PrimitiveString::create(vm(), text_message);
         event_init.origin = url().release_value_but_fixme_should_propagate_errors();

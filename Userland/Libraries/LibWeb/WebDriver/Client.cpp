@@ -356,7 +356,7 @@ ErrorOr<void, Client::WrappedError> Client::send_error_response(HTTP::HttpReques
 
 void Client::log_response(HTTP::HttpRequest const& request, unsigned code)
 {
-    outln("{} :: {:03d} :: {} {}", Core::DateTime::now().to_byte_string(), code, request.method_name(), request.resource());
+    outln("{} :: {:03d} :: {} {}", Core::DateTime::now().to_string(), code, request.method_name(), request.resource());
 }
 
 }

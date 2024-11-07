@@ -340,7 +340,7 @@ WebIDL::ExceptionOr<JS::NonnullGCPtr<Document>> Document::create_and_initialize(
 
         // 3. If referrer is a URL record, then set document's referrer to the serialization of referrer.
         if (referrer.has<URL::URL>()) {
-            document->m_referrer = MUST(String::from_byte_string(referrer.get<URL::URL>().serialize()));
+            document->m_referrer = referrer.get<URL::URL>().serialize();
         }
     }
 
@@ -974,7 +974,7 @@ WebIDL::ExceptionOr<void> Document::set_title(String const& title)
     }
 
     if (browsing_context() == &page().top_level_browsing_context())
-        page().client().page_did_change_title(title.to_byte_string());
+        page().client().page_did_change_title(title);
 
     return {};
 }
@@ -1653,9 +1653,9 @@ HTML::EnvironmentSettingsObject& Document::relevant_settings_object() const
 }
 
 // https://dom.spec.whatwg.org/#dom-document-createelement
-WebIDL::ExceptionOr<JS::NonnullGCPtr<Element>> Document::create_element(String const& a_local_name, Variant<String, ElementCreationOptions> const& options)
+WebIDL::ExceptionOr<JS::NonnullGCPtr<Element>> Document::create_element(String const& local_name, Variant<String, ElementCreationOptions> const& options)
 {
-    auto local_name = a_local_name.to_byte_string();
+    auto local_name = a_local_name;
 
     // 1. If localName does not match the Name production, then throw an "InvalidCharacterError" DOMException.
     if (!is_valid_name(a_local_name))
@@ -1663,7 +1663,7 @@ WebIDL::ExceptionOr<JS::NonnullGCPtr<Element>> Document::create_element(String c
 
     // 2. If this is an HTML document, then set localName to localName in ASCII lowercase.
     if (document_type() == Type::HTML)
-        local_name = local_name.to_lowercase();
+        local_name = MUST(local_name.to_lowercase());
 
     // 3. Let is be null.
     Optional<String> is_value;
@@ -1681,7 +1681,7 @@ WebIDL::ExceptionOr<JS::NonnullGCPtr<Element>> Document::create_element(String c
         namespace_ = Namespace::HTML;
 
     // 6. Return the result of creating an element given this, localName, namespace, null, is, and with the synchronous custom elements flag set.
-    return TRY(DOM::create_element(*this, MUST(FlyString::from_deprecated_fly_string(local_name)), move(namespace_), {}, move(is_value), true));
+    return TRY(DOM::create_element(*this, local_name, move(namespace_), {}, move(is_value), true));
 }
 
 // https://dom.spec.whatwg.org/#dom-document-createelementns
@@ -2119,7 +2119,7 @@ Document::IndicatedPart Document::determine_the_indicated_part() const
     auto decoded_fragment = URL::percent_decode(*fragment);
 
     // 7. Set potentialIndicatedElement to the result of finding a potential indicated element given document and decodedFragment.
-    potential_indicated_element = find_a_potential_indicated_element(MUST(FlyString::from_deprecated_fly_string(decoded_fragment)));
+    potential_indicated_element = find_a_potential_indicated_element(decoded_fragment);
 
     // 8. If potentialIndicatedElement is not null, then return potentialIndicatedElement.
     if (potential_indicated_element)
@@ -4428,8 +4428,8 @@ void Document::update_for_history_step_application(JS::NonnullGCPtr<HTML::Sessio
             //    initialized to the serialization of entry's URL.
             if (old_url.fragment() != entry->url().fragment()) {
                 HTML::HashChangeEventInit hashchange_event_init;
-                hashchange_event_init.old_url = MUST(String::from_byte_string(old_url.serialize()));
-                hashchange_event_init.new_url = MUST(String::from_byte_string(entry->url().serialize()));
+                hashchange_event_init.old_url = old_url.serialize();
+                hashchange_event_init.new_url = entry->url().serialize();
                 auto hashchange_event = HTML::HashChangeEvent::create(realm(), "hashchange"_fly_string, hashchange_event_init);
                 HTML::queue_global_task(HTML::Task::Source::DOMManipulation, relevant_global_object, JS::create_heap_function(heap(), [hashchange_event, &relevant_global_object]() {
                     relevant_global_object.dispatch_event(hashchange_event);

@@ -560,7 +560,7 @@ after_step_7:
         }
 
         // 12. Parse selected source, relative to the element's node document, and let urlString be the resulting URL string.
-        auto url_string = document().parse_url(selected_source.value().url.to_byte_string());
+        auto url_string = document().parse_url(selected_source.value().url);
         // If that is not successful, then:
         if (!url_string.is_valid()) {
             // 1. Abort the image request for the current request and the pending request.

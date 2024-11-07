@@ -205,14 +205,11 @@ JS::NonnullGCPtr<FileAPI::FileList> DataTransfer::files() const
 
         auto blob = FileAPI::Blob::create(realm, item.data, item.type_string);
 
-        // FIXME: The FileAPI should use ByteString for file names.
-        auto file_name = MUST(String::from_byte_string(item.file_name));
-
         // FIXME: Fill in other fields (e.g. last_modified).
         FileAPI::FilePropertyBag options {};
         options.type = item.type_string;
 
-        auto file = MUST(FileAPI::File::create(realm, { JS::make_handle(blob) }, file_name, move(options)));
+        auto file = MUST(FileAPI::File::create(realm, { JS::make_handle(blob) }, item.file_name, move(options)));
         files->add_file(file);
     }
 

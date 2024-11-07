@@ -20,7 +20,7 @@ JS_DEFINE_ALLOCATOR(ClassicScript);
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script
 // https://whatpr.org/html/9893/webappapis.html#creating-a-classic-script
-JS::NonnullGCPtr<ClassicScript> ClassicScript::create(ByteString filename, StringView source, JS::Realm& realm, URL::URL base_url, size_t source_line_number, MutedErrors muted_errors)
+JS::NonnullGCPtr<ClassicScript> ClassicScript::create(String filename, StringView source, JS::Realm& realm, URL::URL base_url, size_t source_line_number, MutedErrors muted_errors)
 {
     auto& vm = realm.vm();
 
@@ -150,7 +150,7 @@ JS::Completion ClassicScript::run(RethrowErrors rethrow_errors)
     //            Return Completion { [[Type]]: throw, [[Value]]: a new "QuotaExceededError" DOMException, [[Target]]: empty }.
 }
 
-ClassicScript::ClassicScript(URL::URL base_url, ByteString filename, JS::Realm& realm)
+ClassicScript::ClassicScript(URL::URL base_url, String filename, JS::Realm& realm)
     : Script(move(base_url), move(filename), realm)
 {
 }

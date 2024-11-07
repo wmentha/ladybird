@@ -102,7 +102,7 @@ JS::GCPtr<DataTransferItem> DataTransferItemList::add(JS::NonnullGCPtr<FileAPI::
         .kind = HTML::DragDataStoreItem::Kind::File,
         .type_string = file->type().to_ascii_lowercase(),
         .data = MUST(ByteBuffer::copy(file->raw_bytes())),
-        .file_name = file->name().to_byte_string(),
+        .file_name = file->name(),
     });
 
     // 3. Determine the value of the indexed property corresponding to the newly added item, and return that value (a

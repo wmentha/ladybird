@@ -241,11 +241,11 @@ static WebIDL::ExceptionOr<JS::NonnullGCPtr<DOM::Document>> load_text_document(H
         parser->tokenizer().insert_eof();
         parser->run(url);
 
-        document->set_encoding(MUST(String::from_byte_string(encoding)));
+        document->set_encoding(encoding));
 
         // 5. User agents may add content to the head element of document, e.g., linking to a style sheet, providing
         //    script, or giving the document a title.
-        auto title = MUST(String::from_byte_string(LexicalPath::basename(url.to_byte_string())));
+        auto title = LexicalPath::basename(url.to_string())));
         auto title_element = MUST(DOM::create_element(document, HTML::TagNames::title, Namespace::HTML));
         MUST(document->head()->append_child(title_element));
         auto title_text = document->heap().allocate<DOM::Text>(document->realm(), document, title);
@@ -314,7 +314,7 @@ static WebIDL::ExceptionOr<JS::NonnullGCPtr<DOM::Document>> load_media_document(
         auto img_element = TRY(DOM::create_element(document, HTML::TagNames::img, Namespace::HTML));
         TRY(img_element->set_attribute(HTML::AttributeNames::src, url_string));
         TRY(document->body()->append_child(img_element));
-        TRY(insert_title(document, MUST(String::from_byte_string(LexicalPath::basename(url_string.to_byte_string())))));
+        TRY(insert_title(document, LexicalPath::basename(url_string.to_string())));
 
     } else if (type.type() == "video"sv) {
         auto video_element = TRY(DOM::create_element(document, HTML::TagNames::video, Namespace::HTML));
@@ -322,7 +322,7 @@ static WebIDL::ExceptionOr<JS::NonnullGCPtr<DOM::Document>> load_media_document(
         TRY(video_element->set_attribute(HTML::AttributeNames::autoplay, String {}));
         TRY(video_element->set_attribute(HTML::AttributeNames::controls, String {}));
         TRY(document->body()->append_child(video_element));
-        TRY(insert_title(document, MUST(String::from_byte_string(LexicalPath::basename(url_string.to_byte_string())))));
+        TRY(insert_title(document, LexicalPath::basename(url_string.to_string())));
 
     } else if (type.type() == "audio"sv) {
         auto audio_element = TRY(DOM::create_element(document, HTML::TagNames::audio, Namespace::HTML));
@@ -330,7 +330,7 @@ static WebIDL::ExceptionOr<JS::NonnullGCPtr<DOM::Document>> load_media_document(
         TRY(audio_element->set_attribute(HTML::AttributeNames::autoplay, String {}));
         TRY(audio_element->set_attribute(HTML::AttributeNames::controls, String {}));
         TRY(document->body()->append_child(audio_element));
-        TRY(insert_title(document, MUST(String::from_byte_string(LexicalPath::basename(url_string.to_byte_string())))));
+        TRY(insert_title(document, LexicalPath::basename(url_string.to_string())));
 
     } else {
         // FIXME: According to https://mimesniff.spec.whatwg.org/#audio-or-video-mime-type we might have to deal with

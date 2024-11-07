@@ -495,14 +495,11 @@ void HTMLInputElement::did_select_files(Span<SelectedFile> selected_files, Multi
         auto mime_type = MimeSniff::Resource::sniff(contents);
         auto blob = FileAPI::Blob::create(realm(), move(contents), mime_type.essence());
 
-        // FIXME: The FileAPI should use ByteString for file names.
-        auto file_name = MUST(String::from_byte_string(selected_file.name()));
-
         // FIXME: Fill in other fields (e.g. last_modified).
         FileAPI::FilePropertyBag options {};
         options.type = mime_type.essence();
 
-        auto file = MUST(FileAPI::File::create(realm(), { JS::make_handle(blob) }, file_name, move(options)));
+        auto file = MUST(FileAPI::File::create(realm(), { JS::make_handle(blob) }, selected_file.name(), move(options)));
         files->add_file(file);
     }
 

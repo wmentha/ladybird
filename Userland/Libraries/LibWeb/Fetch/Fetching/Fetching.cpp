@@ -2075,8 +2075,8 @@ WebIDL::ExceptionOr<JS::NonnullGCPtr<PendingResponse>> http_network_or_cache_fet
                 // FIXME: 2. Let username and password be the result of prompting the end user for a username and password,
                 //           respectively, in request’s window.
                 dbgln("Fetch: Username/password prompt is not implemented, using empty strings. This request will probably fail.");
-                auto username = ByteString::empty();
-                auto password = ByteString::empty();
+                auto username = ""_string;
+                auto password = ""_string;
 
                 // 3. Set the username given request’s current URL and username.
                 request->current_url().set_username(username);
@@ -2200,10 +2200,10 @@ WebIDL::ExceptionOr<JS::NonnullGCPtr<PendingResponse>> nonstandard_resource_load
     LoadRequest load_request;
     load_request.set_url(request->current_url());
     load_request.set_page(page);
-    load_request.set_method(ByteString::copy(request->method()));
+    load_request.set_method(String::from_utf8_without_validation(request->method()));
 
     for (auto const& header : *request->header_list())
-        load_request.set_header(ByteString::copy(header.name), ByteString::copy(header.value));
+        load_request.set_header(header.name, header.value);
 
     if (auto const* body = request->body().get_pointer<JS::NonnullGCPtr<Infrastructure::Body>>()) {
         TRY((*body)->source().visit(
@@ -2359,7 +2359,7 @@ WebIDL::ExceptionOr<JS::NonnullGCPtr<PendingResponse>> nonstandard_resource_load
             pending_response->resolve(response);
         });
 
-        auto on_load_error = JS::create_heap_function(vm.heap(), [&realm, &vm, request, pending_response](ByteString const& error, Optional<u32> status_code, Optional<String> const& reason_phrase, ReadonlyBytes data, HTTP::HeaderMap const& response_headers) {
+        auto on_load_error = JS::create_heap_function(vm.heap(), [&realm, &vm, request, pending_response](String const& error, Optional<u32> status_code, Optional<String> const& reason_phrase, ReadonlyBytes data, HTTP::HeaderMap const& response_headers) {
             (void)request;
             dbgln_if(WEB_FETCH_DEBUG, "Fetch: ResourceLoader load for '{}' failed: {} (status {})", request->url(), error, status_code.value_or(0));
             if constexpr (WEB_FETCH_DEBUG)
@@ -2367,7 +2367,7 @@ WebIDL::ExceptionOr<JS::NonnullGCPtr<PendingResponse>> nonstandard_resource_load
             auto response = Infrastructure::Response::create(vm);
             // FIXME: This is ugly, ResourceLoader should tell us.
             if (status_code.value_or(0) == 0) {
-                response = Infrastructure::Response::network_error(vm, TRY_OR_IGNORE(String::from_byte_string(error)));
+                response = Infrastructure::Response::network_error(vm, error));
             } else {
                 response->set_type(Infrastructure::Response::Type::Error);
                 response->set_status(status_code.value_or(400));

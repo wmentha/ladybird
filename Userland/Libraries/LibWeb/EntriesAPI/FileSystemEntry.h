@@ -20,20 +20,20 @@ class FileSystemEntry final : public Bindings::PlatformObject {
     JS_DECLARE_ALLOCATOR(FileSystemEntry);
 
 public:
-    static JS::NonnullGCPtr<FileSystemEntry> create(JS::Realm&, EntryType entry_type, ByteString name);
+    static JS::NonnullGCPtr<FileSystemEntry> create(JS::Realm&, EntryType entry_type, String name);
     virtual ~FileSystemEntry() override = default;
 
     bool is_file() const;
     bool is_directory() const;
-    ByteString name() const;
+    String name() const;
 
 private:
-    FileSystemEntry(JS::Realm&, EntryType entry_type, ByteString name);
+    FileSystemEntry(JS::Realm&, EntryType entry_type, String name);
 
     virtual void initialize(JS::Realm&) override;
 
     EntryType m_entry_type;
-    ByteString m_name;
+    String m_name;
 };
 
 }

@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Function.h>
 #include <AK/HashTable.h>
+#include <AK/String.h>
 #include <LibCore/EventReceiver.h>
 #include <LibRequests/Forward.h>
 #include <LibURL/URL.h>
@@ -27,7 +27,7 @@ public:
     RefPtr<Resource> load_resource(Resource::Type, LoadRequest&);
 
     using SuccessCallback = JS::HeapFunction<void(ReadonlyBytes, HTTP::HeaderMap const& response_headers, Optional<u32> status_code, Optional<String> const& reason_phrase)>;
-    using ErrorCallback = JS::HeapFunction<void(ByteString const&, Optional<u32> status_code, Optional<String> const& reason_phrase, ReadonlyBytes payload, HTTP::HeaderMap const& response_headers)>;
+    using ErrorCallback = JS::HeapFunction<void(String const&, Optional<u32> status_code, Optional<String> const& reason_phrase, ReadonlyBytes payload, HTTP::HeaderMap const& response_headers)>;
     using TimeoutCallback = JS::HeapFunction<void()>;
 
     void load(LoadRequest&, JS::Handle<SuccessCallback> success_callback, JS::Handle<ErrorCallback> error_callback = nullptr, Optional<u32> timeout = {}, JS::Handle<TimeoutCallback> timeout_callback = nullptr);

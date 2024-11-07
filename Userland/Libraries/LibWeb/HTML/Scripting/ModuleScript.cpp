@@ -17,21 +17,21 @@ JS_DEFINE_ALLOCATOR(JavaScriptModuleScript);
 
 ModuleScript::~ModuleScript() = default;
 
-ModuleScript::ModuleScript(URL::URL base_url, ByteString filename, JS::Realm& realm)
+ModuleScript::ModuleScript(URL::URL base_url, String filename, JS::Realm& realm)
     : Script(move(base_url), move(filename), realm)
 {
 }
 
 JavaScriptModuleScript::~JavaScriptModuleScript() = default;
 
-JavaScriptModuleScript::JavaScriptModuleScript(URL::URL base_url, ByteString filename, JS::Realm& realm)
+JavaScriptModuleScript::JavaScriptModuleScript(URL::URL base_url, String filename, JS::Realm& realm)
     : ModuleScript(move(base_url), move(filename), realm)
 {
 }
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-javascript-module-script
 // https://whatpr.org/html/9893/webappapis.html#creating-a-javascript-module-script
-WebIDL::ExceptionOr<JS::GCPtr<JavaScriptModuleScript>> JavaScriptModuleScript::create(ByteString const& filename, StringView source, JS::Realm& realm, URL::URL base_url)
+WebIDL::ExceptionOr<JS::GCPtr<JavaScriptModuleScript>> JavaScriptModuleScript::create(String const& filename, StringView source, JS::Realm& realm, URL::URL base_url)
 {
     // 1. If scripting is disabled for realm, then set source to the empty string.
     if (HTML::is_scripting_disabled(realm))

@@ -11,7 +11,7 @@ namespace Web::HTML {
 
 JS_DEFINE_ALLOCATOR(EventHandler);
 
-EventHandler::EventHandler(ByteString s)
+EventHandler::EventHandler(String s)
     : value(move(s))
 {
 }

@@ -13,12 +13,12 @@ namespace Web::EntriesAPI {
 
 JS_DEFINE_ALLOCATOR(FileSystemEntry);
 
-JS::NonnullGCPtr<FileSystemEntry> FileSystemEntry::create(JS::Realm& realm, EntryType entry_type, ByteString name)
+JS::NonnullGCPtr<FileSystemEntry> FileSystemEntry::create(JS::Realm& realm, EntryType entry_type, String name)
 {
     return realm.heap().allocate<FileSystemEntry>(realm, realm, entry_type, name);
 }
 
-FileSystemEntry::FileSystemEntry(JS::Realm& realm, EntryType entry_type, ByteString name)
+FileSystemEntry::FileSystemEntry(JS::Realm& realm, EntryType entry_type, String name)
     : PlatformObject(realm)
     , m_entry_type(entry_type)
     , m_name(name)
@@ -46,7 +46,7 @@ bool FileSystemEntry::is_directory() const
 }
 
 // https://wicg.github.io/entries-api/#dom-filesystementry-name
-ByteString FileSystemEntry::name() const
+String FileSystemEntry::name() const
 {
     // The name getter steps are to return this's name.
     return m_name;

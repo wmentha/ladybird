@@ -327,11 +327,11 @@ EventResult EventHandler::handle_mouseup(CSSPixelPoint viewport_position, CSSPix
                     auto url = document->parse_url(href);
 
                     if (button == UIEvents::MouseButton::Primary && (modifiers & UIEvents::Mod_PlatformCtrl) != 0) {
-                        m_navigable->page().client().page_did_click_link(url, link->target().to_byte_string(), modifiers);
+                        m_navigable->page().client().page_did_click_link(url, link->target().to_string(), modifiers);
                     } else if (button == UIEvents::MouseButton::Middle) {
-                        m_navigable->page().client().page_did_middle_click_link(url, link->target().to_byte_string(), modifiers);
+                        m_navigable->page().client().page_did_middle_click_link(url, link->target().to_string(), modifiers);
                     } else if (button == UIEvents::MouseButton::Secondary) {
-                        m_navigable->page().client().page_did_request_link_context_menu(viewport_position, url, link->target().to_byte_string(), modifiers);
+                        m_navigable->page().client().page_did_request_link_context_menu(viewport_position, url, link->target().to_string(), modifiers);
                     }
                 } else if (button == UIEvents::MouseButton::Secondary) {
                     if (is<HTML::HTMLImageElement>(*node)) {
@@ -609,7 +609,7 @@ EventResult EventHandler::handle_mousemove(CSSPixelPoint viewport_position, CSSP
     if (hovered_node_changed) {
         JS::GCPtr<HTML::HTMLElement const> hovered_html_element = document.hovered_node() ? document.hovered_node()->enclosing_html_element_with_attribute(HTML::AttributeNames::title) : nullptr;
         if (hovered_html_element && hovered_html_element->title().has_value()) {
-            page.client().page_did_enter_tooltip_area(hovered_html_element->title()->to_byte_string());
+            page.client().page_did_enter_tooltip_area(hovered_html_element->title()->to_string());
         } else {
             page.client().page_did_leave_tooltip_area();
         }

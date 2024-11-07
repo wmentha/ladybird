@@ -15,14 +15,14 @@ namespace Web::HTML {
 
 class ModuleLocationTuple {
 public:
-    ModuleLocationTuple(URL::URL url, ByteString type)
+    ModuleLocationTuple(URL::URL url, String type)
         : m_url(move(url))
         , m_type(move(type))
     {
     }
 
     URL::URL const& url() const { return m_url; }
-    ByteString const& type() const { return m_type; }
+    String const& type() const { return m_type; }
 
     bool operator==(ModuleLocationTuple const& other) const
     {
@@ -31,7 +31,7 @@ public:
 
 private:
     URL::URL m_url;
-    ByteString m_type;
+    String m_type;
 };
 
 // https://html.spec.whatwg.org/multipage/webappapis.html#module-map
@@ -56,16 +56,16 @@ public:
 
     using CallbackFunction = JS::NonnullGCPtr<JS::HeapFunction<void(Entry)>>;
 
-    bool is_fetching(URL::URL const& url, ByteString const& type) const;
-    bool is_failed(URL::URL const& url, ByteString const& type) const;
+    bool is_fetching(URL::URL const& url, String const& type) const;
+    bool is_failed(URL::URL const& url, String const& type) const;
 
-    bool is(URL::URL const& url, ByteString const& type, EntryType) const;
+    bool is(URL::URL const& url, String const& type, EntryType) const;
 
-    Optional<Entry> get(URL::URL const& url, ByteString const& type) const;
+    Optional<Entry> get(URL::URL const& url, String const& type) const;
 
-    AK::HashSetResult set(URL::URL const& url, ByteString const& type, Entry);
+    AK::HashSetResult set(URL::URL const& url, String const& type, Entry);
 
-    void wait_for_change(JS::Heap&, URL::URL const& url, ByteString const& type, Function<void(Entry)> callback);
+    void wait_for_change(JS::Heap&, URL::URL const& url, String const& type, Function<void(Entry)> callback);
 
 private:
     virtual void visit_edges(JS::Cell::Visitor&) override;
@@ -84,7 +84,7 @@ template<>
 struct Traits<Web::HTML::ModuleLocationTuple> : public DefaultTraits<Web::HTML::ModuleLocationTuple> {
     static unsigned hash(Web::HTML::ModuleLocationTuple const& tuple)
     {
-        return pair_int_hash(tuple.url().to_byte_string().hash(), tuple.type().hash());
+        return pair_int_hash(tuple.url().to_string().hash(), tuple.type().hash());
     }
 };
 
