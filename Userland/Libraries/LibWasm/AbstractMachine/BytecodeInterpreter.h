@@ -22,12 +22,12 @@ struct BytecodeInterpreter : public Interpreter {
 
     virtual ~BytecodeInterpreter() override = default;
     virtual bool did_trap() const final { return !m_trap.has<Empty>(); }
-    virtual ByteString trap_reason() const final
+    virtual String trap_reason() const final
     {
         return m_trap.visit(
-            [](Empty) -> ByteString { VERIFY_NOT_REACHED(); },
+            [](Empty) -> String { VERIFY_NOT_REACHED(); },
             [](Trap const& trap) { return trap.reason; },
-            [](JS::Completion const& completion) { return completion.value()->to_string_without_side_effects().to_byte_string(); });
+            [](JS::Completion const& completion) { return completion.value()->to_string_without_side_effects(); });
     }
     virtual void clear_trap() final { m_trap = Empty {}; }
 

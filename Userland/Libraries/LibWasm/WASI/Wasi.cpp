@@ -521,8 +521,9 @@ ErrorOr<Result<FileStat>> Implementation::impl$path_filestat_get(Configuration& 
         [&](PreopenedDirectoryDescriptor descriptor) {
             auto& entry = preopened_directories()[descriptor.value()];
             dir_fd = entry.opened_fd.value_or_lazy_evaluated([&] {
-                ByteString path = entry.host_path.string();
-                return open(path.characters(), O_DIRECTORY, 0);
+                auto path = entry.host_path.string();
+                auto bytes = path.bytes()
+                return open(bytes.data(), O_DIRECTORY, 0);
             });
             entry.opened_fd = dir_fd;
         },
@@ -539,10 +540,11 @@ ErrorOr<Result<FileStat>> Implementation::impl$path_filestat_get(Configuration& 
         options |= AT_SYMLINK_NOFOLLOW;
 
     auto slice = TRY(slice_typed_memory(configuration, path, path_len));
-    auto null_terminated_string = ByteString::copy(slice);
+    auto null_terminated_string = String { slice };
+    auto bytes = null_terminated_string.bytes();
 
     struct stat stat_buf;
-    if (fstatat(dir_fd, null_terminated_string.characters(), &stat_buf, options) < 0)
+    if (fstatat(dir_fd, bytes.data(), &stat_buf, options) < 0)
         return errno_value_from_errno(errno);
 
     constexpr auto file_type_of = [](struct stat const& buf) {
@@ -584,8 +586,9 @@ ErrorOr<Result<void>> Implementation::impl$path_create_directory(Configuration& 
         [&](PreopenedDirectoryDescriptor descriptor) {
             auto& entry = preopened_directories()[descriptor.value()];
             dir_fd = entry.opened_fd.value_or_lazy_evaluated([&] {
-                ByteString path = entry.host_path.string();
-                return open(path.characters(), O_DIRECTORY, 0);
+                auto path = entry.host_path.string();
+                auto bytes = path.bytes();
+                return open(bytes.data(), O_DIRECTORY, 0);
             });
             entry.opened_fd = dir_fd;
         },
@@ -598,9 +601,10 @@ ErrorOr<Result<void>> Implementation::impl$path_create_directory(Configuration& 
         return errno_value_from_errno(errno);
 
     auto slice = TRY(slice_typed_memory(configuration, path, path_len));
-    auto null_terminated_string = ByteString::copy(slice);
+    auto null_terminated_string = String { slice };
+    auto bytes = null_terminated_string.bytes();
 
-    if (mkdirat(dir_fd, null_terminated_string.characters(), 0755) < 0)
+    if (mkdirat(dir_fd, bytes.data(), 0755) < 0)
         return errno_value_from_errno(errno);
 
     return Result<void> {};
@@ -615,8 +619,9 @@ ErrorOr<Result<FD>> Implementation::impl$path_open(Configuration& configuration,
         [&](PreopenedDirectoryDescriptor descriptor) {
             auto& entry = preopened_directories()[descriptor.value()];
             dir_fd = entry.opened_fd.value_or_lazy_evaluated([&] {
-                ByteString path = entry.host_path.string();
-                return open(path.characters(), O_DIRECTORY, 0);
+                auto path = entry.host_path.string();
+                auto bytes = path.bytes();
+                return open(bytes.data(), O_DIRECTORY, 0);
             });
             entry.opened_fd = dir_fd;
         },
@@ -651,11 +656,12 @@ ErrorOr<Result<FD>> Implementation::impl$path_open(Configuration& configuration,
         open_flags |= O_NOFOLLOW;
 
     auto path_data = TRY(slice_typed_memory(configuration, path, path_len));
-    auto path_string = ByteString::copy(path_data);
+    auto path_string = String { path_data };
+    auto bytes = path_string.bytes();
 
     dbgln_if(WASI_FINE_GRAINED_DEBUG, "path_open: dir_fd={}, path={}, open_flags={}", dir_fd, path_string, open_flags);
 
-    int opened_fd = openat(dir_fd, path_string.characters(), open_flags, 0644);
+    int opened_fd = openat(dir_fd, bytes.data(), open_flags, 0644);
     if (opened_fd < 0)
         return errno_value_from_errno(errno);
 
@@ -707,8 +713,9 @@ ErrorOr<Result<FileStat>> Implementation::impl$fd_filestat_get(Configuration&, F
         [&](PreopenedDirectoryDescriptor descriptor) {
             auto& entry = preopened_directories()[descriptor.value()];
             resolved_fd = entry.opened_fd.value_or_lazy_evaluated([&] {
-                ByteString path = entry.host_path.string();
-                return open(path.characters(), O_DIRECTORY, 0);
+                auto path = entry.host_path.string();
+                auto bytes = path.bytes()
+                return open(bytes.data(), O_DIRECTORY, 0);
             });
             entry.opened_fd = resolved_fd;
         },
@@ -788,8 +795,9 @@ ErrorOr<Result<FDStat>> Implementation::impl$fd_fdstat_get(Configuration&, FD fd
         [&](PreopenedDirectoryDescriptor descriptor) {
             auto& entry = preopened_directories()[descriptor.value()];
             resolved_fd = entry.opened_fd.value_or_lazy_evaluated([&] {
-                ByteString path = entry.host_path.string();
-                return open(path.characters(), O_DIRECTORY, 0);
+                auto path = entry.host_path.string();
+                auto bytes = path.bytes();
+                return open(bytes.data(), O_DIRECTORY, 0);
             });
             entry.opened_fd = resolved_fd;
         },
@@ -1020,8 +1028,8 @@ struct InvocationOf<impl> {
                 if (result.is_error()) {
                     auto error = result.release_error();
                     if (error.is_errno())
-                        return Wasm::Trap { ByteString::formatted("exit:{}", error.code() + 1) };
-                    return Wasm::Trap { ByteString::formatted("Invalid call to {}() = {}", function_name, error) };
+                        return Wasm::Trap { MUST(String::formatted("exit:{}", error.code() + 1)) };
+                    return Wasm::Trap { MUST(String::formatted("Invalid call to {}() = {}", function_name, error)) };
                 }
 
                 auto value = result.release_value();

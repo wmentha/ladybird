@@ -24,13 +24,13 @@ class Configuration;
 struct Interpreter;
 
 struct InstantiationError {
-    ByteString error { "Unknown error" };
+    String error { "Unknown error"_string };
 };
 struct LinkError {
     enum OtherErrors {
         InvalidImportedModule,
     };
-    Vector<ByteString> missing_imports;
+    Vector<String> missing_imports;
     Vector<OtherErrors> other_errors;
 };
 
@@ -199,7 +199,7 @@ private:
 };
 
 struct Trap {
-    ByteString reason;
+    String reason;
 };
 
 // A variant of Result that does not include external reasons for error (JS::Completion, for now).
@@ -277,7 +277,7 @@ using ExternValue = Variant<FunctionAddress, TableAddress, MemoryAddress, Global
 
 class ExportInstance {
 public:
-    explicit ExportInstance(ByteString name, ExternValue value)
+    explicit ExportInstance(String name, ExternValue value)
         : m_name(move(name))
         , m_value(move(value))
     {
@@ -287,7 +287,7 @@ public:
     auto& value() const { return m_value; }
 
 private:
-    ByteString m_name;
+    String m_name;
     ExternValue m_value;
 };
 
@@ -362,7 +362,7 @@ private:
 
 class HostFunction {
 public:
-    explicit HostFunction(AK::Function<Result(Configuration&, Vector<Value>&)> function, FunctionType const& type, ByteString name)
+    explicit HostFunction(AK::Function<Result(Configuration&, Vector<Value>&)> function, FunctionType const& type, String name)
         : m_function(move(function))
         , m_type(type)
         , m_name(move(name))
@@ -376,7 +376,7 @@ public:
 private:
     AK::Function<Result(Configuration&, Vector<Value>&)> m_function;
     FunctionType m_type;
-    ByteString m_name;
+    String m_name;
 };
 
 using FunctionInstance = Variant<WasmFunction, HostFunction>;
@@ -655,8 +655,8 @@ private:
 class Linker {
 public:
     struct Name {
-        ByteString module;
-        ByteString name;
+        String module;
+        String name;
         ImportSection::Import::ImportDesc type;
     };
 

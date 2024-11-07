@@ -36,13 +36,13 @@ struct Context {
 };
 
 struct ValidationError : public Error {
-    ValidationError(ByteString error)
-        : Error(Error::from_string_view(error.view()))
+    ValidationError(String error)
+        : Error(Error::from_string_view(error.bytes_as_string_view()))
         , error_string(move(error))
     {
     }
 
-    ByteString error_string;
+    String error_string;
 };
 
 class Validator {
@@ -284,29 +284,29 @@ private:
     }
 
     struct Errors {
-        static ValidationError invalid(StringView name) { return ByteString::formatted("Invalid {}", name); }
+        static ValidationError invalid(StringView name) { return MUST(String::formatted("Invalid {}", name)); }
 
         template<typename Expected, typename Given>
         static ValidationError invalid(StringView name, Expected expected, Given given, SourceLocation location = SourceLocation::current())
         {
             if constexpr (WASM_VALIDATOR_DEBUG)
-                return ByteString::formatted("Invalid {} in {}, expected {} but got {}", name, find_instruction_name(location), expected, given);
+                return MUST(String::formatted("Invalid {} in {}, expected {} but got {}", name, find_instruction_name(location), expected, given));
             else
-                return ByteString::formatted("Invalid {}, expected {} but got {}", name, expected, given);
+                return MUST(String::formatted("Invalid {}, expected {} but got {}", name, expected, given));
         }
 
         template<typename... Args>
         static ValidationError non_conforming_types(StringView name, Args... args)
         {
-            return ByteString::formatted("Non-conforming types for {}: {}", name, Vector { args... });
+            return MUST(String::formatted("Non-conforming types for {}: {}", name, Vector { args... }));
         }
 
-        static ValidationError duplicate_export_name(StringView name) { return ByteString::formatted("Duplicate exported name '{}'", name); }
-        static ValidationError multiple_start_sections() { return ByteString("Found multiple start sections"sv); }
-        static ValidationError stack_height_mismatch(Stack const& stack, size_t expected_height) { return ByteString::formatted("Stack height mismatch, got {} but expected length {}", stack, expected_height); }
+        static ValidationError duplicate_export_name(StringView name) { return MUST(String::formatted("Duplicate exported name '{}'", name)); }
+        static ValidationError multiple_start_sections() { return "Found multiple start sections"_string; }
+        static ValidationError stack_height_mismatch(Stack const& stack, size_t expected_height) { return MUST(String::formatted("Stack height mismatch, got {} but expected length {}", stack, expected_height)); }
 
         template<typename T, typename U, typename V>
-        static ValidationError out_of_bounds(StringView name, V value, T min, U max) { return ByteString::formatted("Value {} for {} is out of bounds ({},{})", value, name, min, max); }
+        static ValidationError out_of_bounds(StringView name, V value, T min, U max) { return MUST(String::formatted("Value {} for {} is out of bounds ({},{})", value, name, min, max)); }
 
         template<typename... Expected>
         static ValidationError invalid_stack_state(Stack const& stack, Tuple<Expected...> expected, SourceLocation location = SourceLocation::current())
@@ -337,11 +337,11 @@ private:
                 }
             }
             builder.append(']');
-            return { builder.to_byte_string() };
+            return { MUST(builder.to_string()) };
         }
 
     private:
-        static ByteString find_instruction_name(SourceLocation const&);
+        static String find_instruction_name(SourceLocation const&);
     };
 
     Context m_context;

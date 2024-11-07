@@ -315,7 +315,7 @@ ErrorOr<void, ValidationError> Validator::validate(Limits const& limits, u64 bou
 template<u64 opcode>
 ErrorOr<void, ValidationError> Validator::validate_instruction(Instruction const& instruction, Stack&, bool&)
 {
-    return Errors::invalid(ByteString::formatted("instruction opcode ({:#x}) (missing validation!)", instruction.opcode().value()));
+    return Errors::invalid(MUST(String::formatted("instruction opcode ({:#x}) (missing validation!)", instruction.opcode().value())));
 }
 
 #define VALIDATE_INSTRUCTION(name) \
@@ -3696,7 +3696,7 @@ ErrorOr<void, ValidationError> Validator::validate(Instruction const& instructio
 #undef M
     default:
         is_constant = false;
-        return Errors::invalid(ByteString::formatted("instruction opcode ({:#x})", instruction.opcode().value()));
+        return Errors::invalid(MUST(String::formatted("instruction opcode ({:#x})", instruction.opcode().value())));
     }
 }
 
@@ -3726,16 +3726,16 @@ ErrorOr<Validator::ExpressionTypeResult, ValidationError> Validator::validate(Ex
     return ExpressionTypeResult { stack.release_vector(), is_constant_expression };
 }
 
-ByteString Validator::Errors::find_instruction_name(SourceLocation const& location)
+String Validator::Errors::find_instruction_name(SourceLocation const& location)
 {
     auto index = location.function_name().find('<');
     auto end_index = location.function_name().find('>');
     if (!index.has_value() || !end_index.has_value())
-        return ByteString::formatted("{}", location);
+        return MUST(String::formatted("{}", location));
 
     auto opcode = location.function_name().substring_view(index.value() + 1, end_index.value() - index.value() - 1).to_number<unsigned>();
     if (!opcode.has_value())
-        return ByteString::formatted("{}", location);
+        return MUST(String::formatted("{}", location));
 
     return instruction_name(OpCode { *opcode });
 }

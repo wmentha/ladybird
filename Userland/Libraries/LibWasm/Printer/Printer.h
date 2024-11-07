@@ -13,7 +13,7 @@ namespace Wasm {
 class Reference;
 class Value;
 
-ByteString instruction_name(OpCode const& opcode);
+String instruction_name(OpCode const& opcode);
 Optional<OpCode> instruction_from_name(StringView name);
 
 struct Printer {

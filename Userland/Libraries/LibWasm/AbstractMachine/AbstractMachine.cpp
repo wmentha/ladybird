@@ -152,7 +152,7 @@ ErrorOr<void, ValidationError> AbstractMachine::validate(Module& module)
 InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<ExternValue> externs)
 {
     if (auto result = validate(const_cast<Module&>(module)); result.is_error())
-        return InstantiationError { ByteString::formatted("Validation failed: {}", result.error()) };
+        return InstantiationError { MUST(String::formatted("Validation failed: {}", result.error())) };
 
     auto main_module_instance_pointer = make<ModuleInstance>();
     auto& main_module_instance = *main_module_instance_pointer;
@@ -166,15 +166,15 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
     for (auto [i, import_] : enumerate(module.import_section().imports())) {
         auto extern_ = externs.at(i);
         auto invalid = import_.description().visit(
-            [&](MemoryType const& mem_type) -> Optional<ByteString> {
+            [&](MemoryType const& mem_type) -> Optional<String> {
                 if (!extern_.has<MemoryAddress>())
                     return "Expected memory import"sv;
                 auto other_mem_type = m_store.get(extern_.get<MemoryAddress>())->type();
                 if (other_mem_type.limits().is_subset_of(mem_type.limits()))
                     return {};
-                return ByteString::formatted("Memory import and extern do not match: {}-{} vs {}-{}", mem_type.limits().min(), mem_type.limits().max(), other_mem_type.limits().min(), other_mem_type.limits().max());
+                return MUST(String::formatted("Memory import and extern do not match: {}-{} vs {}-{}", mem_type.limits().min(), mem_type.limits().max(), other_mem_type.limits().min(), other_mem_type.limits().max()));
             },
-            [&](TableType const& table_type) -> Optional<ByteString> {
+            [&](TableType const& table_type) -> Optional<String> {
                 if (!extern_.has<TableAddress>())
                     return "Expected table import"sv;
                 auto other_table_type = m_store.get(extern_.get<TableAddress>())->type();
@@ -182,9 +182,9 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
                     && other_table_type.limits().is_subset_of(table_type.limits()))
                     return {};
 
-                return ByteString::formatted("Table import and extern do not match: {}-{} vs {}-{}", table_type.limits().min(), table_type.limits().max(), other_table_type.limits().min(), other_table_type.limits().max());
+                return MUST(String::formatted("Table import and extern do not match: {}-{} vs {}-{}", table_type.limits().min(), table_type.limits().max(), other_table_type.limits().min(), other_table_type.limits().max()));
             },
-            [&](GlobalType const& global_type) -> Optional<ByteString> {
+            [&](GlobalType const& global_type) -> Optional<String> {
                 if (!extern_.has<GlobalAddress>())
                     return "Expected global import"sv;
                 auto other_global_type = m_store.get(extern_.get<GlobalAddress>())->type();
@@ -193,29 +193,29 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
                     return {};
                 return "Global import and extern do not match"sv;
             },
-            [&](FunctionType const& type) -> Optional<ByteString> {
+            [&](FunctionType const& type) -> Optional<String> {
                 if (!extern_.has<FunctionAddress>())
                     return "Expected function import"sv;
                 auto other_type = m_store.get(extern_.get<FunctionAddress>())->visit([&](WasmFunction const& wasm_func) { return wasm_func.type(); }, [&](HostFunction const& host_func) { return host_func.type(); });
                 if (type.results() != other_type.results())
-                    return ByteString::formatted("Function import and extern do not match, results: {} vs {}", type.results(), other_type.results());
+                    return MUST(String::formatted("Function import and extern do not match, results: {} vs {}", type.results(), other_type.results()));
                 if (type.parameters() != other_type.parameters())
-                    return ByteString::formatted("Function import and extern do not match, parameters: {} vs {}", type.parameters(), other_type.parameters());
+                    return MUST(String::formatted("Function import and extern do not match, parameters: {} vs {}", type.parameters(), other_type.parameters()));
                 return {};
             },
-            [&](TypeIndex type_index) -> Optional<ByteString> {
+            [&](TypeIndex type_index) -> Optional<String> {
                 if (!extern_.has<FunctionAddress>())
                     return "Expected function import"sv;
                 auto other_type = m_store.get(extern_.get<FunctionAddress>())->visit([&](WasmFunction const& wasm_func) { return wasm_func.type(); }, [&](HostFunction const& host_func) { return host_func.type(); });
                 auto& type = module.type_section().types()[type_index.value()];
                 if (type.results() != other_type.results())
-                    return ByteString::formatted("Function import and extern do not match, results: {} vs {}", type.results(), other_type.results());
+                    return MUST(String::formatted("Function import and extern do not match, results: {} vs {}", type.results(), other_type.results()));
                 if (type.parameters() != other_type.parameters())
-                    return ByteString::formatted("Function import and extern do not match, parameters: {} vs {}", type.parameters(), other_type.parameters());
+                    return MUST(String::formatted("Function import and extern do not match, parameters: {} vs {}", type.parameters(), other_type.parameters()));
                 return {};
             });
         if (invalid.has_value())
-            return InstantiationError { ByteString::formatted("{}::{}: {}", import_.module(), import_.name(), invalid.release_value()) };
+            return InstantiationError { MUST(String::formatted("{}::{}: {}", import_.module(), import_.name(), invalid.release_value())) };
     }
 
     for (auto& entry : externs) {
@@ -252,7 +252,7 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
         });
         auto result = config.execute(interpreter).assert_wasm_result();
         if (result.is_trap())
-            return InstantiationError { ByteString::formatted("Global value construction trapped: {}", result.trap().reason) };
+            return InstantiationError { MUST(String::formatted("Global value construction trapped: {}", result.trap().reason)) };
         global_values.append(result.values().first());
     }
 
@@ -273,7 +273,7 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
             });
             auto result = config.execute(interpreter).assert_wasm_result();
             if (result.is_trap())
-                return InstantiationError { ByteString::formatted("Element construction trapped: {}", result.trap().reason) };
+                return InstantiationError { MUST(String::formatted("Element construction trapped: {}", result.trap().reason)) };
 
             for (auto& value : result.values()) {
                 auto reference = value.to<Reference>();
@@ -308,7 +308,7 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
         });
         auto result = config.execute(interpreter).assert_wasm_result();
         if (result.is_trap())
-            return InstantiationError { ByteString::formatted("Element section initialisation trapped: {}", result.trap().reason) };
+            return InstantiationError { MUST(String::formatted("Element section initialisation trapped: {}", result.trap().reason)) };
         auto d = result.values().first().to<i32>();
         auto table_instance = m_store.get(main_module_instance.tables()[active_ptr->index.value()]);
         if (current_index >= main_module_instance.elements().size())
@@ -343,12 +343,12 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
                 });
                 auto result = config.execute(interpreter).assert_wasm_result();
                 if (result.is_trap())
-                    return InstantiationError { ByteString::formatted("Data section initialisation trapped: {}", result.trap().reason) };
+                    return InstantiationError { MUST(String::formatted("Data section initialisation trapped: {}", result.trap().reason)) };
                 size_t offset = result.values().first().to<u64>();
                 if (main_module_instance.memories().size() <= data.index.value()) {
                     return InstantiationError {
-                        ByteString::formatted("Data segment referenced out-of-bounds memory ({}) of max {} entries",
-                            data.index.value(), main_module_instance.memories().size())
+                        MUST(String::formatted("Data segment referenced out-of-bounds memory ({}) of max {} entries",
+                            data.index.value(), main_module_instance.memories().size()))
                     };
                 }
                 auto maybe_data_address = m_store.allocate_data(data.init);
@@ -363,8 +363,8 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
                 checked_offset += offset;
                 if (checked_offset.has_overflow() || checked_offset > instance->size()) {
                     return InstantiationError {
-                        ByteString::formatted("Data segment attempted to write to out-of-bounds memory ({}) in memory of size {}",
-                            offset, instance->size())
+                        MUST(String::formatted("Data segment attempted to write to out-of-bounds memory ({}) in memory of size {}",
+                            offset, instance->size()))
                     };
                 }
                 if (!data.init.is_empty())
@@ -387,11 +387,11 @@ InstantiationResult AbstractMachine::instantiate(Module const& module, Vector<Ex
         auto& functions = main_module_instance.functions();
         auto index = module.start_section().function()->index();
         if (functions.size() <= index.value()) {
-            return InstantiationError { ByteString::formatted("Start section function referenced invalid index {} of max {} entries", index.value(), functions.size()) };
+            return InstantiationError { MUST(String::formatted("Start section function referenced invalid index {} of max {} entries", index.value(), functions.size())) };
         }
         auto result = invoke(functions[index.value()], {});
         if (result.is_trap())
-            return InstantiationError { ByteString::formatted("Start function trapped: {}", result.trap().reason) };
+            return InstantiationError { MUST(String::formatted("Start function trapped: {}", result.trap().reason)) };
     }
 
     return InstantiationResult { move(main_module_instance_pointer) };
