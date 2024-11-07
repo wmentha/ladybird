@@ -112,6 +112,9 @@ ByteString invert_case(StringView);
 ByteString replace(StringView, StringView needle, StringView replacement, ReplaceMode);
 ErrorOr<String> replace(String const&, StringView needle, StringView replacement, ReplaceMode);
 
+String bijective_base_from(size_t value, u16 base = 26, StringView map = {});
+String roman_number_from(size_t value);
+
 size_t count(StringView, StringView needle);
 size_t count(StringView, char needle);
 
