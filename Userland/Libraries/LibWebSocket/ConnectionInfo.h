@@ -21,14 +21,14 @@ public:
 
     URL::URL const& url() const { return m_url; }
 
-    ByteString const& origin() const { return m_origin; }
-    void set_origin(ByteString origin) { m_origin = move(origin); }
+    String const& origin() const { return m_origin; }
+    void set_origin(String origin) { m_origin = move(origin); }
 
-    Vector<ByteString> const& protocols() const { return m_protocols; }
-    void set_protocols(Vector<ByteString> protocols) { m_protocols = move(protocols); }
+    Vector<String> const& protocols() const { return m_protocols; }
+    void set_protocols(Vector<String> protocols) { m_protocols = move(protocols); }
 
-    Vector<ByteString> const& extensions() const { return m_extensions; }
-    void set_extensions(Vector<ByteString> extensions) { m_extensions = move(extensions); }
+    Vector<String> const& extensions() const { return m_extensions; }
+    void set_extensions(Vector<String> extensions) { m_extensions = move(extensions); }
 
     HTTP::HeaderMap const& headers() const { return m_headers; }
     void set_headers(HTTP::HeaderMap headers) { m_headers = move(headers); }
@@ -37,13 +37,13 @@ public:
     bool is_secure() const;
 
     // "resource-name" or "/resource name/" - defined in RFC 6455 Section 3
-    ByteString resource_name() const;
+    String resource_name() const;
 
 private:
     URL::URL m_url;
-    ByteString m_origin;
-    Vector<ByteString> m_protocols {};
-    Vector<ByteString> m_extensions {};
+    String m_origin;
+    Vector<String> m_protocols {};
+    Vector<String> m_extensions {};
     HTTP::HeaderMap m_headers;
 };
 

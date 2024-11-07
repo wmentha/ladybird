@@ -7,16 +7,16 @@
 #pragma once
 
 #include <AK/ByteBuffer.h>
-#include <AK/ByteString.h>
+#include <AK/String.h>
 #include <AK/Optional.h>
 
 namespace WebSocket {
 
 class Message {
 public:
-    explicit Message(ByteString const& data)
+    explicit Message(String const& data)
         : m_is_text(true)
-        , m_data(ByteBuffer::copy(data.bytes()).release_value_but_fixme_should_propagate_errors()) // FIXME: Handle possible OOM situation.
+        , m_data(move(data.bytes()) // FIXME: Handle possible OOM situation.
     {
     }
 

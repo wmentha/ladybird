@@ -74,7 +74,7 @@ ReadyState WebSocket::ready_state()
     }
 }
 
-ByteString WebSocket::subprotocol_in_use()
+String WebSocket::subprotocol_in_use()
 {
     return m_subprotocol_in_use;
 }
@@ -90,7 +90,7 @@ void WebSocket::send(Message const& message)
         send_frame(WebSocket::OpCode::Binary, message.data(), true);
 }
 
-void WebSocket::close(u16 code, ByteString const& message)
+void WebSocket::close(u16 code, String const& message)
 {
     VERIFY(m_impl);
 
@@ -186,7 +186,7 @@ void WebSocket::send_client_handshake()
     u8 nonce_data[16];
     fill_with_random(nonce_data);
     // FIXME: change to TRY() and make method fallible
-    m_websocket_key = MUST(encode_base64({ nonce_data, 16 })).to_byte_string();
+    m_websocket_key = MUST(encode_base64({ nonce_data, 16 }));
     builder.appendff("Sec-WebSocket-Key: {}\r\n", m_websocket_key);
 
     // 8. Origin (optional field)
@@ -223,7 +223,7 @@ void WebSocket::send_client_handshake()
     VERIFY(success);
 }
 
-void WebSocket::fail_connection(u16 close_status_code, WebSocket::Error error_code, ByteString const& reason)
+void WebSocket::fail_connection(u16 close_status_code, WebSocket::Error error_code, String const& reason)
 {
     dbgln("WebSocket: {}", reason);
     set_state(WebSocket::InternalState::Closed);
@@ -237,7 +237,7 @@ void WebSocket::read_server_handshake()
     VERIFY(m_impl);
     VERIFY(m_state == WebSocket::InternalState::WaitingForServerHandshake);
 
-    auto fail_opening_handshake = [&](ByteString const& reason, CloseStatusCode close_status_code = CloseStatusCode::AbnormalClosure) {
+    auto fail_opening_handshake = [&](String const& reason, CloseStatusCode close_status_code = CloseStatusCode::AbnormalClosure) {
         fail_connection(to_underlying(close_status_code), WebSocket::Error::ConnectionUpgradeFailed, reason);
     };
 
@@ -253,13 +253,13 @@ void WebSocket::read_server_handshake()
             return;
         }
         if (parts[0] != "HTTP/1.1") {
-            fail_opening_handshake(ByteString::formatted("Server HTTP Handshake contained HTTP header {} which isn't supported", parts[0]));
+            fail_opening_handshake(MUST(String::formatted("Server HTTP Handshake contained HTTP header {} which isn't supported", parts[0])));
             return;
         }
         if (parts[1] != "101") {
             // 1. If the status code is not 101, handle as per HTTP procedures.
             // FIXME : This could be a redirect or a 401 authentication request, which we do not handle.
-            fail_opening_handshake(ByteString::formatted("Server HTTP Handshake return status {} which isn't supported", parts[1]));
+            fail_opening_handshake(MUST(String::formatted("Server HTTP Handshake return status {} which isn't supported", parts[1])));
             return;
         }
         m_has_read_server_handshake_first_line = true;
@@ -295,7 +295,7 @@ void WebSocket::read_server_handshake()
         auto parts = line.split(':');
         if (parts.size() < 2) {
             // The header field is not valid
-            fail_opening_handshake(ByteString::formatted("Got invalid header line {} in the Server HTTP handshake", line));
+            fail_opening_handshake(MUST(String::formatted("Got invalid header line {} in the Server HTTP handshake", line)));
             return;
         }
 
@@ -304,7 +304,7 @@ void WebSocket::read_server_handshake()
         if (header_name.equals_ignoring_ascii_case("Upgrade"sv)) {
             // 2. |Upgrade| should be case-insensitive "websocket"
             if (!parts[1].trim_whitespace().equals_ignoring_ascii_case("websocket"sv)) {
-                fail_opening_handshake(ByteString::formatted("Server HTTP Handshake Header |Upgrade| should be 'websocket', got '{}'. Failing connection.", parts[1]));
+                fail_opening_handshake(MUST(String::formatted("Server HTTP Handshake Header |Upgrade| should be 'websocket', got '{}'. Failing connection.", parts[1])));
                 return;
             }
 
@@ -315,7 +315,7 @@ void WebSocket::read_server_handshake()
         if (header_name.equals_ignoring_ascii_case("Connection"sv)) {
             // 3. |Connection| should be case-insensitive "Upgrade"
             if (!parts[1].trim_whitespace().equals_ignoring_ascii_case("Upgrade"sv)) {
-                fail_opening_handshake(ByteString::formatted("Server HTTP Handshake Header |Connection| should be 'Upgrade', got '{}'. Failing connection.", parts[1]));
+                fail_opening_handshake(MUST(String::formatted("Server HTTP Handshake Header |Connection| should be 'Upgrade', got '{}'. Failing connection.", parts[1])));
                 return;
             }
 
@@ -325,7 +325,7 @@ void WebSocket::read_server_handshake()
 
         if (header_name.equals_ignoring_ascii_case("Sec-WebSocket-Accept"sv)) {
             // 4. |Sec-WebSocket-Accept| should be base64(SHA1(|Sec-WebSocket-Key| + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
-            auto expected_content = ByteString::formatted("{}258EAFA5-E914-47DA-95CA-C5AB0DC85B11", m_websocket_key);
+            auto expected_content = MUST(String::formatted("{}258EAFA5-E914-47DA-95CA-C5AB0DC85B11", m_websocket_key));
 
             Crypto::Hash::Manager hash;
             hash.initialize(Crypto::Hash::HashKind::SHA1);
@@ -334,7 +334,7 @@ void WebSocket::read_server_handshake()
             // FIXME: change to TRY() and make method fallible
             auto expected_sha1_string = MUST(encode_base64({ expected_sha1.immutable_data(), expected_sha1.data_length() }));
             if (!parts[1].trim_whitespace().equals_ignoring_ascii_case(expected_sha1_string)) {
-                fail_opening_handshake(ByteString::formatted("Server HTTP Handshake Header |Sec-Websocket-Accept| should be '{}', got '{}'. Failing connection.", expected_sha1_string, parts[1]));
+                fail_opening_handshake(MUST(String::formatted("Server HTTP Handshake Header |Sec-Websocket-Accept| should be '{}', got '{}'. Failing connection.", expected_sha1_string, parts[1])));
                 return;
             }
 
@@ -354,7 +354,7 @@ void WebSocket::read_server_handshake()
                     }
                 }
                 if (!found_extension) {
-                    fail_opening_handshake(ByteString::formatted("Server HTTP Handshake Header |Sec-WebSocket-Extensions| contains '{}', which is not supported by the client. Failing connection.", trimmed_extension));
+                    fail_opening_handshake(MUST(String::formatted("Server HTTP Handshake Header |Sec-WebSocket-Extensions| contains '{}', which is not supported by the client. Failing connection.", trimmed_extension)));
                     return;
                 }
             }
@@ -372,7 +372,7 @@ void WebSocket::read_server_handshake()
                 }
             }
             if (!found_protocol) {
-                fail_opening_handshake(ByteString::formatted("Server HTTP Handshake Header |Sec-WebSocket-Protocol| contains '{}', which is not supported by the client. Failing connection.", server_protocol));
+                fail_opening_handshake(MUST(String::formatted("Server HTTP Handshake Header |Sec-WebSocket-Protocol| contains '{}', which is not supported by the client. Failing connection.", server_protocol)));
                 return;
             }
             m_subprotocol_in_use = server_protocol;
@@ -485,7 +485,7 @@ void WebSocket::read_frame()
     if (op_code == WebSocket::OpCode::ConnectionClose) {
         if (payload.size() > 1) {
             m_last_close_code = (((u16)(payload[0] & 0xff) << 8) | ((u16)(payload[1] & 0xff)));
-            m_last_close_message = ByteString(ReadonlyBytes(payload.offset_pointer(2), payload.size() - 2));
+            m_last_close_message = String::from_utf8_without_validation(ReadonlyBytes(payload.offset_pointer(2), payload.size() - 2));
         } else {
             m_last_close_code = 1000;
             m_last_close_message = {};
@@ -639,7 +639,7 @@ void WebSocket::notify_open()
     on_open();
 }
 
-void WebSocket::notify_close(u16 code, ByteString reason, bool was_clean)
+void WebSocket::notify_close(u16 code, String reason, bool was_clean)
 {
     if (!on_close)
         return;

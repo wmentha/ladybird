@@ -46,7 +46,7 @@ public:
 
     ReadyState ready_state();
 
-    ByteString subprotocol_in_use();
+    String subprotocol_in_use();
 
     // Call this to start the WebSocket connection.
     void start();
@@ -55,13 +55,13 @@ public:
     void send(Message const&);
 
     // This can only be used if the `ready_state` is `ReadyState::Open`
-    void close(u16 code = 1005, ByteString const& reason = {});
+    void close(u16 code = 1005, String const& reason = ""_string);
 
     Function<void()> on_open;
-    Function<void(u16 code, ByteString reason, bool was_clean)> on_close;
+    Function<void(u16 code, String reason, bool was_clean)> on_close;
     Function<void(Message message)> on_message;
     Function<void(ReadyState)> on_ready_state_change;
-    Function<void(ByteString)> on_subprotocol;
+    Function<void(String)> on_subprotocol;
 
     enum class Error {
         CouldNotEstablishConnection,
@@ -93,7 +93,7 @@ private:
     void send_frame(OpCode, ReadonlyBytes, bool is_final);
 
     void notify_open();
-    void notify_close(u16 code, ByteString reason, bool was_clean);
+    void notify_close(u16 code, String reason, bool was_clean);
     void notify_error(Error);
     void notify_message(Message);
 
@@ -115,11 +115,11 @@ private:
 
     void set_state(InternalState);
 
-    void fail_connection(u16 close_status_code, WebSocket::Error, ByteString const& reason);
+    void fail_connection(u16 close_status_code, WebSocket::Error, String const& reason);
 
-    ByteString m_subprotocol_in_use { ByteString::empty() };
+    String m_subprotocol_in_use { ""_string };
 
-    ByteString m_websocket_key;
+    String m_websocket_key;
     bool m_has_read_server_handshake_first_line { false };
     bool m_has_read_server_handshake_upgrade { false };
     bool m_has_read_server_handshake_connection { false };
@@ -128,7 +128,7 @@ private:
     bool m_discard_connection_requested { false };
 
     u16 m_last_close_code { 1005 };
-    ByteString m_last_close_message;
+    String m_last_close_message;
 
     ConnectionInfo m_connection;
     RefPtr<WebSocketImpl> m_impl;
