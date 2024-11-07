@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Optional.h>
 #include <AK/String.h>
 #include <AK/Vector.h>
@@ -47,9 +46,9 @@ enum class EnableAutoplay {
 
 struct ChromeOptions {
     Vector<URL::URL> urls;
-    Vector<ByteString> raw_urls;
+    Vector<String> raw_urls;
     URL::URL new_tab_page_url;
-    Vector<ByteString> certificates {};
+    Vector<String> certificates {};
     NewWindow new_window { NewWindow::No };
     ForceNewProcess force_new_process { ForceNewProcess::No };
     AllowPopups allow_popups { AllowPopups::No };
@@ -57,7 +56,7 @@ struct ChromeOptions {
     DisableSQLDatabase disable_sql_database { DisableSQLDatabase::No };
     Optional<ProcessType> debug_helper_process {};
     Optional<ProcessType> profile_helper_process {};
-    Optional<ByteString> webdriver_content_ipc_path {};
+    Optional<String> webdriver_content_ipc_path {};
 };
 
 enum class IsLayoutTestMode {
@@ -103,7 +102,7 @@ enum class CollectGarbageOnEveryAllocation {
 struct WebContentOptions {
     String command_line;
     String executable_path;
-    Optional<ByteString> config_path {};
+    Optional<String> config_path {};
     Optional<StringView> user_agent_preset {};
     IsLayoutTestMode is_layout_test_mode { IsLayoutTestMode::No };
     LogAllJSExceptions log_all_js_exceptions { LogAllJSExceptions::No };

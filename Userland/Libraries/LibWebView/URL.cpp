@@ -61,9 +61,9 @@ Optional<URL::URL> sanitize_url(StringView url, Optional<StringView> search_engi
         }
     }
 
-    ByteString url_with_scheme = url;
+    String url_with_scheme = url;
     if (!(url_with_scheme.starts_with("about:"sv) || url_with_scheme.contains("://"sv) || url_with_scheme.starts_with("data:"sv)))
-        url_with_scheme = ByteString::formatted("https://{}"sv, url_with_scheme);
+        url_with_scheme = MUST(String::formatted("https://{}"sv, url_with_scheme));
 
     auto result = URL::create_with_url_or_path(url_with_scheme);
     if (!result.is_valid())
@@ -72,7 +72,7 @@ Optional<URL::URL> sanitize_url(StringView url, Optional<StringView> search_engi
     return result;
 }
 
-Vector<URL::URL> sanitize_urls(ReadonlySpan<ByteString> raw_urls, URL::URL const& new_tab_page_url)
+Vector<URL::URL> sanitize_urls(ReadonlySpan<String> raw_urls, URL::URL const& new_tab_page_url)
 {
     Vector<URL::URL> sanitized_urls;
     sanitized_urls.ensure_capacity(raw_urls.size());

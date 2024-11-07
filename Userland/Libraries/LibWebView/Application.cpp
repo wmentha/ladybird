@@ -60,8 +60,8 @@ void Application::initialize(Main::Arguments const& arguments, URL::URL new_tab_
     if (auto result = Core::System::set_resource_limits(RLIMIT_NOFILE, 8192); result.is_error())
         warnln("Unable to increase open file limit: {}", result.error());
 
-    Vector<ByteString> raw_urls;
-    Vector<ByteString> certificates;
+    Vector<String> raw_urls;
+    Vector<String> certificates;
     bool new_window = false;
     bool force_new_process = false;
     bool allow_popups = false;
@@ -146,7 +146,7 @@ void Application::initialize(Main::Arguments const& arguments, URL::URL new_tab_
 
     m_web_content_options = {
         .command_line = MUST(String::join(' ', arguments.strings)),
-        .executable_path = MUST(String::from_byte_string(MUST(Core::System::current_executable_path()))),
+        .executable_path = MUST(Core::System::current_executable_path()),
         .user_agent_preset = move(user_agent_preset),
         .log_all_js_exceptions = log_all_js_exceptions ? LogAllJSExceptions::Yes : LogAllJSExceptions::No,
         .enable_idl_tracing = enable_idl_tracing ? EnableIDLTracing::Yes : EnableIDLTracing::No,

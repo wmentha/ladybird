@@ -79,7 +79,7 @@ public:
 
     void set_enable_autoplay(bool);
 
-    ByteString selected_text();
+    String selected_text();
     Optional<String> selected_text_with_whitespace_collapsed();
     void select_all();
     void find_in_page(String const& query, CaseSensitivity = CaseSensitivity::CaseInsensitive);
@@ -108,10 +108,10 @@ public:
     void list_style_sheets();
     void request_style_sheet_source(Web::CSS::StyleSheetIdentifier const&);
 
-    void debug_request(ByteString const& request, ByteString const& argument = {});
+    void debug_request(String const& request, String const& argument = {});
 
     void run_javascript(StringView);
-    void js_console_input(ByteString const& js_source);
+    void js_console_input(String const& js_source);
     void js_console_request_messages(i32 start_index);
 
     void alert_closed();
@@ -170,18 +170,18 @@ public:
     Function<void(Gfx::IntPoint screen_position, Web::Page::MediaContextMenu const&)> on_media_context_menu_request;
     Function<void(URL::URL const&)> on_link_hover;
     Function<void()> on_link_unhover;
-    Function<void(URL::URL const&, ByteString const& target, unsigned modifiers)> on_link_click;
-    Function<void(URL::URL const&, ByteString const& target, unsigned modifiers)> on_link_middle_click;
-    Function<void(ByteString const&)> on_title_change;
+    Function<void(URL::URL const&, String const& target, unsigned modifiers)> on_link_click;
+    Function<void(URL::URL const&, String const& target, unsigned modifiers)> on_link_middle_click;
+    Function<void(String const&)> on_title_change;
     Function<void(URL::URL const&)> on_url_change;
     Function<void(URL::URL const&, bool)> on_load_start;
     Function<void(URL::URL const&)> on_load_finish;
-    Function<void(ByteString const& path, i32)> on_request_file;
+    Function<void(String const& path, i32)> on_request_file;
     Function<void(Gfx::Bitmap const&)> on_favicon_change;
     Function<void(Gfx::StandardCursor)> on_cursor_change;
-    Function<void(Gfx::IntPoint, ByteString const&)> on_request_tooltip_override;
+    Function<void(Gfx::IntPoint, String const&)> on_request_tooltip_override;
     Function<void()> on_stop_tooltip_override;
-    Function<void(ByteString const&)> on_enter_tooltip_area;
+    Function<void(String const&)> on_enter_tooltip_area;
     Function<void()> on_leave_tooltip_area;
     Function<void(String const& message)> on_request_alert;
     Function<void(String const& message)> on_request_confirm;
@@ -190,9 +190,9 @@ public:
     Function<void()> on_request_accept_dialog;
     Function<void()> on_request_dismiss_dialog;
     Function<void(URL::URL const&, URL::URL const&, String const&)> on_received_source;
-    Function<void(ByteString const&)> on_received_dom_tree;
+    Function<void(String const&)> on_received_dom_tree;
     Function<void(Optional<DOMNodeProperties>)> on_received_dom_node_properties;
-    Function<void(ByteString const&)> on_received_accessibility_tree;
+    Function<void(String const&)> on_received_accessibility_tree;
     Function<void(Vector<Web::CSS::StyleSheetIdentifier>)> on_received_style_sheet_list;
     Function<void(Web::CSS::StyleSheetIdentifier const&)> on_inspector_requested_style_sheet_source;
     Function<void(Web::CSS::StyleSheetIdentifier const&, URL::URL const&, String const&)> on_received_style_sheet_source;
@@ -200,7 +200,7 @@ public:
     Function<void(Optional<Web::UniqueNodeID> const& node_id)> on_finshed_editing_dom_node;
     Function<void(String const&)> on_received_dom_node_html;
     Function<void(i32 message_id)> on_received_console_message;
-    Function<void(i32 start_index, Vector<ByteString> const& message_types, Vector<ByteString> const& messages)> on_received_console_messages;
+    Function<void(i32 start_index, Vector<String> const& message_types, Vector<String> const& messages)> on_received_console_messages;
     Function<void(i32 count_waiting)> on_resource_status_change;
     Function<void()> on_restore_window;
     Function<void(Gfx::IntPoint)> on_reposition_window;

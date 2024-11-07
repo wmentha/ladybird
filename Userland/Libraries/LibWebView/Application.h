@@ -7,9 +7,9 @@
 #pragma once
 
 #include <AK/Badge.h>
-#include <AK/ByteString.h>
 #include <AK/LexicalPath.h>
 #include <AK/Optional.h>
+#include <AK/String.h>
 #include <AK/Swift.h>
 #include <LibCore/EventLoop.h>
 #include <LibCore/Forward.h>
@@ -69,7 +69,7 @@ protected:
     virtual void create_platform_arguments(Core::ArgsParser&) { }
     virtual void create_platform_options(ChromeOptions&, WebContentOptions&) { }
 
-    virtual Optional<ByteString> ask_user_for_download_folder() const { return {}; }
+    virtual Optional<String> ask_user_for_download_folder() const { return {}; }
 
 private:
     void initialize(Main::Arguments const& arguments, URL::URL new_tab_page_url);

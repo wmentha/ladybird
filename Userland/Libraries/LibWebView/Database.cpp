@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/String.h>
 #include <AK/Time.h>
 #include <LibCore/Directory.h>
@@ -42,10 +41,10 @@ static constexpr StringView sql_error(int error_code)
 ErrorOr<NonnullRefPtr<Database>> Database::create()
 {
     // FIXME: Move this to a generic "Ladybird data directory" helper.
-    auto database_path = ByteString::formatted("{}/Ladybird", Core::StandardPaths::user_data_directory());
+    auto database_path = MUST(String::formatted("{}/Ladybird", Core::StandardPaths::user_data_directory()));
     TRY(Core::Directory::create(database_path, Core::Directory::CreateDirectories::Yes));
 
-    auto database_file = ByteString::formatted("{}/Ladybird.db", database_path);
+    auto database_file = MUST(String::formatted("{}/Ladybird.db", database_path));
 
     sqlite3* m_database { nullptr };
     SQL_TRY(sqlite3_open(database_file.characters(), &m_database));

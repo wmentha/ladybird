@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <LibCore/Process.h>
 #include <LibCore/StandardPaths.h>
+#include <AK/String.h>
 #include <LibCore/System.h>
 #include <LibIPC/ConnectionToServer.h>
 #include <LibWebView/Application.h>
@@ -25,7 +25,7 @@ private:
     explicit UIProcessClient(IPC::Transport);
 };
 
-ErrorOr<ChromeProcess::ProcessDisposition> ChromeProcess::connect(Vector<ByteString> const& raw_urls, NewWindow new_window)
+ErrorOr<ChromeProcess::ProcessDisposition> ChromeProcess::connect(Vector<String> const& raw_urls, NewWindow new_window)
 {
     static constexpr auto process_name = "Ladybird"sv;
 
@@ -40,12 +40,12 @@ ErrorOr<ChromeProcess::ProcessDisposition> ChromeProcess::connect(Vector<ByteStr
 
     m_pid_path = pid_path;
     m_pid_file = TRY(Core::File::open(pid_path, Core::File::OpenMode::Write));
-    TRY(m_pid_file->write_until_depleted(ByteString::number(::getpid())));
+    TRY(m_pid_file->write_until_depleted(String::number(::getpid())));
 
     return ProcessDisposition::ContinueMainProcess;
 }
 
-ErrorOr<void> ChromeProcess::connect_as_client(ByteString const& socket_path, Vector<ByteString> const& raw_urls, NewWindow new_window)
+ErrorOr<void> ChromeProcess::connect_as_client(String const& socket_path, Vector<String> const& raw_urls, NewWindow new_window)
 {
     auto socket = TRY(Core::LocalSocket::connect(socket_path));
     static_assert(IsSame<IPC::Transport, IPC::TransportSocket>, "Need to handle other IPC transports here");
@@ -62,7 +62,7 @@ ErrorOr<void> ChromeProcess::connect_as_client(ByteString const& socket_path, Ve
     return {};
 }
 
-ErrorOr<void> ChromeProcess::connect_as_server(ByteString const& socket_path)
+ErrorOr<void> ChromeProcess::connect_as_server(String const& socket_path)
 {
     static_assert(IsSame<IPC::Transport, IPC::TransportSocket>, "Need to handle other IPC transports here");
 
@@ -115,13 +115,13 @@ void UIProcessConnectionFromClient::die()
     s_connections.remove(client_id());
 }
 
-void UIProcessConnectionFromClient::create_new_tab(Vector<ByteString> const& urls)
+void UIProcessConnectionFromClient::create_new_tab(Vector<String> const& urls)
 {
     if (on_new_tab)
         on_new_tab(sanitize_urls(urls, Application::chrome_options().new_tab_page_url));
 }
 
-void UIProcessConnectionFromClient::create_new_window(Vector<ByteString> const& urls)
+void UIProcessConnectionFromClient::create_new_window(Vector<String> const& urls)
 {
     if (on_new_window)
         on_new_window(sanitize_urls(urls, Application::chrome_options().new_tab_page_url));

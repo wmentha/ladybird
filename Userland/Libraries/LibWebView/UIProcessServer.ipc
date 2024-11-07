@@ -1,4 +1,4 @@
 endpoint UIProcessServer {
-    create_new_tab(Vector<ByteString> urls) => ()
-    create_new_window(Vector<ByteString> urls) => ()
+    create_new_tab(Vector<String> urls) => ()
+    create_new_window(Vector<String> urls) => ()
 }

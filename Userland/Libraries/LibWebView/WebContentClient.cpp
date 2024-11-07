@@ -139,17 +139,17 @@ void WebContentClient::did_layout(u64 page_id, Gfx::IntSize content_size)
     }
 }
 
-void WebContentClient::did_change_title(u64 page_id, ByteString const& title)
+void WebContentClient::did_change_title(u64 page_id, String const& title)
 {
     if (auto process = WebView::Application::the().find_process(m_process_handle.pid); process.has_value())
-        process->set_title(MUST(String::from_byte_string(title)));
+        process->set_title(title);
 
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (!view->on_title_change)
             return;
 
         if (title.is_empty())
-            view->on_title_change(view->url().to_byte_string());
+            view->on_title_change(MUST(view->url().to_string()));
         else
             view->on_title_change(title);
     }
@@ -165,7 +165,7 @@ void WebContentClient::did_change_url(u64 page_id, URL::URL const& url)
     }
 }
 
-void WebContentClient::did_request_tooltip_override(u64 page_id, Gfx::IntPoint position, ByteString const& title)
+void WebContentClient::did_request_tooltip_override(u64 page_id, Gfx::IntPoint position, String const& title)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_request_tooltip_override)
@@ -181,7 +181,7 @@ void WebContentClient::did_stop_tooltip_override(u64 page_id)
     }
 }
 
-void WebContentClient::did_enter_tooltip_area(u64 page_id, ByteString const& title)
+void WebContentClient::did_enter_tooltip_area(u64 page_id, String const& title)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_enter_tooltip_area)
@@ -213,7 +213,7 @@ void WebContentClient::did_unhover_link(u64 page_id)
     }
 }
 
-void WebContentClient::did_click_link(u64 page_id, URL::URL const& url, ByteString const& target, unsigned modifiers)
+void WebContentClient::did_click_link(u64 page_id, URL::URL const& url, String const& target, unsigned modifiers)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_link_click)
@@ -221,7 +221,7 @@ void WebContentClient::did_click_link(u64 page_id, URL::URL const& url, ByteStri
     }
 }
 
-void WebContentClient::did_middle_click_link(u64 page_id, URL::URL const& url, ByteString const& target, unsigned modifiers)
+void WebContentClient::did_middle_click_link(u64 page_id, URL::URL const& url, String const& target, unsigned modifiers)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_link_middle_click)
@@ -237,7 +237,7 @@ void WebContentClient::did_request_context_menu(u64 page_id, Gfx::IntPoint conte
     }
 }
 
-void WebContentClient::did_request_link_context_menu(u64 page_id, Gfx::IntPoint content_position, URL::URL const& url, ByteString const&, unsigned)
+void WebContentClient::did_request_link_context_menu(u64 page_id, Gfx::IntPoint content_position, URL::URL const& url, String const&, unsigned)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_link_context_menu_request)
@@ -245,7 +245,7 @@ void WebContentClient::did_request_link_context_menu(u64 page_id, Gfx::IntPoint 
     }
 }
 
-void WebContentClient::did_request_image_context_menu(u64 page_id, Gfx::IntPoint content_position, URL::URL const& url, ByteString const&, unsigned, Gfx::ShareableBitmap const& bitmap)
+void WebContentClient::did_request_image_context_menu(u64 page_id, Gfx::IntPoint content_position, URL::URL const& url, String const&, unsigned, Gfx::ShareableBitmap const& bitmap)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_image_context_menu_request)
@@ -253,7 +253,7 @@ void WebContentClient::did_request_image_context_menu(u64 page_id, Gfx::IntPoint
     }
 }
 
-void WebContentClient::did_request_media_context_menu(u64 page_id, Gfx::IntPoint content_position, ByteString const&, unsigned, Web::Page::MediaContextMenu const& menu)
+void WebContentClient::did_request_media_context_menu(u64 page_id, Gfx::IntPoint content_position, String const&, unsigned, Web::Page::MediaContextMenu const& menu)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_media_context_menu_request)
@@ -269,7 +269,7 @@ void WebContentClient::did_get_source(u64 page_id, URL::URL const& url, URL::URL
     }
 }
 
-void WebContentClient::did_inspect_dom_tree(u64 page_id, ByteString const& dom_tree)
+void WebContentClient::did_inspect_dom_tree(u64 page_id, String const& dom_tree)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_received_dom_tree)
@@ -277,7 +277,7 @@ void WebContentClient::did_inspect_dom_tree(u64 page_id, ByteString const& dom_t
     }
 }
 
-void WebContentClient::did_inspect_dom_node(u64 page_id, bool has_style, ByteString const& computed_style, ByteString const& resolved_style, ByteString const& custom_properties, ByteString const& node_box_sizing, ByteString const& aria_properties_state, ByteString const& fonts)
+void WebContentClient::did_inspect_dom_node(u64 page_id, bool has_style, String const& computed_style, String const& resolved_style, String const& custom_properties, String const& node_box_sizing, String const& aria_properties_state, String const& fonts)
 {
     auto view = view_for_page_id(page_id);
     if (!view.has_value() || !view->on_received_dom_node_properties)
@@ -287,19 +287,19 @@ void WebContentClient::did_inspect_dom_node(u64 page_id, bool has_style, ByteStr
 
     if (has_style) {
         properties = ViewImplementation::DOMNodeProperties {
-            .computed_style_json = MUST(String::from_byte_string(computed_style)),
-            .resolved_style_json = MUST(String::from_byte_string(resolved_style)),
-            .custom_properties_json = MUST(String::from_byte_string(custom_properties)),
-            .node_box_sizing_json = MUST(String::from_byte_string(node_box_sizing)),
-            .aria_properties_state_json = MUST(String::from_byte_string(aria_properties_state)),
-            .fonts_json = MUST(String::from_byte_string(fonts))
+            .computed_style_json = computed_style,
+            .resolved_style_json = resolved_style,
+            .custom_properties_json = custom_properties,
+            .node_box_sizing_json = node_box_sizing,
+            .aria_properties_state_json = aria_properties_state
+            .fonts_json = fonts
         };
     }
 
     view->on_received_dom_node_properties(move(properties));
 }
 
-void WebContentClient::did_inspect_accessibility_tree(u64 page_id, ByteString const& accessibility_tree)
+void WebContentClient::did_inspect_accessibility_tree(u64 page_id, String const& accessibility_tree)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_received_accessibility_tree)
@@ -351,7 +351,7 @@ void WebContentClient::did_output_js_console_message(u64 page_id, i32 message_in
     }
 }
 
-void WebContentClient::did_get_js_console_messages(u64 page_id, i32 start_index, Vector<ByteString> const& message_types, Vector<ByteString> const& messages)
+void WebContentClient::did_get_js_console_messages(u64 page_id, i32 start_index, Vector<String> const& message_types, Vector<String> const& messages)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_received_console_messages)
@@ -532,7 +532,7 @@ void WebContentClient::did_request_fullscreen_window(u64 page_id)
     }
 }
 
-void WebContentClient::did_request_file(u64 page_id, ByteString const& path, i32 request_id)
+void WebContentClient::did_request_file(u64 page_id, String const& path, i32 request_id)
 {
     if (auto view = view_for_page_id(page_id); view.has_value()) {
         if (view->on_request_file)

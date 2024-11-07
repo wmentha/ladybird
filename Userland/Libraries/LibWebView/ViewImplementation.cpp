@@ -217,7 +217,7 @@ void ViewImplementation::set_enable_autoplay(bool enable)
     }
 }
 
-ByteString ViewImplementation::selected_text()
+String ViewImplementation::selected_text()
 {
     return client().get_selected_text(page_id());
 }
@@ -340,7 +340,7 @@ void ViewImplementation::request_style_sheet_source(Web::CSS::StyleSheetIdentifi
     client().async_request_style_sheet_source(page_id(), identifier);
 }
 
-void ViewImplementation::debug_request(ByteString const& request, ByteString const& argument)
+void ViewImplementation::debug_request(String const& request, String const& argument)
 {
     client().async_debug_request(page_id(), request, argument);
 }
@@ -350,7 +350,7 @@ void ViewImplementation::run_javascript(StringView js_source)
     client().async_run_javascript(page_id(), js_source);
 }
 
-void ViewImplementation::js_console_input(ByteString const& js_source)
+void ViewImplementation::js_console_input(String const& js_source)
 {
     client().async_js_console_input(page_id(), js_source);
 }
@@ -517,17 +517,17 @@ void ViewImplementation::handle_web_content_process_crash()
     handle_resize();
     StringBuilder builder;
     builder.append("<html><head><title>Crashed: "sv);
-    builder.append(escape_html_entities(m_url.to_byte_string()));
+    builder.append(escape_html_entities(MUST(m_url.to_string())));
     builder.append("</title></head><body>"sv);
     builder.append("<h1>Web page crashed"sv);
     if (!m_url.host().has<Empty>()) {
         builder.appendff(" on {}", escape_html_entities(m_url.serialized_host().release_value_but_fixme_should_propagate_errors()));
     }
     builder.append("</h1>"sv);
-    auto escaped_url = escape_html_entities(m_url.to_byte_string());
+    auto escaped_url = escape_html_entities(MUST(m_url.to_string()));
     builder.appendff("The web page <a href=\"{}\">{}</a> has crashed.<br><br>You can reload the page to try again.", escaped_url, escaped_url);
     builder.append("</body></html>"sv);
-    load_html(builder.to_byte_string());
+    load_html(MUST(builder.to_string()));
 }
 
 static ErrorOr<LexicalPath> save_screenshot(Gfx::ShareableBitmap const& bitmap)
@@ -535,7 +535,7 @@ static ErrorOr<LexicalPath> save_screenshot(Gfx::ShareableBitmap const& bitmap)
     if (!bitmap.is_valid())
         return Error::from_string_literal("Failed to take a screenshot");
 
-    auto file = Core::DateTime::now().to_byte_string("screenshot-%Y-%m-%d-%H-%M-%S.png"sv);
+    auto file = TRY(Core::DateTime::now().to_string("screenshot-%Y-%m-%d-%H-%M-%S.png"sv));
     auto path = TRY(Application::the().path_for_downloaded_file(file));
 
     auto encoded = TRY(Gfx::PNGWriter::encode(*bitmap.bitmap()));

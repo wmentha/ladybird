@@ -60,7 +60,7 @@ private:
     virtual void set_span_at_index(size_t index, Syntax::TextDocumentSpan span) override;
     virtual Vector<Syntax::TextDocumentFoldingRegion>& folding_regions() override;
     virtual Vector<Syntax::TextDocumentFoldingRegion> const& folding_regions() const override;
-    virtual ByteString highlighter_did_request_text() const override;
+    virtual String highlighter_did_request_text() const override;
     virtual void highlighter_did_request_update() override;
     virtual Syntax::Document& highlighter_did_request_document() override;
     virtual Syntax::TextPosition highlighter_did_request_cursor() const override;

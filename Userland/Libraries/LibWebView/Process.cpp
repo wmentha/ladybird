@@ -87,7 +87,7 @@ ErrorOr<Optional<pid_t>> Process::get_process_pid(StringView process_name, Strin
 }
 
 // This is heavily based on how SystemServer's Service creates its socket.
-ErrorOr<int> Process::create_ipc_socket(ByteString const& socket_path)
+ErrorOr<int> Process::create_ipc_socket(String const& socket_path)
 {
     if (!Core::System::stat(socket_path).is_error())
         TRY(Core::System::unlink(socket_path));
@@ -118,8 +118,8 @@ ErrorOr<int> Process::create_ipc_socket(ByteString const& socket_path)
 ErrorOr<Process::ProcessPaths> Process::paths_for_process(StringView process_name)
 {
     auto runtime_directory = TRY(Core::StandardPaths::runtime_directory());
-    auto socket_path = ByteString::formatted("{}/{}.socket", runtime_directory, process_name);
-    auto pid_path = ByteString::formatted("{}/{}.pid", runtime_directory, process_name);
+    auto socket_path = MUST(String::formatted("{}/{}.socket", runtime_directory, process_name));
+    auto pid_path = MUST(String::formatted("{}/{}.pid", runtime_directory, process_name));
 
     return ProcessPaths { move(socket_path), move(pid_path) };
 }

@@ -84,7 +84,7 @@ Vector<Syntax::TextDocumentFoldingRegion> const& SourceHighlighterClient::foldin
     return document().folding_regions();
 }
 
-ByteString SourceHighlighterClient::highlighter_did_request_text() const
+String SourceHighlighterClient::highlighter_did_request_text() const
 {
     return document().text();
 }
