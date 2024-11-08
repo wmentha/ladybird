@@ -224,11 +224,11 @@ ErrorOr<void, ParseError> Parser::parse_internal()
     if (auto it = find_if(matched_source.begin(), matched_source.end(), s_restricted_characters); !it.is_end()) {
         return parse_error(
             m_lexer.position_for(it.index()),
-            ByteString::formatted("Invalid character #{:x} used in document", *it));
+            MUST(String::formatted("Invalid character #{:x} used in document", *it)));
     }
 
     if (!m_lexer.is_eof())
-        return parse_error(m_lexer.current_position(), ByteString { "Garbage after document"sv });
+        return parse_error(m_lexer.current_position(), String { "Garbage after document"_string });
 
     return {};
 }
@@ -239,7 +239,7 @@ ErrorOr<void, ParseError> Parser::expect(StringView expected)
 
     if (!m_lexer.consume_specific(expected)) {
         if (m_options.treat_errors_as_fatal)
-            return parse_error(m_lexer.current_position(), ByteString::formatted("Expected '{}'", expected));
+            return parse_error(m_lexer.current_position(), MUST(String::formatted("Expected '{}'", expected)));
     }
 
     rollback.disarm();
@@ -356,7 +356,7 @@ ErrorOr<void, ParseError> Parser::parse_version_info()
         m_in_compatibility_mode = true;
     } else {
         if (version_string != "1.1" && m_options.treat_errors_as_fatal)
-            return parse_error(m_lexer.current_position(), ByteString::formatted("Expected '1.1', found '{}'", version_string));
+            return parse_error(m_lexer.current_position(), MUST(String::formatted("Expected '1.1', found '{}'", version_string)));
     }
 
     m_version = Version::Version11;
@@ -502,7 +502,7 @@ ErrorOr<void, ParseError> Parser::parse_processing_instruction()
     auto accept = accept_rule();
 
     auto target = TRY(parse_processing_instruction_target());
-    ByteString data;
+    String data;
     if (auto result = skip_whitespace(Required::Yes); !result.is_error())
         data = m_lexer.consume_until("?>");
     TRY(expect("?>"sv));
@@ -525,7 +525,7 @@ ErrorOr<Name, ParseError> Parser::parse_processing_instruction_target()
     if (target.equals_ignoring_ascii_case("xml"sv) && m_options.treat_errors_as_fatal) {
         return parse_error(
             m_lexer.position_for(m_lexer.tell() - target.length()),
-            ByteString { "Use of the reserved 'xml' name for processing instruction target name is disallowed"sv });
+            String { "Use of the reserved 'xml' name for processing instruction target name is disallowed"_string });
     }
 
     rollback.disarm();
@@ -554,7 +554,7 @@ ErrorOr<Name, ParseError> Parser::parse_name()
     builder.append(rest);
 
     rollback.disarm();
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 // 2.8.28. doctypedecl, https://www.w3.org/TR/2006/REC-xml11-20060816/#NT-doctypedecl
@@ -577,14 +577,14 @@ ErrorOr<void, ParseError> Parser::parse_doctype_decl()
                 auto resource_result = m_options.resolve_external_resource(doctype.external_id->system_id, doctype.external_id->public_id);
                 if (!resource_result.is_error()) {
                     auto declarations = TRY(resource_result.release_value().visit(
-                        [&](ByteString resolved_source) -> ErrorOr<Vector<MarkupDeclaration>, ParseError> {
+                        [&](String resolved_source) -> ErrorOr<Vector<MarkupDeclaration>, ParseError> {
                             TemporaryChange source { m_source, resolved_source.view() };
                             TemporaryChange lexer { m_lexer, LineTrackingLexer(m_source) };
                             auto declarations = TRY(parse_external_subset());
                             if (!m_lexer.is_eof()) {
                                 return parse_error(
                                     m_lexer.current_position(),
-                                    ByteString::formatted("Failed to resolve external subset '{}': garbage after declarations", doctype.external_id->system_id.system_literal));
+                                    MUST(String::formatted("Failed to resolve external subset '{}': garbage after declarations", doctype.external_id->system_id.system_literal)));
                             }
                             return declarations;
                         },
@@ -644,7 +644,7 @@ ErrorOr<void, ParseError> Parser::parse_element()
 
     // Well-formedness constraint: The Name in an element's end-tag MUST match the element type in the start-tag.
     if (m_options.treat_errors_as_fatal && closing_name != tag.name)
-        return parse_error(m_lexer.position_for(tag_location), ByteString { "Invalid closing tag"sv });
+        return parse_error(m_lexer.position_for(tag_location), String { "Invalid closing tag"_string });
 
     rollback.disarm();
     return {};
@@ -661,7 +661,7 @@ ErrorOr<NonnullOwnPtr<Node>, ParseError> Parser::parse_empty_element_tag()
     TRY(expect("<"sv));
 
     auto name = TRY(parse_name());
-    HashMap<Name, ByteString> attributes;
+    HashMap<Name, String> attributes;
 
     while (true) {
         if (auto result = skip_whitespace(Required::Yes); result.is_error())
@@ -705,7 +705,7 @@ ErrorOr<Attribute, ParseError> Parser::parse_attribute()
 }
 
 // 2.3.10. AttValue, https://www.w3.org/TR/2006/REC-xml11-20060816/#NT-AttValue
-ErrorOr<ByteString, ParseError> Parser::parse_attribute_value()
+ErrorOr<String, ParseError> Parser::parse_attribute_value()
 {
     auto rollback = rollback_point();
     auto rule = enter_rule();
@@ -722,7 +722,7 @@ ErrorOr<ByteString, ParseError> Parser::parse_attribute_value()
     return text;
 }
 
-ErrorOr<ByteString, ParseError> Parser::parse_attribute_value_inner(StringView disallow)
+ErrorOr<String, ParseError> Parser::parse_attribute_value_inner(StringView disallow)
 {
     StringBuilder builder;
     while (true) {
@@ -731,12 +731,12 @@ ErrorOr<ByteString, ParseError> Parser::parse_attribute_value_inner(StringView d
 
         if (m_lexer.next_is('<')) {
             // Not allowed, return a nice error to make it easier to debug.
-            return parse_error(m_lexer.current_position(), ByteString { "Unescaped '<' not allowed in attribute values"sv });
+            return parse_error(m_lexer.current_position(), String { "Unescaped '<' not allowed in attribute values"_string });
         }
 
         if (m_lexer.next_is('&')) {
             auto reference = TRY(parse_reference());
-            if (auto* char_reference = reference.get_pointer<ByteString>())
+            if (auto* char_reference = reference.get_pointer<String>())
                 builder.append(*char_reference);
             else
                 builder.append(TRY(resolve_reference(reference.get<EntityReference>(), ReferencePlacement::AttributeValue)));
@@ -744,14 +744,14 @@ ErrorOr<ByteString, ParseError> Parser::parse_attribute_value_inner(StringView d
             builder.append(m_lexer.consume());
         }
     }
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 // Char ::= [#x1-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
 constexpr static auto s_characters = ranges_for_search<Range(0x1, 0xd7ff), Range(0xe000, 0xfffd), Range(0x10000, 0x10ffff)>();
 
 // 4.1.67. Reference, https://www.w3.org/TR/2006/REC-xml11-20060816/#NT-Reference
-ErrorOr<Variant<Parser::EntityReference, ByteString>, ParseError> Parser::parse_reference()
+ErrorOr<Variant<Parser::EntityReference, String>, ParseError> Parser::parse_reference()
 {
     auto rollback = rollback_point();
     auto rule = enter_rule();
@@ -785,7 +785,7 @@ ErrorOr<Variant<Parser::EntityReference, ByteString>, ParseError> Parser::parse_
         }
 
         if (!code_point.has_value() || !s_characters.contains(*code_point))
-            return parse_error(m_lexer.position_for(reference_start), ByteString { "Invalid character reference"sv });
+            return parse_error(m_lexer.position_for(reference_start), String { "Invalid character reference"_string });
 
         TRY(expect(";"sv));
 
@@ -793,7 +793,7 @@ ErrorOr<Variant<Parser::EntityReference, ByteString>, ParseError> Parser::parse_
         builder.append_code_point(*code_point);
 
         rollback.disarm();
-        return builder.to_byte_string();
+        return MUST(builder.to_string());
     }
 
     auto name = name_result.release_value();
@@ -815,7 +815,7 @@ ErrorOr<NonnullOwnPtr<Node>, ParseError> Parser::parse_start_tag()
     auto accept = accept_rule();
 
     auto name = TRY(parse_name());
-    HashMap<Name, ByteString> attributes;
+    HashMap<Name, String> attributes;
 
     while (true) {
         if (auto result = skip_whitespace(Required::Yes); result.is_error())
@@ -874,7 +874,7 @@ ErrorOr<void, ParseError> Parser::parse_content()
         if (auto result = parse_reference(); !result.is_error()) {
             auto reference = result.release_value();
             auto reference_offset = m_lexer.position_for(node_start);
-            if (auto char_reference = reference.get_pointer<ByteString>())
+            if (auto char_reference = reference.get_pointer<String>())
                 append_text(*char_reference, reference_offset);
             else
                 append_text(TRY(resolve_reference(reference.get<EntityReference>(), ReferencePlacement::Content)), reference_offset);
@@ -1011,7 +1011,7 @@ ErrorOr<Optional<MarkupDeclaration>, ParseError> Parser::parse_markup_declaratio
 }
 
 // 2.8.28a DeclSep, https://www.w3.org/TR/2006/REC-xml11-20060816/#NT-DeclSep
-ErrorOr<Optional<ByteString>, ParseError> Parser::parse_declaration_separator()
+ErrorOr<Optional<String>, ParseError> Parser::parse_declaration_separator()
 {
     auto rollback = rollback_point();
     auto rule = enter_rule();
@@ -1025,7 +1025,7 @@ ErrorOr<Optional<ByteString>, ParseError> Parser::parse_declaration_separator()
 
     if (auto result = skip_whitespace(Required::Yes); !result.is_error()) {
         rollback.disarm();
-        return Optional<ByteString> {};
+        return Optional<String> {};
     }
 
     return parse_error(m_lexer.current_position(), Expectation { "either whitespace, or a PEReference"sv });
@@ -1161,7 +1161,7 @@ ErrorOr<AttributeListDeclaration::Definition, ParseError> Parser::parse_attribut
         TRY(expect(")"sv));
         type = AttributeListDeclaration::NotationType { move(names) };
     } else {
-        HashTable<ByteString> names;
+        HashTable<String> names;
         TRY(expect("("sv));
         TRY(skip_whitespace());
         names.set(TRY(parse_nm_token()));
@@ -1446,7 +1446,7 @@ ErrorOr<EntityDeclaration, ParseError> Parser::parse_general_entity_declaration(
 {
     auto rollback = rollback_point();
     auto rule = enter_rule();
-    Variant<ByteString, EntityDefinition, Empty> definition;
+    Variant<String, EntityDefinition, Empty> definition;
 
     // GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'
     TRY(expect("<!ENTITY"sv));
@@ -1476,7 +1476,7 @@ ErrorOr<EntityDeclaration, ParseError> Parser::parse_general_entity_declaration(
     rollback.disarm();
     return GEDeclaration {
         move(name),
-        move(definition).downcast<ByteString, EntityDefinition>(),
+        move(definition).downcast<String, EntityDefinition>(),
     };
 }
 
@@ -1486,7 +1486,7 @@ ErrorOr<EntityDeclaration, ParseError> Parser::parse_parameter_entity_declaratio
     auto rollback = rollback_point();
     auto rule = enter_rule();
 
-    Variant<ByteString, ExternalID, Empty> definition;
+    Variant<String, ExternalID, Empty> definition;
     // PEDecl ::= '<!ENTITY' S '%' S Name S PEDef S? '>'
     TRY(expect("<!ENTITY"sv));
     auto accept = accept_rule();
@@ -1508,7 +1508,7 @@ ErrorOr<EntityDeclaration, ParseError> Parser::parse_parameter_entity_declaratio
     rollback.disarm();
     return PEDeclaration {
         move(name),
-        move(definition).downcast<ByteString, ExternalID>(),
+        move(definition).downcast<String, ExternalID>(),
     };
 }
 
@@ -1623,7 +1623,7 @@ ErrorOr<Name, ParseError> Parser::parse_notation_data_declaration()
 }
 
 // 2.3.9 EntityValue, https://www.w3.org/TR/2006/REC-xml11-20060816/#NT-EntityValue
-ErrorOr<ByteString, ParseError> Parser::parse_entity_value()
+ErrorOr<String, ParseError> Parser::parse_entity_value()
 {
     auto rollback = rollback_point();
     auto rule = enter_rule();
@@ -1648,7 +1648,7 @@ ErrorOr<ByteString, ParseError> Parser::parse_entity_value()
         }
         if (m_lexer.next_is('&')) {
             auto reference = TRY(parse_reference());
-            if (auto char_reference = reference.get_pointer<ByteString>())
+            if (auto char_reference = reference.get_pointer<String>())
                 builder.append(*char_reference);
             else
                 builder.append(TRY(resolve_reference(reference.get<EntityReference>(), ReferencePlacement::AttributeValue)));
@@ -1659,7 +1659,7 @@ ErrorOr<ByteString, ParseError> Parser::parse_entity_value()
     TRY(expect(quote));
 
     rollback.disarm();
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 // 2.7.18 CDSect, https://www.w3.org/TR/2006/REC-xml11-20060816/#NT-CDSect
@@ -1721,11 +1721,11 @@ ErrorOr<void, ParseError> Parser::parse_text_declaration()
     return {};
 }
 
-ErrorOr<ByteString, ParseError> Parser::resolve_reference(EntityReference const& reference, ReferencePlacement placement)
+ErrorOr<String, ParseError> Parser::resolve_reference(EntityReference const& reference, ReferencePlacement placement)
 {
     static HashTable<Name> reference_lookup {};
     if (reference_lookup.contains(reference.name))
-        return parse_error(m_lexer.current_position(), ByteString::formatted("Invalid recursive definition for '{}'", reference.name));
+        return parse_error(m_lexer.current_position(), MUST(String::formatted("Invalid recursive definition for '{}'", reference.name)));
 
     reference_lookup.set(reference.name);
     ScopeGuard remove_lookup {
@@ -1734,7 +1734,7 @@ ErrorOr<ByteString, ParseError> Parser::resolve_reference(EntityReference const&
         }
     };
 
-    Optional<ByteString> resolved;
+    Optional<String> resolved;
     if (m_doctype.has_value()) {
         // FIXME: Split these up and resolve them ahead of time.
         for (auto& declaration : m_doctype->markup_declarations) {
@@ -1747,28 +1747,28 @@ ErrorOr<ByteString, ParseError> Parser::resolve_reference(EntityReference const&
             if (ge_declaration->name != reference.name)
                 continue;
             TRY(ge_declaration->definition.visit(
-                [&](ByteString const& definition) -> ErrorOr<void, ParseError> {
+                [&](String const& definition) -> ErrorOr<void, ParseError> {
                     resolved = definition;
                     return {};
                 },
                 [&](EntityDefinition const& definition) -> ErrorOr<void, ParseError> {
                     if (placement == ReferencePlacement::AttributeValue)
-                        return parse_error(m_lexer.current_position(), ByteString::formatted("Attribute references external entity '{}'", reference.name));
+                        return parse_error(m_lexer.current_position(), MUST(String::formatted("Attribute references external entity '{}'", reference.name)));
 
                     if (definition.notation.has_value())
-                        return parse_error(m_lexer.position_for(0), ByteString::formatted("Entity reference to unparsed entity '{}'", reference.name));
+                        return parse_error(m_lexer.position_for(0), MUST(String::formatted("Entity reference to unparsed entity '{}'", reference.name)));
 
                     if (!m_options.resolve_external_resource)
-                        return parse_error(m_lexer.position_for(0), ByteString::formatted("Failed to resolve external entity '{}'", reference.name));
+                        return parse_error(m_lexer.position_for(0), MUST(String::formatted("Failed to resolve external entity '{}'", reference.name)));
 
                     auto result = m_options.resolve_external_resource(definition.id.system_id, definition.id.public_id);
                     if (result.is_error())
-                        return parse_error(m_lexer.position_for(0), ByteString::formatted("Failed to resolve external entity '{}': {}", reference.name, result.error()));
+                        return parse_error(m_lexer.position_for(0), MUST(String::formatted("Failed to resolve external entity '{}': {}", reference.name, result.error())));
 
-                    if (!result.value().has<ByteString>())
-                        return parse_error(m_lexer.position_for(0), ByteString::formatted("Failed to resolve external entity '{}': Resource is of the wrong type", reference.name));
+                    if (!result.value().has<String>())
+                        return parse_error(m_lexer.position_for(0), MUST(String::formatted("Failed to resolve external entity '{}': Resource is of the wrong type", reference.name)));
 
-                    resolved = result.release_value().get<ByteString>();
+                    resolved = result.release_value().get<String>();
                     return {};
                 }));
             break;
@@ -1786,7 +1786,7 @@ ErrorOr<ByteString, ParseError> Parser::resolve_reference(EntityReference const&
             return "'";
         if (reference.name == "quot")
             return "\"";
-        return parse_error(m_lexer.position_for(0), ByteString::formatted("Reference to undeclared entity '{}'", reference.name));
+        return parse_error(m_lexer.position_for(0), MUST(String::formatted("Reference to undeclared entity '{}'", reference.name)));
     }
 
     StringView resolved_source = *resolved;

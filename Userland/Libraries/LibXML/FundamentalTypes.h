@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
+#include <AK/String.h>
 
 namespace XML {
 
 // FIXME: Maybe extend this to something more sophisticated?
-using Name = ByteString;
+using Name = String;
 
 }

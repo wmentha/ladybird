@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/GenericLexer.h>
 #include <AK/HashMap.h>
+#include <AK/String.h>
 #include <AK/Variant.h>
 #include <AK/Vector.h>
 #include <LibXML/FundamentalTypes.h>
@@ -17,7 +17,7 @@ namespace XML {
 
 struct Attribute {
     Name name;
-    ByteString value;
+    String value;
 };
 
 struct Node {
@@ -25,11 +25,11 @@ struct Node {
         StringBuilder builder;
     };
     struct Comment {
-        ByteString text;
+        String text;
     };
     struct Element {
         Name name;
-        HashMap<Name, ByteString> attributes;
+        HashMap<Name, String> attributes;
         Vector<NonnullOwnPtr<Node>> children;
     };
 
