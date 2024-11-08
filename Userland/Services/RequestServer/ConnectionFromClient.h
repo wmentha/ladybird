@@ -33,16 +33,16 @@ private:
     explicit ConnectionFromClient(IPC::Transport);
 
     virtual Messages::RequestServer::ConnectNewClientResponse connect_new_client() override;
-    virtual Messages::RequestServer::IsSupportedProtocolResponse is_supported_protocol(ByteString const&) override;
-    virtual void start_request(i32 request_id, ByteString const&, URL::URL const&, HTTP::HeaderMap const&, ByteBuffer const&, Core::ProxyData const&) override;
+    virtual Messages::RequestServer::IsSupportedProtocolResponse is_supported_protocol(String const&) override;
+    virtual void start_request(i32 request_id, String const&, URL::URL const&, HTTP::HeaderMap const&, ByteBuffer const&, Core::ProxyData const&) override;
     virtual Messages::RequestServer::StopRequestResponse stop_request(i32) override;
-    virtual Messages::RequestServer::SetCertificateResponse set_certificate(i32, ByteString const&, ByteString const&) override;
+    virtual Messages::RequestServer::SetCertificateResponse set_certificate(i32, String const&, String const&) override;
     virtual void ensure_connection(URL::URL const& url, ::RequestServer::CacheLevel const& cache_level) override;
 
-    virtual void websocket_connect(i64 websocket_id, URL::URL const&, ByteString const&, Vector<ByteString> const&, Vector<ByteString> const&, HTTP::HeaderMap const&) override;
+    virtual void websocket_connect(i64 websocket_id, URL::URL const&, String const&, Vector<String> const&, Vector<String> const&, HTTP::HeaderMap const&) override;
     virtual void websocket_send(i64 websocket_id, bool, ByteBuffer const&) override;
-    virtual void websocket_close(i64 websocket_id, u16, ByteString const&) override;
-    virtual Messages::RequestServer::WebsocketSetCertificateResponse websocket_set_certificate(i64, ByteString const&, ByteString const&) override;
+    virtual void websocket_close(i64 websocket_id, u16, String const&) override;
+    virtual Messages::RequestServer::WebsocketSetCertificateResponse websocket_set_certificate(i64, String const&, String const&) override;
 
     HashMap<i32, RefPtr<WebSocket::WebSocket>> m_websockets;
 

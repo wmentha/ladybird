@@ -20,7 +20,7 @@
 
 namespace RequestServer {
 
-ByteString g_default_certificate_path;
+String g_default_certificate_path;
 static HashMap<int, RefPtr<ConnectionFromClient>> s_connections;
 static IDAllocator s_client_ids;
 static long s_connect_timeout_seconds = 90L;
@@ -259,12 +259,12 @@ Messages::RequestServer::ConnectNewClientResponse ConnectionFromClient::connect_
     return IPC::File::adopt_fd(socket_fds[1]);
 }
 
-Messages::RequestServer::IsSupportedProtocolResponse ConnectionFromClient::is_supported_protocol(ByteString const& protocol)
+Messages::RequestServer::IsSupportedProtocolResponse ConnectionFromClient::is_supported_protocol(String const& protocol)
 {
     return protocol == "http"sv || protocol == "https"sv;
 }
 
-void ConnectionFromClient::start_request(i32 request_id, ByteString const& method, URL::URL const& url, HTTP::HeaderMap const& request_headers, ByteBuffer const& request_body, Core::ProxyData const& proxy_data)
+void ConnectionFromClient::start_request(i32 request_id, String const& method, URL::URL const& url, HTTP::HeaderMap const& request_headers, ByteBuffer const& request_body, Core::ProxyData const& proxy_data)
 {
     if (!url.is_valid()) {
         dbgln("StartRequest: Invalid URL requested: '{}'", url);
@@ -326,7 +326,7 @@ void ConnectionFromClient::start_request(i32 request_id, ByteString const& metho
 
     struct curl_slist* curl_headers = nullptr;
     for (auto const& header : request_headers.headers()) {
-        auto header_string = ByteString::formatted("{}: {}", header.name, header.value);
+        auto header_string = MUST(String::formatted("{}: {}", header.name, header.value));
         curl_headers = curl_slist_append(curl_headers, header_string.characters());
     }
     set_option(CURLOPT_HTTPHEADER, curl_headers);
@@ -432,7 +432,7 @@ void ConnectionFromClient::did_request_certificates(Badge<Request>, Request&)
     TODO();
 }
 
-Messages::RequestServer::SetCertificateResponse ConnectionFromClient::set_certificate(i32 request_id, ByteString const& certificate, ByteString const& key)
+Messages::RequestServer::SetCertificateResponse ConnectionFromClient::set_certificate(i32 request_id, String const& certificate, String const& key)
 {
     (void)request_id;
     (void)certificate;
@@ -490,7 +490,7 @@ void ConnectionFromClient::ensure_connection(URL::URL const& url, ::RequestServe
     }
 }
 
-void ConnectionFromClient::websocket_connect(i64 websocket_id, URL::URL const& url, ByteString const& origin, Vector<ByteString> const& protocols, Vector<ByteString> const& extensions, HTTP::HeaderMap const& additional_request_headers)
+void ConnectionFromClient::websocket_connect(i64 websocket_id, URL::URL const& url, String const& origin, Vector<String> const& protocols, Vector<String> const& extensions, HTTP::HeaderMap const& additional_request_headers)
 {
     if (!url.is_valid()) {
         dbgln("WebSocket::Connect: Invalid URL requested: '{}'", url);
@@ -513,7 +513,7 @@ void ConnectionFromClient::websocket_connect(i64 websocket_id, URL::URL const& u
     connection->on_error = [this, websocket_id](auto message) {
         async_websocket_errored(websocket_id, (i32)message);
     };
-    connection->on_close = [this, websocket_id](u16 code, ByteString reason, bool was_clean) {
+    connection->on_close = [this, websocket_id](u16 code, String reason, bool was_clean) {
         async_websocket_closed(websocket_id, code, move(reason), was_clean);
     };
     connection->on_ready_state_change = [this, websocket_id](auto state) {
@@ -530,13 +530,13 @@ void ConnectionFromClient::websocket_send(i64 websocket_id, bool is_text, ByteBu
         connection->send(WebSocket::Message { data, is_text });
 }
 
-void ConnectionFromClient::websocket_close(i64 websocket_id, u16 code, ByteString const& reason)
+void ConnectionFromClient::websocket_close(i64 websocket_id, u16 code, String const& reason)
 {
     if (auto connection = m_websockets.get(websocket_id).value_or({}); connection && connection->ready_state() == WebSocket::ReadyState::Open)
         connection->close(code, reason);
 }
 
-Messages::RequestServer::WebsocketSetCertificateResponse ConnectionFromClient::websocket_set_certificate(i64 websocket_id, ByteString const&, ByteString const&)
+Messages::RequestServer::WebsocketSetCertificateResponse ConnectionFromClient::websocket_set_certificate(i64 websocket_id, String const&, String const&)
 {
     auto success = false;
     if (auto connection = m_websockets.get(websocket_id).value_or({}); connection) {

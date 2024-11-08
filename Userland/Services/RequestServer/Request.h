@@ -28,7 +28,7 @@ public:
     HTTP::HeaderMap const& response_headers() const { return m_response_headers; }
 
     void stop();
-    virtual void set_certificate(ByteString, ByteString);
+    virtual void set_certificate(String, String);
 
     // FIXME: Want Badge<Protocol>, but can't make one from HttpProtocol, etc.
     void set_request_fd(int fd) { m_request_fd = fd; }
