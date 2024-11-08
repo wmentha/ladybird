@@ -90,7 +90,7 @@ static void decode_image_to_bitmaps_and_durations_with_decoder(Gfx::ImageDecoder
     }
 }
 
-static ErrorOr<ConnectionFromClient::DecodeResult> decode_image_to_details(Core::AnonymousBuffer const& encoded_buffer, Optional<Gfx::IntSize> ideal_size, Optional<ByteString> const& known_mime_type)
+static ErrorOr<ConnectionFromClient::DecodeResult> decode_image_to_details(Core::AnonymousBuffer const& encoded_buffer, Optional<Gfx::IntSize> ideal_size, Optional<String> const& known_mime_type)
 {
     auto decoder = TRY(Gfx::ImageDecoder::try_create_for_raw_bytes(ReadonlyBytes { encoded_buffer.data<u8>(), encoded_buffer.size() }, known_mime_type));
 
@@ -128,7 +128,7 @@ static ErrorOr<ConnectionFromClient::DecodeResult> decode_image_to_details(Core:
     return result;
 }
 
-NonnullRefPtr<ConnectionFromClient::Job> ConnectionFromClient::make_decode_image_job(i64 image_id, Core::AnonymousBuffer encoded_buffer, Optional<Gfx::IntSize> ideal_size, Optional<ByteString> mime_type)
+NonnullRefPtr<ConnectionFromClient::Job> ConnectionFromClient::make_decode_image_job(i64 image_id, Core::AnonymousBuffer encoded_buffer, Optional<Gfx::IntSize> ideal_size, Optional<String> mime_type)
 {
     return Job::construct(
         [encoded_buffer = move(encoded_buffer), ideal_size = move(ideal_size), mime_type = move(mime_type)](auto&) -> ErrorOr<DecodeResult> {
@@ -146,7 +146,7 @@ NonnullRefPtr<ConnectionFromClient::Job> ConnectionFromClient::make_decode_image
         });
 }
 
-Messages::ImageDecoderServer::DecodeImageResponse ConnectionFromClient::decode_image(Core::AnonymousBuffer const& encoded_buffer, Optional<Gfx::IntSize> const& ideal_size, Optional<ByteString> const& mime_type)
+Messages::ImageDecoderServer::DecodeImageResponse ConnectionFromClient::decode_image(Core::AnonymousBuffer const& encoded_buffer, Optional<Gfx::IntSize> const& ideal_size, Optional<String> const& mime_type)
 {
     auto image_id = m_next_image_id++;
 
