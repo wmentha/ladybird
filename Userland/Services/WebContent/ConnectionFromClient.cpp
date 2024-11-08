@@ -104,7 +104,7 @@ void ConnectionFromClient::set_window_handle(u64 page_id, String const& handle)
         page->page().top_level_traversable()->set_window_handle(handle);
 }
 
-void ConnectionFromClient::connect_to_webdriver(u64 page_id, ByteString const& webdriver_ipc_path)
+void ConnectionFromClient::connect_to_webdriver(u64 page_id, String const& webdriver_ipc_path)
 {
     if (auto page = this->page(page_id); page.has_value()) {
         // FIXME: Propagate this error back to the browser.
@@ -145,7 +145,7 @@ void ConnectionFromClient::load_url(u64 page_id, const URL::URL& url)
     page->page().load(url);
 }
 
-void ConnectionFromClient::load_html(u64 page_id, ByteString const& html)
+void ConnectionFromClient::load_html(u64 page_id, String const& html)
 {
     if (auto page = this->page(page_id); page.has_value())
         page->page().load_html(html);
@@ -279,7 +279,7 @@ void ConnectionFromClient::report_finished_handling_input_event(u64 page_id, Web
     async_did_finish_handling_input_event(page_id, event_result);
 }
 
-void ConnectionFromClient::debug_request(u64 page_id, ByteString const& request, ByteString const& argument)
+void ConnectionFromClient::debug_request(u64 page_id, String const& request, String const& argument)
 {
     auto page = this->page(page_id);
     if (!page.has_value())
@@ -371,22 +371,22 @@ void ConnectionFromClient::debug_request(u64 page_id, ByteString const& request,
     }
 
     if (request == "spoof-user-agent") {
-        Web::ResourceLoader::the().set_user_agent(MUST(String::from_byte_string(argument)));
+        Web::ResourceLoader::the().set_user_agent(argument);
         return;
     }
 
     if (request == "same-origin-policy") {
-        page->page().set_same_origin_policy_enabled(argument == "on");
+        page->page().set_same_origin_policy_enabled(argument == "on"_string);
         return;
     }
 
     if (request == "scripting") {
-        page->page().set_is_scripting_enabled(argument == "on");
+        page->page().set_is_scripting_enabled(argument == "on"_string);
         return;
     }
 
     if (request == "block-pop-ups") {
-        page->page().set_should_block_pop_ups(argument == "on");
+        page->page().set_should_block_pop_ups(argument == "on"_string);
         return;
     }
 
@@ -413,11 +413,11 @@ void ConnectionFromClient::debug_request(u64 page_id, ByteString const& request,
 
     if (request == "navigator-compatibility-mode") {
         Web::NavigatorCompatibilityMode compatibility_mode;
-        if (argument == "chrome") {
+        if (argument == "chrome"_string) {
             compatibility_mode = Web::NavigatorCompatibilityMode::Chrome;
-        } else if (argument == "gecko") {
+        } else if (argument == "gecko"_string) {
             compatibility_mode = Web::NavigatorCompatibilityMode::Gecko;
-        } else if (argument == "webkit") {
+        } else if (argument == "webkit"_string) {
             compatibility_mode = Web::NavigatorCompatibilityMode::WebKit;
         } else {
             dbgln("Unknown navigator compatibility mode '{}', defaulting to Chrome", argument);
@@ -441,7 +441,7 @@ void ConnectionFromClient::inspect_dom_tree(u64 page_id)
 {
     if (auto page = this->page(page_id); page.has_value()) {
         if (auto* doc = page->page().top_level_browsing_context().active_document())
-            async_did_inspect_dom_tree(page_id, doc->dump_dom_tree_as_json().to_byte_string());
+            async_did_inspect_dom_tree(page_id, doc->dump_dom_tree_as_json());
     }
 }
 
@@ -476,19 +476,19 @@ void ConnectionFromClient::inspect_dom_node(u64 page_id, Web::UniqueNodeID const
             return;
         }
 
-        auto serialize_json = [](Web::CSS::StyleProperties const& properties) -> ByteString {
+        auto serialize_json = [](Web::CSS::StyleProperties const& properties) -> String {
             StringBuilder builder;
 
             auto serializer = MUST(JsonObjectSerializer<>::try_create(builder));
             properties.for_each_property([&](auto property_id, auto& value) {
-                MUST(serializer.add(Web::CSS::string_from_property_id(property_id), value.to_string().to_byte_string()));
+                MUST(serializer.add(Web::CSS::string_from_property_id(property_id), value.to_string()));
             });
             MUST(serializer.finish());
 
-            return builder.to_byte_string();
+            return MUST(builder.to_string());
         };
 
-        auto serialize_custom_properties_json = [](Web::DOM::Element const& element, Optional<Web::CSS::Selector::PseudoElement::Type> pseudo_element) -> ByteString {
+        auto serialize_custom_properties_json = [](Web::DOM::Element const& element, Optional<Web::CSS::Selector::PseudoElement::Type> pseudo_element) -> String {
             StringBuilder builder;
             auto serializer = MUST(JsonObjectSerializer<>::try_create(builder));
             HashTable<FlyString> seen_properties;
@@ -507,9 +507,9 @@ void ConnectionFromClient::inspect_dom_node(u64 page_id, Web::UniqueNodeID const
 
             MUST(serializer.finish());
 
-            return builder.to_byte_string();
+            return MUST(builder.to_string());
         };
-        auto serialize_node_box_sizing_json = [](Web::Layout::Node const* layout_node) -> ByteString {
+        auto serialize_node_box_sizing_json = [](Web::Layout::Node const* layout_node) -> String {
             if (!layout_node || !layout_node->is_box()) {
                 return "{}";
             }
@@ -538,10 +538,10 @@ void ConnectionFromClient::inspect_dom_node(u64 page_id, Web::UniqueNodeID const
             }
 
             MUST(serializer.finish());
-            return builder.to_byte_string();
+            return MUST(builder.to_string());
         };
 
-        auto serialize_aria_properties_state_json = [](Web::DOM::Element const& element) -> ByteString {
+        auto serialize_aria_properties_state_json = [](Web::DOM::Element const& element) -> String {
             auto role_name = element.role_or_default();
             if (!role_name.has_value()) {
                 return "";
@@ -553,10 +553,10 @@ void ConnectionFromClient::inspect_dom_node(u64 page_id, Web::UniqueNodeID const
             auto serializer = MUST(JsonObjectSerializer<>::try_create(builder));
             MUST(role->serialize_as_json(serializer));
             MUST(serializer.finish());
-            return builder.to_byte_string();
+            return MUST(builder.to_string());
         };
 
-        auto serialize_fonts_json = [](Web::CSS::StyleProperties const& properties) -> ByteString {
+        auto serialize_fonts_json = [](Web::CSS::StyleProperties const& properties) -> String {
             StringBuilder builder;
             auto serializer = MUST(JsonArraySerializer<>::try_create(builder));
 
@@ -570,7 +570,7 @@ void ConnectionFromClient::inspect_dom_node(u64 page_id, Web::UniqueNodeID const
                 MUST(font_json_object.finish());
             });
             MUST(serializer.finish());
-            return builder.to_byte_string();
+            return MUST(builder.to_string());
         };
 
         if (pseudo_element.has_value()) {
@@ -581,22 +581,22 @@ void ConnectionFromClient::inspect_dom_node(u64 page_id, Web::UniqueNodeID const
             }
 
             auto pseudo_element_style = element.pseudo_element_computed_css_values(pseudo_element.value());
-            ByteString computed_values = serialize_json(*pseudo_element_style);
-            ByteString resolved_values = serialize_json(element.resolved_css_values(pseudo_element.value()));
-            ByteString custom_properties_json = serialize_custom_properties_json(element, pseudo_element);
-            ByteString node_box_sizing_json = serialize_node_box_sizing_json(pseudo_element_node.ptr());
-            ByteString fonts_json = serialize_fonts_json(*pseudo_element_style);
+            String computed_values = serialize_json(*pseudo_element_style);
+            String resolved_values = serialize_json(element.resolved_css_values(pseudo_element.value()));
+            String custom_properties_json = serialize_custom_properties_json(element, pseudo_element);
+            String node_box_sizing_json = serialize_node_box_sizing_json(pseudo_element_node.ptr());
+            String fonts_json = serialize_fonts_json(*pseudo_element_style);
 
             async_did_inspect_dom_node(page_id, true, move(computed_values), move(resolved_values), move(custom_properties_json), move(node_box_sizing_json), {}, move(fonts_json));
             return;
         }
 
-        ByteString computed_values = serialize_json(*element.computed_css_values());
-        ByteString resolved_values = serialize_json(element.resolved_css_values());
-        ByteString custom_properties_json = serialize_custom_properties_json(element, {});
-        ByteString node_box_sizing_json = serialize_node_box_sizing_json(element.layout_node());
-        ByteString aria_properties_state_json = serialize_aria_properties_state_json(element);
-        ByteString fonts_json = serialize_fonts_json(*element.computed_css_values());
+        String computed_values = serialize_json(*element.computed_css_values());
+        String resolved_values = serialize_json(element.resolved_css_values());
+        String custom_properties_json = serialize_custom_properties_json(element, {});
+        String node_box_sizing_json = serialize_node_box_sizing_json(element.layout_node());
+        String aria_properties_state_json = serialize_aria_properties_state_json(element);
+        String fonts_json = serialize_fonts_json(*element.computed_css_values());
 
         async_did_inspect_dom_node(page_id, true, move(computed_values), move(resolved_values), move(custom_properties_json), move(node_box_sizing_json), move(aria_properties_state_json), move(fonts_json));
         return;
@@ -609,7 +609,7 @@ void ConnectionFromClient::inspect_accessibility_tree(u64 page_id)
 {
     if (auto page = this->page(page_id); page.has_value()) {
         if (auto* doc = page->page().top_level_browsing_context().active_document())
-            async_did_inspect_accessibility_tree(page_id, doc->dump_accessibility_tree_as_json().to_byte_string());
+            async_did_inspect_accessibility_tree(page_id, doc->dump_accessibility_tree_as_json().to_string());
     }
 }
 
@@ -942,8 +942,8 @@ void ConnectionFromClient::request_internal_page_info(u64 page_id, WebView::Page
 Messages::WebContentServer::GetSelectedTextResponse ConnectionFromClient::get_selected_text(u64 page_id)
 {
     if (auto page = this->page(page_id); page.has_value())
-        return page->page().focused_navigable().selected_text().to_byte_string();
-    return ByteString {};
+        return page->page().focused_navigable().selected_text();
+    return ""_string;
 }
 
 void ConnectionFromClient::select_all(u64 page_id)
@@ -1005,12 +1005,12 @@ void ConnectionFromClient::set_autoplay_allowlist(u64, Vector<String> const& all
     autoplay_allowlist.enable_for_origins(allowlist).release_value_but_fixme_should_propagate_errors();
 }
 
-void ConnectionFromClient::set_proxy_mappings(u64, Vector<ByteString> const& proxies, HashMap<ByteString, size_t> const& mappings)
+void ConnectionFromClient::set_proxy_mappings(u64, Vector<String> const& proxies, HashMap<String, size_t> const& mappings)
 {
     auto keys = mappings.keys();
     quick_sort(keys, [&](auto& a, auto& b) { return a.length() < b.length(); });
 
-    OrderedHashMap<ByteString, size_t> sorted_mappings;
+    OrderedHashMap<String, size_t> sorted_mappings;
     for (auto& key : keys) {
         auto value = *mappings.get(key);
         if (value >= proxies.size())
@@ -1141,7 +1141,7 @@ void ConnectionFromClient::set_system_visibility_state(u64 page_id, bool visible
     }
 }
 
-void ConnectionFromClient::js_console_input(u64 page_id, ByteString const& js_source)
+void ConnectionFromClient::js_console_input(u64 page_id, String const& js_source)
 {
     auto page = this->page(page_id);
     if (!page.has_value())
@@ -1150,7 +1150,7 @@ void ConnectionFromClient::js_console_input(u64 page_id, ByteString const& js_so
     page->js_console_input(js_source);
 }
 
-void ConnectionFromClient::run_javascript(u64 page_id, ByteString const& js_source)
+void ConnectionFromClient::run_javascript(u64 page_id, String const& js_source)
 {
     if (auto page = this->page(page_id); page.has_value())
         page->run_javascript(js_source);

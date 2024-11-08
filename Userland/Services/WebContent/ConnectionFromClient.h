@@ -56,12 +56,12 @@ private:
     virtual void close_server() override;
     virtual Messages::WebContentServer::GetWindowHandleResponse get_window_handle(u64 page_id) override;
     virtual void set_window_handle(u64 page_id, String const& handle) override;
-    virtual void connect_to_webdriver(u64 page_id, ByteString const& webdriver_ipc_path) override;
+    virtual void connect_to_webdriver(u64 page_id, String const& webdriver_ipc_path) override;
     virtual void connect_to_image_decoder(IPC::File const& image_decoder_socket) override;
     virtual void update_system_theme(u64 page_id, Core::AnonymousBuffer const&) override;
     virtual void update_screen_rects(u64 page_id, Vector<Web::DevicePixelRect> const&, u32) override;
     virtual void load_url(u64 page_id, URL::URL const&) override;
-    virtual void load_html(u64 page_id, ByteString const&) override;
+    virtual void load_html(u64 page_id, String const&) override;
     virtual void reload(u64 page_id) override;
     virtual void traverse_the_history_by_delta(u64 page_id, i32 delta) override;
     virtual void set_viewport_size(u64 page_id, Web::DevicePixelSize const) override;
@@ -69,7 +69,7 @@ private:
     virtual void mouse_event(u64 page_id, Web::MouseEvent const&) override;
     virtual void drag_event(u64 page_id, Web::DragEvent const&) override;
     virtual void ready_to_paint(u64 page_id) override;
-    virtual void debug_request(u64 page_id, ByteString const&, ByteString const&) override;
+    virtual void debug_request(u64 page_id, String const&, String const&) override;
     virtual void get_source(u64 page_id) override;
     virtual void inspect_dom_tree(u64 page_id) override;
     virtual void inspect_dom_node(u64 page_id, Web::UniqueNodeID const& node_id, Optional<Web::CSS::Selector::PseudoElement::Type> const& pseudo_element) override;
@@ -92,7 +92,7 @@ private:
     virtual void set_content_filters(u64 page_id, Vector<String> const&) override;
     virtual void set_autoplay_allowed_on_all_websites(u64 page_id) override;
     virtual void set_autoplay_allowlist(u64 page_id, Vector<String> const& allowlist) override;
-    virtual void set_proxy_mappings(u64 page_id, Vector<ByteString> const&, HashMap<ByteString, size_t> const&) override;
+    virtual void set_proxy_mappings(u64 page_id, Vector<String> const&, HashMap<String, size_t> const&) override;
     virtual void set_preferred_color_scheme(u64 page_id, Web::CSS::PreferredColorScheme const&) override;
     virtual void set_preferred_contrast(u64 page_id, Web::CSS::PreferredContrast const&) override;
     virtual void set_preferred_motion(u64 page_id, Web::CSS::PreferredMotion const&) override;
@@ -107,8 +107,8 @@ private:
     virtual void handle_file_return(u64 page_id, i32 error, Optional<IPC::File> const& file, i32 request_id) override;
     virtual void set_system_visibility_state(u64 page_id, bool visible) override;
 
-    virtual void js_console_input(u64 page_id, ByteString const&) override;
-    virtual void run_javascript(u64 page_id, ByteString const&) override;
+    virtual void js_console_input(u64 page_id, String const&) override;
+    virtual void run_javascript(u64 page_id, String const&) override;
     virtual void js_console_request_messages(u64 page_id, i32) override;
 
     virtual void alert_closed(u64 page_id) override;

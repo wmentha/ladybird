@@ -39,7 +39,7 @@ public:
     virtual Web::Page& page() override { return *m_page; }
     virtual Web::Page const& page() const override { return *m_page; }
 
-    ErrorOr<void> connect_to_webdriver(ByteString const& webdriver_ipc_path);
+    ErrorOr<void> connect_to_webdriver(String const& webdriver_ipc_path);
 
     virtual void paint_next_frame() override;
     virtual void process_screenshot_requests() override;
@@ -76,12 +76,12 @@ public:
     void ready_to_paint();
 
     void initialize_js_console(Web::DOM::Document& document);
-    void js_console_input(ByteString const& js_source);
-    void run_javascript(ByteString const& js_source);
+    void js_console_input(String const& js_source);
+    void run_javascript(String const& js_source);
     void js_console_request_messages(i32 start_index);
     void did_output_js_console_message(i32 message_index);
     void console_peer_did_misbehave(char const* reason);
-    void did_get_js_console_messages(i32 start_index, Vector<ByteString> message_types, Vector<ByteString> messages);
+    void did_get_js_console_messages(i32 start_index, Vector<String> message_types, Vector<String> messages);
 
     Vector<Web::CSS::StyleSheetIdentifier> list_style_sheets() const;
 
@@ -107,7 +107,7 @@ private:
     virtual Web::CSS::PreferredMotion preferred_motion() const override { return m_preferred_motion; }
     virtual void page_did_request_cursor_change(Gfx::StandardCursor) override;
     virtual void page_did_layout() override;
-    virtual void page_did_change_title(ByteString const&) override;
+    virtual void page_did_change_title(String const&) override;
     virtual void page_did_change_url(URL::URL const&) override;
     virtual void page_did_request_navigate_back() override;
     virtual void page_did_request_navigate_forward() override;
@@ -118,18 +118,18 @@ private:
     virtual void page_did_request_maximize_window() override;
     virtual void page_did_request_minimize_window() override;
     virtual void page_did_request_fullscreen_window() override;
-    virtual void page_did_request_tooltip_override(Web::CSSPixelPoint, ByteString const&) override;
+    virtual void page_did_request_tooltip_override(Web::CSSPixelPoint, String const&) override;
     virtual void page_did_stop_tooltip_override() override;
-    virtual void page_did_enter_tooltip_area(ByteString const&) override;
+    virtual void page_did_enter_tooltip_area(String const&) override;
     virtual void page_did_leave_tooltip_area() override;
     virtual void page_did_hover_link(URL::URL const&) override;
     virtual void page_did_unhover_link() override;
-    virtual void page_did_click_link(URL::URL const&, ByteString const& target, unsigned modifiers) override;
-    virtual void page_did_middle_click_link(URL::URL const&, ByteString const& target, unsigned modifiers) override;
+    virtual void page_did_click_link(URL::URL const&, String const& target, unsigned modifiers) override;
+    virtual void page_did_middle_click_link(URL::URL const&, String const& target, unsigned modifiers) override;
     virtual void page_did_request_context_menu(Web::CSSPixelPoint) override;
-    virtual void page_did_request_link_context_menu(Web::CSSPixelPoint, URL::URL const&, ByteString const& target, unsigned modifiers) override;
-    virtual void page_did_request_image_context_menu(Web::CSSPixelPoint, URL::URL const&, ByteString const& target, unsigned modifiers, Gfx::Bitmap const*) override;
-    virtual void page_did_request_media_context_menu(Web::CSSPixelPoint, ByteString const& target, unsigned modifiers, Web::Page::MediaContextMenu) override;
+    virtual void page_did_request_link_context_menu(Web::CSSPixelPoint, URL::URL const&, String const& target, unsigned modifiers) override;
+    virtual void page_did_request_image_context_menu(Web::CSSPixelPoint, URL::URL const&, String const& target, unsigned modifiers, Gfx::Bitmap const*) override;
+    virtual void page_did_request_media_context_menu(Web::CSSPixelPoint, String const& target, unsigned modifiers, Web::Page::MediaContextMenu) override;
     virtual void page_did_start_loading(URL::URL const&, bool) override;
     virtual void page_did_create_new_document(Web::DOM::Document&) override;
     virtual void page_did_change_active_document_in_top_level_browsing_context(Web::DOM::Document&) override;

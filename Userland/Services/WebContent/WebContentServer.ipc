@@ -20,14 +20,14 @@ endpoint WebContentServer
     get_window_handle(u64 page_id) => (String handle)
     set_window_handle(u64 page_id, String handle) =|
 
-    connect_to_webdriver(u64 page_id, ByteString webdriver_ipc_path) =|
+    connect_to_webdriver(u64 page_id, String webdriver_ipc_path) =|
     connect_to_image_decoder(IPC::File socket_fd) =|
 
     update_system_theme(u64 page_id, Core::AnonymousBuffer theme_buffer) =|
     update_screen_rects(u64 page_id, Vector<Web::DevicePixelRect> rects, u32 main_screen_index) =|
 
     load_url(u64 page_id, URL::URL url) =|
-    load_html(u64 page_id, ByteString html) =|
+    load_html(u64 page_id, String html) =|
     reload(u64 page_id) =|
     traverse_the_history_by_delta(u64 page_id, i32 delta) =|
 
@@ -39,13 +39,13 @@ endpoint WebContentServer
     mouse_event(u64 page_id, Web::MouseEvent event) =|
     drag_event(u64 page_id, Web::DragEvent event) =|
 
-    debug_request(u64 page_id, ByteString request, ByteString argument) =|
+    debug_request(u64 page_id, String request, String argument) =|
     get_source(u64 page_id) =|
     inspect_dom_tree(u64 page_id) =|
     inspect_dom_node(u64 page_id, Web::UniqueNodeID node_id, Optional<Web::CSS::Selector::PseudoElement::Type> pseudo_element) =|
     inspect_accessibility_tree(u64 page_id) =|
     get_hovered_node_id(u64 page_id) =|
-    js_console_input(u64 page_id, ByteString js_source) =|
+    js_console_input(u64 page_id, String js_source) =|
     js_console_request_messages(u64 page_id, i32 start_index) =|
     list_style_sheets(u64 page_id) =|
     request_style_sheet_source(u64 page_id, Web::CSS::StyleSheetIdentifier identifier) =|
@@ -65,9 +65,9 @@ endpoint WebContentServer
 
     request_internal_page_info(u64 page_id, WebView::PageInfoType type) =|
 
-    run_javascript(u64 page_id, ByteString js_source) =|
+    run_javascript(u64 page_id, String js_source) =|
 
-    get_selected_text(u64 page_id) => (ByteString selection)
+    get_selected_text(u64 page_id) => (String selection)
     select_all(u64 page_id) =|
     paste(u64 page_id, String text) =|
 
@@ -78,7 +78,7 @@ endpoint WebContentServer
     set_content_filters(u64 page_id, Vector<String> filters) =|
     set_autoplay_allowed_on_all_websites(u64 page_id) =|
     set_autoplay_allowlist(u64 page_id, Vector<String> allowlist) =|
-    set_proxy_mappings(u64 page_id, Vector<ByteString> proxies, HashMap<ByteString, size_t> mappings) =|
+    set_proxy_mappings(u64 page_id, Vector<String> proxies, HashMap<String, size_t> mappings) =|
     set_preferred_color_scheme(u64 page_id, Web::CSS::PreferredColorScheme color_scheme) =|
     set_preferred_contrast(u64 page_id, Web::CSS::PreferredContrast contrast) =|
     set_preferred_motion(u64 page_id, Web::CSS::PreferredMotion motion) =|

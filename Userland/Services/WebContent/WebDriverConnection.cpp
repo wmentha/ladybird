@@ -80,14 +80,14 @@ namespace WebContent {
 static JsonValue serialize_cookie(Web::Cookie::Cookie const& cookie)
 {
     JsonObject serialized_cookie;
-    serialized_cookie.set("name"sv, cookie.name.to_byte_string());
-    serialized_cookie.set("value"sv, cookie.value.to_byte_string());
-    serialized_cookie.set("path"sv, cookie.path.to_byte_string());
-    serialized_cookie.set("domain"sv, cookie.domain.to_byte_string());
-    serialized_cookie.set("secure"sv, cookie.secure);
-    serialized_cookie.set("httpOnly"sv, cookie.http_only);
-    serialized_cookie.set("expiry"sv, cookie.expiry_time.seconds_since_epoch());
-    serialized_cookie.set("sameSite"sv, Web::Cookie::same_site_to_string(cookie.same_site));
+    serialized_cookie.set("name"_string, cookie.name);
+    serialized_cookie.set("value"_string, cookie.value);
+    serialized_cookie.set("path"_string, cookie.path);
+    serialized_cookie.set("domain"_string, cookie.domain);
+    serialized_cookie.set("secure"_string, cookie.secure);
+    serialized_cookie.set("httpOnly"_string, cookie.http_only);
+    serialized_cookie.set("expiry"_string, cookie.expiry_time.seconds_since_epoch());
+    serialized_cookie.set("sameSite"_string, Web::Cookie::same_site_to_string(cookie.same_site));
 
     return serialized_cookie;
 }
@@ -192,7 +192,7 @@ static bool fire_an_event(FlyString name, Optional<Web::DOM::Element&> target)
     return target->dispatch_event(event);
 }
 
-ErrorOr<NonnullRefPtr<WebDriverConnection>> WebDriverConnection::connect(Web::PageClient& page_client, ByteString const& webdriver_ipc_path)
+ErrorOr<NonnullRefPtr<WebDriverConnection>> WebDriverConnection::connect(Web::PageClient& page_client, String const& webdriver_ipc_path)
 {
     static_assert(IsSame<IPC::Transport, IPC::TransportSocket>, "Need to handle other IPC transports here");
 
@@ -293,7 +293,7 @@ Messages::WebDriverClient::NavigateToResponse WebDriverConnection::navigate_to(J
     // 2. Let url be the result of getting the property url from the parameters argument.
     if (!payload.is_object() || !payload.as_object().has_string("url"sv))
         return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, "Payload doesn't have a string `url`"sv);
-    URL::URL url(payload.as_object().get_byte_string("url"sv).value());
+    URL::URL url(payload.as_object().get_string("url"_string).value());
 
     // FIXME: 3. If url is not an absolute URL or is not an absolute URL with fragment or not a local scheme, return error with error code invalid argument.
 
@@ -349,7 +349,7 @@ Messages::WebDriverClient::GetCurrentUrlResponse WebDriverConnection::get_curren
         auto url = current_top_level_browsing_context()->active_document()->url();
 
         // 4. Return success with data url.
-        async_driver_execution_complete({ url.to_byte_string() });
+        async_driver_execution_complete({ url.to_string() });
     });
 
     return JsonValue {};
@@ -434,7 +434,7 @@ Messages::WebDriverClient::GetTitleResponse WebDriverConnection::get_title()
         auto title = current_top_level_browsing_context()->active_document()->title();
 
         // 4. Return success with data title.
-        async_driver_execution_complete({ title.to_byte_string() });
+        async_driver_execution_complete({ title.to_string() });
     });
 
     return JsonValue {};
@@ -588,7 +588,7 @@ Messages::WebDriverClient::SwitchToFrameResponse WebDriverConnection::switch_to_
         auto id_value = id.get_integer<u16>();
 
         if (!id_value.has_value())
-            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Frame ID {} is invalid", id));
+            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Frame ID {} is invalid", id)));
 
         // 2. If session's current browsing context is no longer open, return error with error code no such window.
         TRY(ensure_current_browsing_context_is_open());
@@ -604,7 +604,7 @@ Messages::WebDriverClient::SwitchToFrameResponse WebDriverConnection::switch_to_
             auto property = window->get(id);
 
             if (property.is_error() || !property.value().is_object() || !is<Web::HTML::WindowProxy>(property.value().as_object())) {
-                async_driver_execution_complete(Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::NoSuchFrame, ByteString::formatted("Frame ID {} not found", id)));
+                async_driver_execution_complete(Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::NoSuchFrame, MUST(String::formatted("Frame ID {} not found", id))));
                 return;
             }
 
@@ -712,11 +712,11 @@ Messages::WebDriverClient::SetWindowRectResponse WebDriverConnection::set_window
 
         auto value = property.get_double_with_precision_loss();
         if (!value.has_value())
-            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Property '{}' is not a Number", name));
+            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Property '{}' is not a Number", name)));
         if (*value < min)
-            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Property '{}' value {} exceeds the minimum allowed value {}", name, *value, min));
+            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Property '{}' value {} exceeds the minimum allowed value {}", name, *value, min)));
         if (*value > max)
-            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Property '{}' value {} exceeds the maximum allowed value {}", name, *value, max));
+            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Property '{}' value {} exceeds the maximum allowed value {}", name, *value, max)));
 
         return value;
     };
@@ -890,7 +890,7 @@ Messages::WebDriverClient::FindElementResponse WebDriverConnection::find_element
     // 2. If location strategy is not present as a keyword in the table of location strategies, return error with error
     //    code invalid argument.
     if (!location_strategy.has_value())
-        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Location strategy '{}' is invalid", location_strategy_string));
+        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Location strategy '{}' is invalid", location_strategy_string)));
 
     // 3. Let selector be the result of getting a property named "value" from parameters.
     // 4. If selector is undefined, return error with error code invalid argument.
@@ -932,7 +932,7 @@ Messages::WebDriverClient::FindElementsResponse WebDriverConnection::find_elemen
     // 2. If location strategy is not present as a keyword in the table of location strategies, return error with error
     //    code invalid argument.
     if (!location_strategy.has_value())
-        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Location strategy '{}' is invalid", location_strategy_string));
+        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Location strategy '{}' is invalid", location_strategy_string)));
 
     // 3. Let selector be the result of getting a property named "value" from parameters.
     // 4. If selector is undefined, return error with error code invalid argument.
@@ -972,7 +972,7 @@ Messages::WebDriverClient::FindElementFromElementResponse WebDriverConnection::f
 
     // 2. If location strategy is not present as a keyword in the table of location strategies, return error with error code invalid argument.
     if (!location_strategy.has_value())
-        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Location strategy '{}' is invalid", location_strategy_string));
+        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Location strategy '{}' is invalid", location_strategy_string)));
 
     // 3. Let selector be the result of getting a property named "value" from parameters.
     // 4. If selector is undefined, return error with error code invalid argument.
@@ -1007,7 +1007,7 @@ Messages::WebDriverClient::FindElementsFromElementResponse WebDriverConnection::
 
     // 2. If location strategy is not present as a keyword in the table of location strategies, return error with error code invalid argument.
     if (!location_strategy.has_value())
-        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Location strategy '{}' is invalid", location_strategy_string));
+        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Location strategy '{}' is invalid", location_strategy_string)));
 
     // 3. Let selector be the result of getting a property named "value" from parameters.
     // 4. If selector is undefined, return error with error code invalid argument.
@@ -1041,7 +1041,7 @@ Messages::WebDriverClient::FindElementFromShadowRootResponse WebDriverConnection
 
     // 2. If location strategy is not present as a keyword in the table of location strategies, return error with error code invalid argument.
     if (!location_strategy.has_value())
-        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Location strategy '{}' is invalid", location_strategy_string));
+        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Location strategy '{}' is invalid", location_strategy_string)));
 
     // 3. Let selector be the result of getting a property called "value".
     // 4. If selector is undefined, return error with error code invalid argument.
@@ -1076,7 +1076,7 @@ Messages::WebDriverClient::FindElementsFromShadowRootResponse WebDriverConnectio
 
     // 2. If location strategy is not present as a keyword in the table of location strategies, return error with error code invalid argument.
     if (!location_strategy.has_value())
-        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("Location strategy '{}' is invalid", location_strategy_string));
+        return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("Location strategy '{}' is invalid", location_strategy_string)));
 
     // 3. Let selector be the result of getting a property called "value".
     // 4. If selector is undefined, return error with error code invalid argument.
@@ -1142,7 +1142,7 @@ Messages::WebDriverClient::GetElementShadowRootResponse WebDriverConnection::get
 
         // 5. If shadow root is null, return error with error code no such shadow root.
         if (!shadow_root) {
-            async_driver_execution_complete(Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::NoSuchShadowRoot, ByteString::formatted("Element with ID '{}' does not have a shadow root", element_id)));
+            async_driver_execution_complete(Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::NoSuchShadowRoot, MUST(String::formatted("Element with ID '{}' does not have a shadow root", element_id))));
             return;
         }
 
@@ -1206,7 +1206,7 @@ Messages::WebDriverClient::GetElementAttributeResponse WebDriverConnection::get_
         auto element = WEBDRIVER_TRY(Web::WebDriver::get_known_element(current_browsing_context(), element_id));
 
         // 4. Let result be the result of the first matching condition:
-        Optional<ByteString> result;
+        Optional<String> result;
 
         // -> If name is a boolean attribute
         if (Web::HTML::is_boolean_attribute(name)) {
@@ -1218,7 +1218,7 @@ Messages::WebDriverClient::GetElementAttributeResponse WebDriverConnection::get_
         else {
             // The result of getting an attribute by name name.
             if (auto attr = element->get_attribute(name); attr.has_value())
-                result = attr->to_byte_string();
+                result = attr->to_string();
         }
 
         // 5. Return success with data result.
@@ -1243,17 +1243,17 @@ Messages::WebDriverClient::GetElementPropertyResponse WebDriverConnection::get_e
         // 3. Let element be the result of trying to get a known connected element with url variable element id.
         auto element = WEBDRIVER_TRY(Web::WebDriver::get_known_element(current_browsing_context(), element_id));
 
-        Optional<ByteString> result;
+        Optional<String> result;
 
         // 4. Let property be the result of calling the Object.[[GetProperty]](name) on element.
         Web::HTML::TemporaryExecutionContext execution_context { current_browsing_context().active_document()->realm() };
 
-        if (auto property_or_error = element->get(name.to_byte_string()); !property_or_error.is_throw_completion()) {
+        if (auto property_or_error = element->get(name.to_string()); !property_or_error.is_throw_completion()) {
             auto property = property_or_error.release_value();
 
             // 5. Let result be the value of property if not undefined, or null.
             if (!property.is_undefined()) {
-                if (auto string_or_error = property.to_byte_string(element->vm()); !string_or_error.is_error())
+                if (auto string_or_error = property.to_string(element->vm()); !string_or_error.is_error())
                     result = string_or_error.release_value();
             }
         }
@@ -1281,20 +1281,20 @@ Messages::WebDriverClient::GetElementCssValueResponse WebDriverConnection::get_e
         auto element = WEBDRIVER_TRY(Web::WebDriver::get_known_element(current_browsing_context(), element_id));
 
         // 4. Let computed value be the result of the first matching condition:
-        ByteString computed_value;
+        String computed_value;
 
         // -> current browsing context’s active document’s type is not "xml"
         if (!current_browsing_context().active_document()->is_xml_document()) {
             // computed value of parameter property name from element’s style declarations. property name is obtained from url variables.
             if (auto property = Web::CSS::property_id_from_string(name); property.has_value()) {
                 if (auto computed_values = element->computed_css_values(); computed_values.has_value())
-                    computed_value = computed_values->property(property.value())->to_string().to_byte_string();
+                    computed_value = computed_values->property(property.value())->to_string();
             }
         }
         // -> Otherwise
         else {
             // "" (empty string)
-            computed_value = ByteString::empty();
+            computed_value = ""_string;
         }
 
         // 5. Return success with data computed value.
@@ -1320,7 +1320,7 @@ Messages::WebDriverClient::GetElementTextResponse WebDriverConnection::get_eleme
         auto rendered_text = Web::WebDriver::element_rendered_text(element);
 
         // 5. Return success with data rendered text.
-        async_driver_execution_complete({ rendered_text.to_byte_string() });
+        async_driver_execution_complete({ rendered_text.to_string() });
     });
 
     return JsonValue {};
@@ -1341,7 +1341,7 @@ Messages::WebDriverClient::GetElementTagNameResponse WebDriverConnection::get_el
         auto qualified_name = element->tag_name();
 
         // 5. Return success with data qualified name.
-        async_driver_execution_complete({ qualified_name.to_string().to_byte_string() });
+        async_driver_execution_complete({ qualified_name.to_string() });
     });
 
     return JsonValue {};
@@ -1448,7 +1448,7 @@ Messages::WebDriverClient::GetComputedLabelResponse WebDriverConnection::get_com
         auto label = element->accessible_name(element->document()).release_value_but_fixme_should_propagate_errors();
 
         // 5. Return success with data label.
-        async_driver_execution_complete({ label.to_byte_string() });
+        async_driver_execution_complete({ label.to_string() });
     });
 
     return JsonValue {};
@@ -1605,7 +1605,7 @@ Web::WebDriver::Response WebDriverConnection::element_click_impl(String const& e
 
         // 10. Set a property origin to element on pointer move action.
         auto origin = Web::WebDriver::get_or_create_a_web_element_reference(current_browsing_context(), *element);
-        pointer_move_action.pointer_move_fields().origin = MUST(String::from_byte_string(origin));
+        pointer_move_action.pointer_move_fields().origin = origin;
 
         // 11. Let pointer down action be an action object constructed with arguments input id, "pointer", and "pointerDown".
         Web::WebDriver::ActionObject pointer_down_action { input_id, Web::WebDriver::InputSourceType::Pointer, Web::WebDriver::ActionObject::Subtype::PointerDown };
@@ -1765,7 +1765,7 @@ Messages::WebDriverClient::ElementSendKeysResponse WebDriverConnection::element_
     return JsonValue {};
 }
 
-Web::WebDriver::Response WebDriverConnection::element_send_keys_impl(String const& element_id, ByteString const& text)
+Web::WebDriver::Response WebDriverConnection::element_send_keys_impl(String const& element_id, String const& text)
 {
     // 5. Let element be the result of trying to get a known element with session and URL variables[element id].
     auto element = TRY(Web::WebDriver::get_known_element(current_browsing_context(), element_id));
@@ -1831,7 +1831,7 @@ Web::WebDriver::Response WebDriverConnection::element_send_keys_impl(String cons
         for (auto const& path : files) {
             auto selected_file = create_selected_file(path);
             if (selected_file.is_error())
-                return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, ByteString::formatted("'{}' does not exist", path));
+                return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidArgument, MUST(String::formatted("'{}' does not exist", path)));
 
             selected_files.unchecked_append(selected_file.release_value());
         }
@@ -1863,7 +1863,7 @@ Web::WebDriver::Response WebDriverConnection::element_send_keys_impl(String cons
             return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::ElementNotInteractable, "Element is immutable"sv);
 
         // 3. Set a property value to text on element.
-        MUST(input_element.set_value(MUST(String::from_byte_string(text))));
+        MUST(input_element.set_value(text));
 
         // FIXME: 4. If element is suffering from bad input return an error with error code invalid argument.
 
@@ -1951,7 +1951,7 @@ Messages::WebDriverClient::GetSourceResponse WebDriverConnection::get_source()
             source = MUST(document->serialize_fragment(Web::DOMParsing::RequireWellFormed::No));
 
         // 5. Return success with data source.
-        async_driver_execution_complete({ source->to_byte_string() });
+        async_driver_execution_complete({ source });
     });
 
     return JsonValue {};
@@ -2094,7 +2094,7 @@ Messages::WebDriverClient::GetNamedCookieResponse WebDriverConnection::get_named
         }
 
         // 4. Otherwise, return error with error code no such cookie.
-        async_driver_execution_complete(Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::NoSuchCookie, ByteString::formatted("Cookie '{}' not found", name)));
+        async_driver_execution_complete(Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::NoSuchCookie, MUST(String::formatted("Cookie '{}' not found", name))));
     });
 
     return JsonValue {};
@@ -2137,13 +2137,13 @@ Web::WebDriver::Response WebDriverConnection::add_cookie_impl(JsonObject const& 
 
     // 7. Create a cookie in the cookie store associated with the active document’s address using cookie name name, cookie value value, and an attribute-value list of the following cookie concepts listed in the table for cookie conversion from data:
     Web::Cookie::ParsedCookie cookie {};
-    cookie.name = MUST(String::from_byte_string(TRY(Web::WebDriver::get_property(data, "name"sv))));
-    cookie.value = MUST(String::from_byte_string(TRY(Web::WebDriver::get_property(data, "value"sv))));
+    cookie.name = TRY(Web::WebDriver::get_property(data, "name"sv));
+    cookie.value = TRY(Web::WebDriver::get_property(data, "value"sv));
 
     // Cookie path
     //     The value if the entry exists, otherwise "/".
     if (data.has("path"sv))
-        cookie.path = MUST(String::from_byte_string(TRY(Web::WebDriver::get_property(data, "path"sv))));
+        cookie.path = TRY(Web::WebDriver::get_property(data, "path"sv));
     else
         cookie.path = "/"_string;
 
@@ -2151,7 +2151,7 @@ Web::WebDriver::Response WebDriverConnection::add_cookie_impl(JsonObject const& 
     //     The value if the entry exists, otherwise the current browsing context’s active document’s URL domain.
     // NOTE: The otherwise case is handled by the CookieJar
     if (data.has("domain"sv)) {
-        cookie.domain = MUST(String::from_byte_string(TRY(Web::WebDriver::get_property(data, "domain"sv))));
+        cookie.domain = TRY(Web::WebDriver::get_property(data, "domain"sv));
 
         // FIXME: Spec issue: We must return InvalidCookieDomain for invalid domains, rather than InvalidArgument.
         // https://github.com/w3c/webdriver/issues/1570
@@ -2351,7 +2351,7 @@ Messages::WebDriverClient::GetAlertTextResponse WebDriverConnection::get_alert_t
 
     // 4. Return success with data message.
     if (message.has_value())
-        return message->to_byte_string();
+        return message->to_string();
     return JsonValue {};
 }
 
@@ -2390,7 +2390,7 @@ Messages::WebDriverClient::SendAlertTextResponse WebDriverConnection::send_alert
     }
 
     // 6. Perform user agent dependent steps to set the value of current user prompt’s text field to text.
-    current_browsing_context().page().client().page_did_request_set_prompt_text(TRY(String::from_byte_string(text)));
+    current_browsing_context().page().client().page_did_request_set_prompt_text(text);
 
     // 7. Return success with data null.
     return JsonValue {};
@@ -2756,7 +2756,7 @@ public:
     ElementLocator(
         Web::HTML::BrowsingContext const& browsing_context,
         Web::WebDriver::LocationStrategy location_strategy,
-        ByteString selector,
+        String selector,
         WebDriverConnection::GetStartNode get_start_node,
         WebDriverConnection::OnFindComplete on_complete,
         JS::NonnullGCPtr<Web::WebDriver::HeapTimer> timer)
@@ -2794,7 +2794,7 @@ private:
         // 2. If a DOMException, SyntaxError, XPathException, or other error occurs during the execution of the element
         //    location strategy, return error invalid selector.
         if (maybe_elements.is_error())
-            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidSelector, ByteString::formatted("The location strategy could not finish: {}", maybe_elements.error().message));
+            return Web::WebDriver::Error::from_code(Web::WebDriver::ErrorCode::InvalidSelector, MUST(String::formatted("The location strategy could not finish: {}", maybe_elements.error().message)));
 
         if (auto elements = maybe_elements.release_value(); elements->length() > 0) {
             // 8. Let result be an empty List.
@@ -2825,7 +2825,7 @@ private:
     JS::NonnullGCPtr<Web::HTML::BrowsingContext const> m_browsing_context;
 
     Web::WebDriver::LocationStrategy m_location_strategy;
-    ByteString m_selector;
+    String m_selector;
 
     WebDriverConnection::GetStartNode m_get_start_node;
     WebDriverConnection::OnFindComplete m_on_complete;
@@ -2836,7 +2836,7 @@ private:
 JS_DEFINE_ALLOCATOR(ElementLocator);
 
 // https://w3c.github.io/webdriver/#dfn-find
-void WebDriverConnection::find(Web::WebDriver::LocationStrategy location_strategy, ByteString selector, GetStartNode get_start_node, OnFindComplete on_complete)
+void WebDriverConnection::find(Web::WebDriver::LocationStrategy location_strategy, String selector, GetStartNode get_start_node, OnFindComplete on_complete)
 {
     auto& realm = current_browsing_context().active_document()->realm();
 

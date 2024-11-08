@@ -28,20 +28,20 @@ endpoint WebContentClient
     did_paint(u64 page_id, Gfx::IntRect content_rect, i32 bitmap_id) =|
     did_request_cursor_change(u64 page_id, i32 cursor_type) =|
     did_layout(u64 page_id, Gfx::IntSize content_size) =|
-    did_change_title(u64 page_id, ByteString title) =|
+    did_change_title(u64 page_id, String title) =|
     did_change_url(u64 page_id, URL::URL url) =|
-    did_request_tooltip_override(u64 page_id, Gfx::IntPoint position, ByteString title) =|
+    did_request_tooltip_override(u64 page_id, Gfx::IntPoint position, String title) =|
     did_stop_tooltip_override(u64 page_id) =|
-    did_enter_tooltip_area(u64 page_id, ByteString title) =|
+    did_enter_tooltip_area(u64 page_id, String title) =|
     did_leave_tooltip_area(u64 page_id) =|
     did_hover_link(u64 page_id, URL::URL url) =|
     did_unhover_link(u64 page_id) =|
-    did_click_link(u64 page_id, URL::URL url, ByteString target, unsigned modifiers) =|
-    did_middle_click_link(u64 page_id, URL::URL url, ByteString target, unsigned modifiers) =|
+    did_click_link(u64 page_id, URL::URL url, String target, unsigned modifiers) =|
+    did_middle_click_link(u64 page_id, URL::URL url, String target, unsigned modifiers) =|
     did_request_context_menu(u64 page_id, Gfx::IntPoint content_position) =|
-    did_request_link_context_menu(u64 page_id, Gfx::IntPoint content_position, URL::URL url, ByteString target, unsigned modifiers) =|
-    did_request_image_context_menu(u64 page_id, Gfx::IntPoint content_position, URL::URL url, ByteString target, unsigned modifiers, Gfx::ShareableBitmap bitmap) =|
-    did_request_media_context_menu(u64 page_id, Gfx::IntPoint content_position, ByteString target, unsigned modifiers, Web::Page::MediaContextMenu menu) =|
+    did_request_link_context_menu(u64 page_id, Gfx::IntPoint content_position, URL::URL url, String target, unsigned modifiers) =|
+    did_request_image_context_menu(u64 page_id, Gfx::IntPoint content_position, URL::URL url, String target, unsigned modifiers, Gfx::ShareableBitmap bitmap) =|
+    did_request_media_context_menu(u64 page_id, Gfx::IntPoint content_position, String target, unsigned modifiers, Web::Page::MediaContextMenu menu) =|
     did_request_alert(u64 page_id, String message) =|
     did_request_confirm(u64 page_id, String message) =|
     did_request_prompt(u64 page_id, String message, String default_) =|
@@ -50,9 +50,9 @@ endpoint WebContentClient
     did_request_dismiss_dialog(u64 page_id) =|
     did_get_source(u64 page_id, URL::URL url, URL::URL base_url, String source) =|
 
-    did_inspect_dom_tree(u64 page_id, ByteString dom_tree) =|
-    did_inspect_dom_node(u64 page_id, bool has_style, ByteString computed_style,  ByteString resolved_style,  ByteString custom_properties, ByteString node_box_sizing, ByteString aria_properties_state, ByteString fonts) =|
-    did_inspect_accessibility_tree(u64 page_id, ByteString accessibility_tree) =|
+    did_inspect_dom_tree(u64 page_id, String dom_tree) =|
+    did_inspect_dom_node(u64 page_id, bool has_style, String computed_style,  String resolved_style,  String custom_properties, String node_box_sizing, String aria_properties_state, String fonts) =|
+    did_inspect_accessibility_tree(u64 page_id, String accessibility_tree) =|
     did_get_hovered_node_id(u64 page_id, Web::UniqueNodeID node_id) =|
     did_finish_editing_dom_node(u64 page_id, Optional<Web::UniqueNodeID> node_id) =|
     did_get_dom_node_html(u64 page_id, String html) =|
@@ -82,7 +82,7 @@ endpoint WebContentClient
     did_request_maximize_window(u64 page_id) =|
     did_request_minimize_window(u64 page_id) =|
     did_request_fullscreen_window(u64 page_id) =|
-    did_request_file(u64 page_id, ByteString path, i32 request_id) =|
+    did_request_file(u64 page_id, String path, i32 request_id) =|
     did_request_color_picker(u64 page_id, Color current_color) =|
     did_request_file_picker(u64 page_id, Web::HTML::FileFilter accepted_file_types, Web::HTML::AllowMultipleFiles allow_multiple_files) =|
     did_request_select_dropdown(u64 page_id, Gfx::IntPoint content_position, i32 minimum_width, Vector<Web::HTML::SelectItem> items) =|
@@ -95,7 +95,7 @@ endpoint WebContentClient
     did_change_audio_play_state(u64 page_id, Web::HTML::AudioPlayState play_state) =|
 
     did_output_js_console_message(u64 page_id, i32 message_index) =|
-    did_get_js_console_messages(u64 page_id, i32 start_index, Vector<ByteString> message_types, Vector<ByteString> messages) =|
+    did_get_js_console_messages(u64 page_id, i32 start_index, Vector<String> message_types, Vector<String> messages) =|
 
     did_finish_text_test(u64 page_id, String text) =|
 

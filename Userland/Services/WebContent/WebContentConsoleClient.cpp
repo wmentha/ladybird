@@ -40,7 +40,7 @@ void WebContentConsoleClient::visit_edges(JS::Cell::Visitor& visitor)
     visitor.visit(m_console_global_environment_extensions);
 }
 
-void WebContentConsoleClient::handle_input(ByteString const& js_source)
+void WebContentConsoleClient::handle_input(String const& js_source)
 {
     if (!m_console_global_environment_extensions)
         return;
@@ -48,27 +48,27 @@ void WebContentConsoleClient::handle_input(ByteString const& js_source)
     auto& realm = m_console->realm();
     auto& window = verify_cast<Web::HTML::Window>(realm.global_object());
 
-    auto source_text = ByteString::formatted("return {}", js_source);
+    auto source_text = MUST(String::formatted("return {}", js_source));
 
     auto completion = Web::WebDriver::execute_a_function_body(window, source_text, {}, m_console_global_environment_extensions);
 
     if (completion.has_value()) {
         m_console_global_environment_extensions->set_most_recent_result(completion.value());
-        print_html(JS::MarkupGenerator::html_from_value(completion.value()).release_value_but_fixme_should_propagate_errors().to_byte_string());
+        print_html(JS::MarkupGenerator::html_from_value(completion.value()).release_value_but_fixme_should_propagate_errors().to_string());
     } else {
         m_console_global_environment_extensions->set_most_recent_result(JS::js_undefined());
 
         if (completion.error().value().has_value())
-            print_html(JS::MarkupGenerator::html_from_value(completion.error().value().value()).release_value_but_fixme_should_propagate_errors().to_byte_string());
+            print_html(JS::MarkupGenerator::html_from_value(completion.error().value().value()).release_value_but_fixme_should_propagate_errors().to_string());
     }
 }
 
 void WebContentConsoleClient::report_exception(JS::Error const& exception, bool in_promise)
 {
-    print_html(JS::MarkupGenerator::html_from_error(exception, in_promise).release_value_but_fixme_should_propagate_errors().to_byte_string());
+    print_html(JS::MarkupGenerator::html_from_error(exception, in_promise).release_value_but_fixme_should_propagate_errors().to_string());
 }
 
-void WebContentConsoleClient::print_html(ByteString const& line)
+void WebContentConsoleClient::print_html(String const& line)
 {
     m_message_log.append({ .type = ConsoleOutput::Type::HTML, .data = line });
     m_client->did_output_js_console_message(m_message_log.size() - 1);
@@ -80,7 +80,7 @@ void WebContentConsoleClient::clear_output()
     m_client->did_output_js_console_message(m_message_log.size() - 1);
 }
 
-void WebContentConsoleClient::begin_group(ByteString const& label, bool start_expanded)
+void WebContentConsoleClient::begin_group(String const& label, bool start_expanded)
 {
     m_message_log.append({ .type = start_expanded ? ConsoleOutput::Type::BeginGroup : ConsoleOutput::Type::BeginGroupCollapsed, .data = label });
     m_client->did_output_js_console_message(m_message_log.size() - 1);
@@ -106,8 +106,8 @@ void WebContentConsoleClient::send_messages(i32 start_index)
     }
 
     // FIXME: Replace with a single Vector of message structs
-    Vector<ByteString> message_types;
-    Vector<ByteString> messages;
+    Vector<String> message_types;
+    Vector<String> messages;
     message_types.ensure_capacity(messages_to_send);
     messages.ensure_capacity(messages_to_send);
 
@@ -241,7 +241,7 @@ JS::ThrowCompletionOr<JS::Value> WebContentConsoleClient::printer(JS::Console::L
 
     if (log_level == JS::Console::LogLevel::Group || log_level == JS::Console::LogLevel::GroupCollapsed) {
         auto group = arguments.get<JS::Console::Group>();
-        begin_group(ByteString::formatted("<span style='{}'>{}</span>", styling, escape_html_entities(group.label)), log_level == JS::Console::LogLevel::Group);
+        begin_group(MUST(String::formatted("<span style='{}'>{}</span>", styling, escape_html_entities(group.label))), log_level == JS::Console::LogLevel::Group);
         return JS::js_undefined();
     }
 

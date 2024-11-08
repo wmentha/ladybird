@@ -25,7 +25,7 @@ class WebContentConsoleClient final : public JS::ConsoleClient {
 public:
     virtual ~WebContentConsoleClient() override;
 
-    void handle_input(ByteString const& js_source);
+    void handle_input(String const& js_source);
     void send_messages(i32 start_index);
     void report_exception(JS::Error const&, bool) override;
 
@@ -46,8 +46,8 @@ private:
     JS::GCPtr<ConsoleGlobalEnvironmentExtensions> m_console_global_environment_extensions;
 
     void clear_output();
-    void print_html(ByteString const& line);
-    void begin_group(ByteString const& label, bool start_expanded);
+    void print_html(String const& line);
+    void begin_group(String const& label, bool start_expanded);
     virtual void end_group() override;
 
     struct ConsoleOutput {
@@ -59,7 +59,7 @@ private:
             EndGroup,
         };
         Type type;
-        ByteString data;
+        String data;
     };
     Vector<ConsoleOutput> m_message_log;
 

@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/HashMap.h>
 #include <AK/String.h>
 #include <LibGfx/Rect.h>
@@ -35,7 +34,7 @@ class WebDriverConnection final
     C_OBJECT_ABSTRACT(WebDriverConnection)
 
 public:
-    static ErrorOr<NonnullRefPtr<WebDriverConnection>> connect(Web::PageClient& page_client, ByteString const& webdriver_ipc_path);
+    static ErrorOr<NonnullRefPtr<WebDriverConnection>> connect(Web::PageClient& page_client, String const& webdriver_ipc_path);
     virtual ~WebDriverConnection() = default;
 
     void visit_edges(JS::Cell::Visitor&);
@@ -124,7 +123,7 @@ private:
 
     Web::WebDriver::Response element_click_impl(String const& element_id);
     Web::WebDriver::Response element_clear_impl(String const& element_id);
-    Web::WebDriver::Response element_send_keys_impl(String const& element_id, ByteString const& text);
+    Web::WebDriver::Response element_send_keys_impl(String const& element_id, String const& text);
     Web::WebDriver::Response add_cookie_impl(JsonObject const&);
 
     void handle_any_user_prompts(Function<void()> on_dialog_closed);
@@ -142,10 +141,10 @@ private:
 
     using GetStartNode = JS::NonnullGCPtr<JS::HeapFunction<ErrorOr<JS::NonnullGCPtr<Web::DOM::ParentNode>, Web::WebDriver::Error>()>>;
     using OnFindComplete = JS::NonnullGCPtr<JS::HeapFunction<void(Web::WebDriver::Response)>>;
-    void find(Web::WebDriver::LocationStrategy, ByteString, GetStartNode, OnFindComplete);
+    void find(Web::WebDriver::LocationStrategy, String, GetStartNode, OnFindComplete);
 
     struct ScriptArguments {
-        ByteString script;
+        String script;
         JS::MarkedVector<JS::Value> arguments;
     };
     ErrorOr<ScriptArguments, Web::WebDriver::Error> extract_the_script_arguments_from_a_request(JS::VM&, JsonValue const& payload);

@@ -236,7 +236,7 @@ void PageClient::page_did_layout()
     client().async_did_layout(m_id, m_content_size.to_type<int>());
 }
 
-void PageClient::page_did_change_title(ByteString const& title)
+void PageClient::page_did_change_title(String const& title)
 {
     client().async_did_change_title(m_id, title);
 }
@@ -291,7 +291,7 @@ void PageClient::page_did_request_fullscreen_window()
     client().async_did_request_fullscreen_window(m_id);
 }
 
-void PageClient::page_did_request_tooltip_override(Web::CSSPixelPoint position, ByteString const& title)
+void PageClient::page_did_request_tooltip_override(Web::CSSPixelPoint position, String const& title)
 {
     auto device_position = page().css_to_device_point(position);
     client().async_did_request_tooltip_override(m_id, { device_position.x(), device_position.y() }, title);
@@ -302,7 +302,7 @@ void PageClient::page_did_stop_tooltip_override()
     client().async_did_leave_tooltip_area(m_id);
 }
 
-void PageClient::page_did_enter_tooltip_area(ByteString const& title)
+void PageClient::page_did_enter_tooltip_area(String const& title)
 {
     client().async_did_enter_tooltip_area(m_id, title);
 }
@@ -322,12 +322,12 @@ void PageClient::page_did_unhover_link()
     client().async_did_unhover_link(m_id);
 }
 
-void PageClient::page_did_click_link(URL::URL const& url, ByteString const& target, unsigned modifiers)
+void PageClient::page_did_click_link(URL::URL const& url, String const& target, unsigned modifiers)
 {
     client().async_did_click_link(m_id, url, target, modifiers);
 }
 
-void PageClient::page_did_middle_click_link(URL::URL const& url, ByteString const& target, unsigned modifiers)
+void PageClient::page_did_middle_click_link(URL::URL const& url, String const& target, unsigned modifiers)
 {
     client().async_did_middle_click_link(m_id, url, target, modifiers);
 }
@@ -370,18 +370,18 @@ void PageClient::page_did_request_context_menu(Web::CSSPixelPoint content_positi
     client().async_did_request_context_menu(m_id, page().css_to_device_point(content_position).to_type<int>());
 }
 
-void PageClient::page_did_request_link_context_menu(Web::CSSPixelPoint content_position, URL::URL const& url, ByteString const& target, unsigned modifiers)
+void PageClient::page_did_request_link_context_menu(Web::CSSPixelPoint content_position, URL::URL const& url, String const& target, unsigned modifiers)
 {
     client().async_did_request_link_context_menu(m_id, page().css_to_device_point(content_position).to_type<int>(), url, target, modifiers);
 }
 
-void PageClient::page_did_request_image_context_menu(Web::CSSPixelPoint content_position, URL::URL const& url, ByteString const& target, unsigned modifiers, Gfx::Bitmap const* bitmap_pointer)
+void PageClient::page_did_request_image_context_menu(Web::CSSPixelPoint content_position, URL::URL const& url, String const& target, unsigned modifiers, Gfx::Bitmap const* bitmap_pointer)
 {
     auto bitmap = bitmap_pointer ? bitmap_pointer->to_shareable_bitmap() : Gfx::ShareableBitmap();
     client().async_did_request_image_context_menu(m_id, page().css_to_device_point(content_position).to_type<int>(), url, target, modifiers, bitmap);
 }
 
-void PageClient::page_did_request_media_context_menu(Web::CSSPixelPoint content_position, ByteString const& target, unsigned modifiers, Web::Page::MediaContextMenu menu)
+void PageClient::page_did_request_media_context_menu(Web::CSSPixelPoint content_position, String const& target, unsigned modifiers, Web::Page::MediaContextMenu menu)
 {
     client().async_did_request_media_context_menu(m_id, page().css_to_device_point(content_position).to_type<int>(), target, modifiers, move(menu));
 }
@@ -686,7 +686,7 @@ void PageClient::inspector_did_export_inspector_html(String const& html)
     client().async_inspector_did_export_inspector_html(m_id, html);
 }
 
-ErrorOr<void> PageClient::connect_to_webdriver(ByteString const& webdriver_ipc_path)
+ErrorOr<void> PageClient::connect_to_webdriver(String const& webdriver_ipc_path)
 {
     VERIFY(!m_webdriver);
     m_webdriver = TRY(WebDriverConnection::connect(*this, webdriver_ipc_path));
@@ -707,13 +707,13 @@ void PageClient::initialize_js_console(Web::DOM::Document& document)
     document.set_console_client(console_client);
 }
 
-void PageClient::js_console_input(ByteString const& js_source)
+void PageClient::js_console_input(String const& js_source)
 {
     if (m_top_level_document_console_client)
         m_top_level_document_console_client->handle_input(js_source);
 }
 
-void PageClient::run_javascript(ByteString const& js_source)
+void PageClient::run_javascript(String const& js_source)
 {
     auto* active_document = page().top_level_browsing_context().active_document();
 
@@ -756,7 +756,7 @@ void PageClient::console_peer_did_misbehave(char const* reason)
     client().did_misbehave(reason);
 }
 
-void PageClient::did_get_js_console_messages(i32 start_index, Vector<ByteString> message_types, Vector<ByteString> messages)
+void PageClient::did_get_js_console_messages(i32 start_index, Vector<String> message_types, Vector<String> messages)
 {
     client().async_did_get_js_console_messages(m_id, start_index, move(message_types), move(messages));
 }
