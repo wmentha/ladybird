@@ -50,7 +50,7 @@ ErrorOr<size_t> TLSv12::write_some(ReadonlyBytes bytes)
     return bytes.size();
 }
 
-ErrorOr<NonnullOwnPtr<TLSv12>> TLSv12::connect(ByteString const& host, u16 port, Options options)
+ErrorOr<NonnullOwnPtr<TLSv12>> TLSv12::connect(String const& host, u16 port, Options options)
 {
     auto promise = Core::Promise<Empty>::construct();
     OwnPtr<Core::Socket> tcp_socket = TRY(Core::TCPSocket::connect(host, port));
@@ -73,7 +73,7 @@ ErrorOr<NonnullOwnPtr<TLSv12>> TLSv12::connect(ByteString const& host, u16 port,
     return tls_socket;
 }
 
-ErrorOr<NonnullOwnPtr<TLSv12>> TLSv12::connect(ByteString const& host, Core::Socket& underlying_stream, Options options)
+ErrorOr<NonnullOwnPtr<TLSv12>> TLSv12::connect(String const& host, Core::Socket& underlying_stream, Options options)
 {
     auto promise = Core::Promise<Empty>::construct();
     TRY(underlying_stream.set_blocking(false));

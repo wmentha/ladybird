@@ -546,9 +546,9 @@ Vector<Certificate> TLSv12::parse_pem_certificate(ReadonlyBytes certificate_pem_
     return { move(certificate) };
 }
 
-static Vector<ByteString> s_default_ca_certificate_paths;
+static Vector<String> s_default_ca_certificate_paths;
 
-void DefaultRootCACertificates::set_default_certificate_paths(Span<ByteString> paths)
+void DefaultRootCACertificates::set_default_certificate_paths(Span<String> paths)
 {
     s_default_ca_certificate_paths.clear();
     s_default_ca_certificate_paths.ensure_capacity(paths.size());
@@ -573,7 +573,7 @@ DefaultRootCACertificates& DefaultRootCACertificates::the()
     return s_the;
 }
 
-ErrorOr<Vector<Certificate>> DefaultRootCACertificates::load_certificates(Span<ByteString> custom_cert_paths)
+ErrorOr<Vector<Certificate>> DefaultRootCACertificates::load_certificates(Span<String> custom_cert_paths)
 {
     auto cacert_file_or_error = Core::File::open("/etc/cacert.pem"sv, Core::File::OpenMode::Read);
     ByteBuffer data;

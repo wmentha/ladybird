@@ -283,7 +283,7 @@ struct Context {
 
     struct {
         // Server Name Indicator
-        ByteString SNI; // I hate your existence
+        String SNI; // I hate your existence
         bool extended_master_secret { false };
     } extensions;
 
@@ -300,9 +300,9 @@ struct Context {
     // message flags
     u8 handshake_messages[11] { 0 };
     ByteBuffer user_data;
-    HashMap<ByteString, Certificate> root_certificates;
+    HashMap<String, Certificate> root_certificates;
 
-    Vector<ByteString> alpn;
+    Vector<String> alpn;
     StringView negotiated_alpn;
 
     size_t send_retries { 0 };
@@ -357,8 +357,8 @@ public:
 
     virtual void set_notifications_enabled(bool enabled) override { underlying_stream().set_notifications_enabled(enabled); }
 
-    static ErrorOr<NonnullOwnPtr<TLSv12>> connect(ByteString const& host, u16 port, Options = {});
-    static ErrorOr<NonnullOwnPtr<TLSv12>> connect(ByteString const& host, Core::Socket& underlying_stream, Options = {});
+    static ErrorOr<NonnullOwnPtr<TLSv12>> connect(String const& host, u16 port, Options = {});
+    static ErrorOr<NonnullOwnPtr<TLSv12>> connect(String const& host, Core::Socket& underlying_stream, Options = {});
 
     using StreamVariantType = Variant<OwnPtr<Core::Socket>, Core::Socket*>;
     explicit TLSv12(StreamVariantType, Options);
