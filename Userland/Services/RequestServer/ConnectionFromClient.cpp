@@ -473,7 +473,8 @@ void ConnectionFromClient::ensure_connection(URL::URL const& url, ::RequestServe
         request->is_connect_only = true;
 
         set_option(CURLOPT_PRIVATE, request.ptr());
-        set_option(CURLOPT_URL, url_string_value.to_byte_string().characters());
+        auto url_bytes = url_string_value.to_string().value().bytes();
+        set_option(CURLOPT_URL, url_bytes.data());
         set_option(CURLOPT_PORT, url.port_or_default());
         set_option(CURLOPT_CONNECTTIMEOUT, s_connect_timeout_seconds);
         set_option(CURLOPT_CONNECT_ONLY, 1L);

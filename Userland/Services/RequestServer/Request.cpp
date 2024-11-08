@@ -27,7 +27,7 @@ void Request::set_response_headers(HTTP::HeaderMap response_headers)
     m_client.did_receive_headers({}, *this);
 }
 
-void Request::set_certificate(ByteString, ByteString)
+void Request::set_certificate(String, String)
 {
 }
 
