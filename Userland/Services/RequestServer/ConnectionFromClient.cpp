@@ -307,7 +307,8 @@ void ConnectionFromClient::start_request(i32 request_id, String const& method, U
         set_option(CURLOPT_CAINFO, g_default_certificate_path.characters());
 
     set_option(CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
-    set_option(CURLOPT_URL, url.to_string().value().to_byte_string().characters());
+    auto url_bytes = url.to_string().value().bytes();
+    set_option(CURLOPT_URL, url_bytes.data());
     set_option(CURLOPT_PORT, url.port_or_default());
     set_option(CURLOPT_CONNECTTIMEOUT, s_connect_timeout_seconds);
 
