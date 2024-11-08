@@ -80,7 +80,7 @@ ErrorOr<NonnullRefPtr<Core::LocalServer>> Session::create_server(NonnullRefPtr<S
             return;
         }
 
-        auto window_handle = MUST(String::from_byte_string(maybe_window_handle.value().as_string()));
+        auto window_handle = maybe_window_handle.value().as_string();
 
         web_content_connection->on_close = [this, window_handle]() {
             dbgln_if(WEBDRIVER_DEBUG, "Window {} was closed remotely.", window_handle);
@@ -107,7 +107,7 @@ ErrorOr<void> Session::start(LaunchBrowserCallbacks const& callbacks)
 {
     auto promise = TRY(ServerPromise::try_create());
 
-    m_web_content_socket_path = ByteString::formatted("{}/webdriver/session_{}_{}", TRY(Core::StandardPaths::runtime_directory()), getpid(), m_id);
+    m_web_content_socket_path = MUST(String::formatted("{}/webdriver/session_{}_{}", TRY(Core::StandardPaths::runtime_directory()), getpid(), m_id));
     m_web_content_server = TRY(create_server(promise));
 
     if (m_options.headless)

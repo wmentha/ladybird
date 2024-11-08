@@ -88,7 +88,7 @@ private:
     HashMap<String, Window> m_windows;
     String m_current_window_handle;
 
-    Optional<ByteString> m_web_content_socket_path;
+    Optional<String> m_web_content_socket_path;
     Optional<pid_t> m_browser_pid;
 
     RefPtr<Core::LocalServer> m_web_content_server;
