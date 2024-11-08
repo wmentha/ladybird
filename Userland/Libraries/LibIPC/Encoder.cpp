@@ -8,7 +8,6 @@
 
 #include <AK/BitCast.h>
 #include <AK/ByteBuffer.h>
-#include <AK/ByteString.h>
 #include <AK/JsonObject.h>
 #include <AK/JsonValue.h>
 #include <AK/NumericLimits.h>
@@ -66,12 +65,6 @@ ErrorOr<void> encode(Encoder& encoder, StringView const& value)
 }
 
 template<>
-ErrorOr<void> encode(Encoder& encoder, ByteString const& value)
-{
-    return encoder.encode(value.view());
-}
-
-template<>
 ErrorOr<void> encode(Encoder& encoder, ByteBuffer const& value)
 {
     TRY(encoder.encode_size(value.size()));
@@ -119,7 +112,7 @@ ErrorOr<void> encode(Encoder& encoder, URL::URL const& value)
 template<>
 ErrorOr<void> encode(Encoder& encoder, URL::Origin const& origin)
 {
-    TRY(encoder.encode<ByteString>(origin.scheme()));
+    TRY(encoder.encode<String>(origin.scheme()));
     TRY(encoder.encode(origin.host()));
     TRY(encoder.encode(origin.port()));
 

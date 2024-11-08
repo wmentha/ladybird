@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/OwnPtr.h>
+#include <AK/String.h>
 #include <LibIPC/Forward.h>
 
 namespace AK {
@@ -22,14 +22,14 @@ public:
     virtual ~Stub() = default;
 
     virtual u32 magic() const = 0;
-    virtual ByteString name() const = 0;
+    virtual String name() const = 0;
     virtual ErrorOr<OwnPtr<MessageBuffer>> handle(Message const&) = 0;
 
 protected:
     Stub() = default;
 
 private:
-    ByteString m_name;
+    String m_name;
 };
 
 }

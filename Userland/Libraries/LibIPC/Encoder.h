@@ -87,9 +87,6 @@ template<>
 ErrorOr<void> encode(Encoder&, StringView const&);
 
 template<>
-ErrorOr<void> encode(Encoder&, ByteString const&);
-
-template<>
 ErrorOr<void> encode(Encoder&, ByteBuffer const&);
 
 template<>
