@@ -101,13 +101,13 @@ Web::DragEvent ns_event_to_drag_event(Web::DragEvent::Type type, id<NSDraggingIn
                                                                        options:nil];
 
         for (NSURL* file in file_list) {
-            auto file_path = Ladybird::ns_string_to_byte_string([file path]);
+            auto file_path = Ladybird::ns_string_to_string([file path]);
             callback(file_path);
         }
     };
 
     if (type == Web::DragEvent::Type::DragStart) {
-        for_each_file([&](ByteString const& file_path) {
+        for_each_file([&](String const& file_path) {
             if (auto file = Web::HTML::SelectedFile::from_file_path(file_path); file.is_error())
                 warnln("Unable to open file {}: {}", file_path, file.error());
             else
@@ -116,7 +116,7 @@ Web::DragEvent ns_event_to_drag_event(Web::DragEvent::Type type, id<NSDraggingIn
     } else if (type == Web::DragEvent::Type::Drop) {
         Vector<URL::URL> urls;
 
-        for_each_file([&](ByteString const& file_path) {
+        for_each_file([&](String const& file_path) {
             if (auto url = URL::create_with_url_or_path(file_path); url.is_valid())
                 urls.append(move(url));
         });

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/String.h>
 #include <Ladybird/Utilities.h>
 #include <LibCore/Resource.h>

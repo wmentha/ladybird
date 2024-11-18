@@ -39,7 +39,7 @@
 - (void)onBackNavigationEnabled:(BOOL)back_enabled
        forwardNavigationEnabled:(BOOL)forward_enabled;
 
-- (void)onTitleChange:(ByteString const&)title;
+- (void)onTitleChange:(String const&)title;
 - (void)onFaviconChange:(Gfx::Bitmap const&)bitmap;
 - (void)onAudioPlayStateChange:(Web::HTML::AudioPlayState)play_state;
 
@@ -87,7 +87,7 @@
 - (void)resetZoom;
 - (float)zoomLevel;
 
-- (void)debugRequest:(ByteString const&)request argument:(ByteString const&)argument;
+- (void)debugRequest:(String const&)request argument:(String const&)argument;
 
 - (void)setEnableAutoplay:(BOOL)enabled;
 

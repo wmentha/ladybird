@@ -269,7 +269,7 @@ struct HideCursor {
     m_web_view_bridge->set_preferred_motion(motion);
 }
 
-- (void)debugRequest:(ByteString const&)request argument:(ByteString const&)argument
+- (void)debugRequest:(String const&)request argument:(String const&)argument
 {
     m_web_view_bridge->debug_request(request, argument);
 }
@@ -931,7 +931,7 @@ static void copy_data_to_clipboard(StringView data, NSPasteboardType pasteboard_
                           Vector<Web::HTML::SelectedFile> selected_files;
 
                           auto create_selected_file = [&](NSString* ns_file_path) {
-                              auto file_path = Ladybird::ns_string_to_byte_string(ns_file_path);
+                              auto file_path = Ladybird::ns_string_to_string(ns_file_path);
 
                               if (auto file = Web::HTML::SelectedFile::from_file_path(file_path); file.is_error())
                                   warnln("Unable to open file {}: {}", file_path, file.error());

@@ -19,8 +19,8 @@ struct TabSettings {
     BOOL block_popups { YES };
     BOOL autoplay_enabled { NO };
     BOOL same_origin_policy_enabled { NO };
-    ByteString user_agent_name { "Disabled"sv };
-    ByteString navigator_compatibility_mode { "chrome"sv };
+    String user_agent_name { "Disabled"_string };
+    String navigator_compatibility_mode { "chrome"_string };
 };
 
 @interface TabController : NSWindowController <NSWindowDelegate>
@@ -38,7 +38,7 @@ struct TabSettings {
 - (void)onBackNavigationEnabled:(BOOL)back_enabled
        forwardNavigationEnabled:(BOOL)forward_enabled;
 
-- (void)onTitleChange:(ByteString const&)title;
+- (void)onTitleChange:(String const&)title;
 
 - (void)onCreateNewTab;
 
@@ -50,7 +50,7 @@ struct TabSettings {
 - (void)setPopupBlocking:(BOOL)block_popups;
 - (void)setScripting:(BOOL)enabled;
 - (void)setAutoplay:(BOOL)enabled;
-- (void)debugRequest:(ByteString const&)request argument:(ByteString const&)argument;
+- (void)debugRequest:(String const&)request argument:(String const&)argument;
 
 - (void)focusLocationToolbarItem;
 

@@ -27,7 +27,7 @@ class ApplicationBridge : public WebView::Application {
     WEB_VIEW_APPLICATION(ApplicationBridge)
 
 private:
-    virtual Optional<ByteString> ask_user_for_download_folder() const override
+    virtual Optional<String> ask_user_for_download_folder() const override
     {
         auto* panel = [NSOpenPanel openPanel];
         [panel setAllowsMultipleSelection:NO];
@@ -38,7 +38,7 @@ private:
         if ([panel runModal] != NSModalResponseOK)
             return {};
 
-        return Ladybird::ns_string_to_byte_string([[panel URL] path]);
+        return Ladybird::ns_string_to_string([[panel URL] path]);
     }
 };
 

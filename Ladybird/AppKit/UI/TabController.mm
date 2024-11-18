@@ -51,7 +51,7 @@ static NSString* const TOOLBAR_TAB_OVERVIEW_IDENTIFIER = @"ToolbarTabOverviewIde
 {
     u64 m_page_index;
 
-    ByteString m_title;
+    String m_title;
 
     TabSettings m_settings;
 
@@ -155,7 +155,7 @@ static NSString* const TOOLBAR_TAB_OVERVIEW_IDENTIFIER = @"ToolbarTabOverviewIde
     [self updateNavigationButtonStates];
 }
 
-- (void)onTitleChange:(ByteString const&)title
+- (void)onTitleChange:(String const&)title
 {
     m_title = title;
 }
@@ -205,7 +205,7 @@ static NSString* const TOOLBAR_TAB_OVERVIEW_IDENTIFIER = @"ToolbarTabOverviewIde
     // FIXME: Reimplement clearing history using WebContent's history.
 }
 
-- (void)debugRequest:(ByteString const&)request argument:(ByteString const&)argument
+- (void)debugRequest:(String const&)request argument:(String const&)argument
 {
     [[[self tab] web_view] debugRequest:request argument:argument];
 }
@@ -408,8 +408,8 @@ static NSString* const TOOLBAR_TAB_OVERVIEW_IDENTIFIER = @"ToolbarTabOverviewIde
 
 - (void)setUserAgentSpoof:(NSMenuItem*)sender
 {
-    ByteString const user_agent_name = [[sender title] UTF8String];
-    ByteString user_agent = "";
+    String const user_agent_name = [[sender title] UTF8String];
+    String user_agent = ""_string;
     if (user_agent_name == "Disabled"sv) {
         user_agent = Web::default_user_agent;
     } else {
@@ -423,7 +423,7 @@ static NSString* const TOOLBAR_TAB_OVERVIEW_IDENTIFIER = @"ToolbarTabOverviewIde
 
 - (void)setNavigatorCompatibilityMode:(NSMenuItem*)sender
 {
-    ByteString const compatibility_mode = [[[sender title] lowercaseString] UTF8String];
+    String const compatibility_mode = [[[sender title] lowercaseString] UTF8String];
     m_settings.navigator_compatibility_mode = compatibility_mode;
 
     [self debugRequest:"navigator-compatibility-mode" argument:compatibility_mode];

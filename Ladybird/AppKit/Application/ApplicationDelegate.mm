@@ -34,7 +34,7 @@
     Web::CSS::PreferredColorScheme m_preferred_color_scheme;
     Web::CSS::PreferredContrast m_preferred_contrast;
     Web::CSS::PreferredMotion m_preferred_motion;
-    ByteString m_navigator_compatibility_mode;
+    String m_navigator_compatibility_mode;
 
     WebView::SearchEngine m_search_engine;
 }
@@ -80,7 +80,7 @@
         m_preferred_color_scheme = Web::CSS::PreferredColorScheme::Auto;
         m_preferred_contrast = Web::CSS::PreferredContrast::Auto;
         m_preferred_motion = Web::CSS::PreferredMotion::Auto;
-        m_navigator_compatibility_mode = "chrome";
+        m_navigator_compatibility_mode = "chrome"_string;
         m_search_engine = WebView::default_search_engine();
 
         // Reduce the tooltip delay, as the default delay feels quite long.
@@ -665,7 +665,7 @@
     [submenu addItem:[NSMenuItem separatorItem]];
 
     auto* spoof_user_agent_menu = [[NSMenu alloc] init];
-    auto add_user_agent = [spoof_user_agent_menu](ByteString name) {
+    auto add_user_agent = [spoof_user_agent_menu](String name) {
         [spoof_user_agent_menu addItem:[[NSMenuItem alloc] initWithTitle:Ladybird::string_to_ns_string(name)
                                                                   action:@selector(setUserAgentSpoof:)
                                                            keyEquivalent:@""]];
@@ -683,7 +683,7 @@
     [submenu addItem:spoof_user_agent_menu_item];
 
     auto* navigator_compatibility_mode_menu = [[NSMenu alloc] init];
-    auto add_navigator_compatibility_mode = [navigator_compatibility_mode_menu](ByteString name) {
+    auto add_navigator_compatibility_mode = [navigator_compatibility_mode_menu](String name) {
         [navigator_compatibility_mode_menu addItem:[[NSMenuItem alloc] initWithTitle:Ladybird::string_to_ns_string(name)
                                                                               action:@selector(setNavigatorCompatibilityMode:)
                                                                        keyEquivalent:@""]];
