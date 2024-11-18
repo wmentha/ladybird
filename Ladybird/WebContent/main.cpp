@@ -92,9 +92,9 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
     StringView command_line {};
     StringView executable_path {};
-    auto config_path = ByteString::formatted("{}/ladybird/default-config", s_ladybird_resource_root);
+    auto config_path = MUST(String::formatted("{}/ladybird/default-config", s_ladybird_resource_root));
     StringView mach_server_name {};
-    Vector<ByteString> certificates;
+    Vector<String> certificates;
     int request_server_socket { -1 };
     int image_decoder_socket { -1 };
     bool is_layout_test_mode = false;
@@ -212,7 +212,7 @@ static ErrorOr<void> load_content_filters(StringView config_path)
 {
     auto buffer = TRY(ByteBuffer::create_uninitialized(4096));
 
-    auto file = TRY(Core::File::open(ByteString::formatted("{}/BrowserContentFilters.txt", config_path), Core::File::OpenMode::Read));
+    auto file = TRY(Core::File::open(String::formatted("{}/BrowserContentFilters.txt", config_path), Core::File::OpenMode::Read));
     auto ad_filter_list = TRY(Core::InputBufferedFile::create(move(file)));
 
     Vector<String> patterns;
@@ -236,7 +236,7 @@ static ErrorOr<void> load_autoplay_allowlist(StringView config_path)
 {
     auto buffer = TRY(ByteBuffer::create_uninitialized(4096));
 
-    auto file = TRY(Core::File::open(ByteString::formatted("{}/BrowserAutoplayAllowlist.txt", config_path), Core::File::OpenMode::Read));
+    auto file = TRY(Core::File::open(String::formatted("{}/BrowserAutoplayAllowlist.txt", config_path), Core::File::OpenMode::Read));
     auto allowlist = TRY(Core::InputBufferedFile::create(move(file)));
 
     Vector<String> origins;
