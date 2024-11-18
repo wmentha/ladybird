@@ -37,7 +37,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
     int request_server_socket { -1 };
     StringView serenity_resource_root;
-    Vector<ByteString> certificates;
+    Vector<String> certificates;
     bool wait_for_debugger = false;
 
     Core::ArgsParser args_parser;
