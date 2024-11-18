@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/OwnPtr.h>
+#include <AK/String.h>
 #include <LibWebView/SearchEngine.h>
 #include <QPoint>
 #include <QSettings>
@@ -30,7 +30,7 @@ public:
         return &instance;
     }
 
-    ByteString directory();
+    String directory();
 
     Optional<QPoint> last_position();
     void set_last_position(QPoint const& last_position);

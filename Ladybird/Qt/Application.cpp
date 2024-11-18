@@ -121,13 +121,13 @@ BrowserWindow& Application::new_window(Vector<URL::URL> const& initial_urls, Bro
     return *window;
 }
 
-Optional<ByteString> Application::ask_user_for_download_folder() const
+Optional<String> Application::ask_user_for_download_folder() const
 {
     auto path = QFileDialog::getExistingDirectory(nullptr, "Select download directory", QDir::homePath());
     if (path.isNull())
         return {};
 
-    return ak_byte_string_from_qstring(path);
+    return ak_string_from_qstring(path);
 }
 
 }

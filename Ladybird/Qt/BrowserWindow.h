@@ -150,7 +150,7 @@ private:
     Tab& create_new_tab(Web::HTML::ActivateTab, Tab& parent, Optional<u64> page_index);
     void initialize_tab(Tab*);
 
-    void debug_request(ByteString const& request, ByteString const& argument = "");
+    void debug_request(String const& request, String const& argument = ""_string);
 
     void set_current_tab(Tab* tab);
     void update_displayed_zoom_level();
@@ -172,10 +172,10 @@ private:
 
     void set_window_rect(Optional<Web::DevicePixels> x, Optional<Web::DevicePixels> y, Optional<Web::DevicePixels> width, Optional<Web::DevicePixels> height);
 
-    ByteString user_agent_string() const { return m_user_agent_string; }
-    void set_user_agent_string(ByteString const& user_agent_string) { m_user_agent_string = user_agent_string; }
-    ByteString navigator_compatibility_mode() const { return m_navigator_compatibility_mode; }
-    void set_navigator_compatibility_mode(ByteString const& navigator_compatibility_mode) { m_navigator_compatibility_mode = navigator_compatibility_mode; }
+    String user_agent_string() const { return m_user_agent_string; }
+    void set_user_agent_string(String const& user_agent_string) { m_user_agent_string = user_agent_string; }
+    String navigator_compatibility_mode() const { return m_navigator_compatibility_mode; }
+    void set_navigator_compatibility_mode(String const& navigator_compatibility_mode) { m_navigator_compatibility_mode = navigator_compatibility_mode; }
 
     QScreen* m_current_screen;
     double m_device_pixel_ratio { 0 };
@@ -207,8 +207,8 @@ private:
     QAction* m_block_pop_ups_action { nullptr };
     QAction* m_enable_same_origin_policy_action { nullptr };
 
-    ByteString m_user_agent_string {};
-    ByteString m_navigator_compatibility_mode {};
+    String m_user_agent_string {};
+    String m_navigator_compatibility_mode {};
 
     SettingsDialog* m_settings_dialog { nullptr };
 

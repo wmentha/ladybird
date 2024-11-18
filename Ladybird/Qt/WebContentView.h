@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Function.h>
 #include <AK/HashMap.h>
 #include <AK/OwnPtr.h>
+#include <AK/String.h>
 #include <LibGfx/Forward.h>
 #include <LibGfx/Rect.h>
 #include <LibGfx/StandardCursor.h>
@@ -113,7 +113,7 @@ private:
     void update_screen_rects();
 
     bool m_tooltip_override { false };
-    Optional<ByteString> m_tooltip_text;
+    Optional<String> m_tooltip_text;
     QTimer m_tooltip_hover_timer;
 
     bool m_should_show_line_box_borders { false };

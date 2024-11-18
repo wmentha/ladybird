@@ -577,7 +577,7 @@ static Core::AnonymousBuffer make_system_theme_from_qt_palette(QWidget& widget, 
 
     auto theme_file = mode == WebContentView::PaletteMode::Default ? "Default"sv : "Dark"sv;
     auto theme_ini = MUST(Core::Resource::load_from_uri(MUST(String::formatted("resource://themes/{}.ini", theme_file))));
-    auto theme = Gfx::load_system_theme(theme_ini->filesystem_path().to_byte_string()).release_value_but_fixme_should_propagate_errors();
+    auto theme = Gfx::load_system_theme(MUST(theme_ini->filesystem_path().to_string()));
 
     auto palette_impl = Gfx::PaletteImpl::create_with_anonymous_buffer(theme);
     auto palette = Gfx::Palette(move(palette_impl));
@@ -846,7 +846,7 @@ void WebContentView::enqueue_native_event(Web::DragEvent::Type type, QDropEvent 
         VERIFY(event.mimeData()->hasUrls());
 
         for (auto const& url : event.mimeData()->urls()) {
-            auto file_path = ak_byte_string_from_qstring(url.toLocalFile());
+            auto file_path = ak_string_from_qstring(url.toLocalFile());
 
             if (auto file = Web::HTML::SelectedFile::from_file_path(file_path); file.is_error())
                 warnln("Unable to open file {}: {}", file_path, file.error());

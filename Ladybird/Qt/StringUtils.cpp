@@ -6,12 +6,6 @@
 
 #include "StringUtils.h"
 
-AK::ByteString ak_byte_string_from_qstring(QString const& qstring)
-{
-    auto utf8_data = qstring.toUtf8();
-    return AK::ByteString(utf8_data.data(), utf8_data.size());
-}
-
 String ak_string_from_qstring(QString const& qstring)
 {
     auto utf8_data = qstring.toUtf8();

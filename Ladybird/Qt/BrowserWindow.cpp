@@ -504,7 +504,7 @@ BrowserWindow::BrowserWindow(Vector<URL::URL> const& initial_urls, IsPopupWindow
     auto* disable_spoofing = add_user_agent("Disabled"sv, Web::default_user_agent);
     disable_spoofing->setChecked(!user_agent_preset.has_value());
     for (auto const& user_agent : WebView::user_agents) {
-        auto* spoofed_user_agent = add_user_agent(user_agent.key, user_agent.value.to_byte_string());
+        auto* spoofed_user_agent = add_user_agent(MUST(user_agent.key, user_agent.value.to_string()));
         spoofed_user_agent->setChecked(user_agent.key == user_agent_preset);
     }
 
@@ -515,11 +515,11 @@ BrowserWindow::BrowserWindow(Vector<URL::URL> const& initial_urls, IsPopupWindow
     QObject::connect(custom_user_agent_action, &QAction::triggered, this, [this, disable_spoofing] {
         auto user_agent = QInputDialog::getText(this, "Custom User Agent", "Enter User Agent:");
         if (!user_agent.isEmpty()) {
-            auto user_agent_byte_string = ak_byte_string_from_qstring(user_agent);
+            auto user_agent_string = ak_string_from_qstring(user_agent);
             for_each_tab([&](auto& tab) {
-                tab.set_user_agent_string(user_agent_byte_string);
+                tab.set_user_agent_string(user_agent_string);
             });
-            set_user_agent_string(user_agent_byte_string);
+            set_user_agent_string(user_agent_string);
         } else {
             disable_spoofing->activate(QAction::Trigger);
         }
@@ -543,11 +543,11 @@ BrowserWindow::BrowserWindow(Vector<URL::URL> const& initial_urls, IsPopupWindow
         });
         return action;
     };
-    auto* chrome_compatibility_mode = add_navigator_compatibility_mode("Chrome"_string, "chrome"sv.to_byte_string());
+    auto* chrome_compatibility_mode = add_navigator_compatibility_mode("Chrome"_string, "chrome"_string);
     chrome_compatibility_mode->setChecked(true);
-    add_navigator_compatibility_mode("Gecko"_string, "gecko"sv.to_byte_string());
-    add_navigator_compatibility_mode("WebKit"_string, "webkit"sv.to_byte_string());
-    set_navigator_compatibility_mode("chrome");
+    add_navigator_compatibility_mode("Gecko"_string, "gecko"_string);
+    add_navigator_compatibility_mode("WebKit"_string, "webkit"_string);
+    set_navigator_compatibility_mode("chrome"_string);
 
     debug_menu->addSeparator();
 
@@ -699,7 +699,7 @@ void BrowserWindow::set_current_tab(Tab* tab)
     }
 }
 
-void BrowserWindow::debug_request(ByteString const& request, ByteString const& argument)
+void BrowserWindow::debug_request(String const& request, String const& argument)
 {
     if (!m_current_tab)
         return;

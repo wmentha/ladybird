@@ -45,7 +45,7 @@ public:
 private:
     virtual void create_platform_options(WebView::ChromeOptions&, WebView::WebContentOptions&) override;
 
-    virtual Optional<ByteString> ask_user_for_download_folder() const override;
+    virtual Optional<String> ask_user_for_download_folder() const override;
 
     TaskManagerWindow* m_task_manager_window { nullptr };
     BrowserWindow* m_active_window { nullptr };

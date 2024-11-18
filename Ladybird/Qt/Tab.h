@@ -41,7 +41,7 @@ public:
     void forward();
     void reload();
 
-    void debug_request(ByteString const& request, ByteString const& argument = "");
+    void debug_request(String const& request, String const& argument = "");
 
     void open_file();
     void update_reset_zoom_button();
@@ -71,8 +71,8 @@ public:
     void set_line_box_borders(bool);
     void set_same_origin_policy(bool);
     void set_scripting(bool);
-    void set_user_agent_string(ByteString const&);
-    void set_navigator_compatibility_mode(ByteString const&);
+    void set_user_agent_string(String const&);
+    void set_navigator_compatibility_mode(String const&);
 
     void set_preferred_languages(Vector<String> const& preferred_languages);
 

@@ -124,7 +124,7 @@ Tab::Tab(BrowserWindow* window, RefPtr<WebView::WebContentClient> parent_client,
     };
 
     view().on_link_hover = [this](auto const& url) {
-        m_hover_label->setText(qstring_from_ak_string(url.to_byte_string()));
+        m_hover_label->setText(qstring_from_ak_string(MUST(url.to_string())));
         update_hover_label();
         m_hover_label->show();
     };
@@ -265,7 +265,7 @@ Tab::Tab(BrowserWindow* window, RefPtr<WebView::WebContentClient> parent_client,
         Vector<Web::HTML::SelectedFile> selected_files;
 
         auto create_selected_file = [&](auto const& qfile_path) {
-            auto file_path = ak_byte_string_from_qstring(qfile_path);
+            auto file_path = ak_string_from_qstring(qfile_path);
 
             if (auto file = Web::HTML::SelectedFile::from_file_path(file_path); file.is_error())
                 warnln("Unable to open file {}: {}", file_path, file.error());
@@ -838,7 +838,7 @@ int Tab::tab_index()
     return m_window->tab_index(this);
 }
 
-void Tab::debug_request(ByteString const& request, ByteString const& argument)
+void Tab::debug_request(String const& request, String const& argument)
 {
     m_view->debug_request(request, argument);
 }
@@ -952,14 +952,14 @@ void Tab::set_scripting(bool enabled)
     debug_request("scripting", enabled ? "on" : "off");
 }
 
-void Tab::set_user_agent_string(ByteString const& user_agent)
+void Tab::set_user_agent_string(String const& user_agent)
 {
     debug_request("spoof-user-agent", user_agent);
     // Clear the cache to ensure requests are re-done with the new user agent.
     debug_request("clear-cache");
 }
 
-void Tab::set_navigator_compatibility_mode(ByteString const& compatibility_mode)
+void Tab::set_navigator_compatibility_mode(String const& compatibility_mode)
 {
     debug_request("navigator-compatibility-mode", compatibility_mode);
 }
