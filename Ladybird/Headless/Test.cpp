@@ -5,10 +5,10 @@
  */
 
 #include <AK/ByteBuffer.h>
-#include <AK/ByteString.h>
 #include <AK/Enumerate.h>
 #include <AK/LexicalPath.h>
 #include <AK/QuickSort.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 #include <Ladybird/Headless/Application.h>
 #include <Ladybird/Headless/HeadlessWebView.h>
@@ -29,7 +29,7 @@
 
 namespace Ladybird {
 
-static Vector<ByteString> s_skipped_tests;
+static Vector<String> s_skipped_tests;
 
 static ErrorOr<void> load_test_config(StringView test_root_path)
 {
@@ -59,21 +59,21 @@ static ErrorOr<void> load_test_config(StringView test_root_path)
 
 static ErrorOr<void> collect_dump_tests(Vector<Test>& tests, StringView path, StringView trail, TestMode mode)
 {
-    Core::DirIterator it(ByteString::formatted("{}/input/{}", path, trail), Core::DirIterator::Flags::SkipDots);
+    Core::DirIterator it(MUST(String::formatted("{}/input/{}", path, trail), Core::DirIterator::Flags::SkipDots));
 
     while (it.has_next()) {
         auto name = it.next_path();
-        auto input_path = TRY(FileSystem::real_path(ByteString::formatted("{}/input/{}/{}", path, trail, name)));
+        auto input_path = TRY(FileSystem::real_path(MUST(String::formatted("{}/input/{}/{}", path, trail, name))));
 
         if (FileSystem::is_directory(input_path)) {
-            TRY(collect_dump_tests(tests, path, ByteString::formatted("{}/{}", trail, name), mode));
+            TRY(collect_dump_tests(tests, path, MUST(String::formatted("{}/{}", trail, name)), mode));
             continue;
         }
 
         if (!name.ends_with(".html"sv) && !name.ends_with(".svg"sv) && !name.ends_with(".xhtml"sv))
             continue;
 
-        auto expectation_path = ByteString::formatted("{}/expected/{}/{}.txt", path, trail, LexicalPath::title(name));
+        auto expectation_path = MUST(String::formatted("{}/expected/{}/{}.txt", path, trail, LexicalPath::title(name)));
         tests.append({ mode, input_path, move(expectation_path), {} });
     }
 
@@ -86,7 +86,7 @@ static ErrorOr<void> collect_ref_tests(Vector<Test>& tests, StringView path)
         if (entry.type == Core::DirectoryEntry::Type::Directory)
             return IterationDecision::Continue;
 
-        auto input_path = TRY(FileSystem::real_path(ByteString::formatted("{}/{}", path, entry.name)));
+        auto input_path = TRY(FileSystem::real_path(MUST(String::formatted("{}/{}", path, entry.name))));
         tests.append({ TestMode::Ref, input_path, {}, {} });
 
         return IterationDecision::Continue;
@@ -246,8 +246,8 @@ static void run_ref_test(HeadlessWebView& view, Test& test, URL::URL const& url,
             TRY(Core::Directory::create("test-dumps"sv, Core::Directory::CreateDirectories::Yes));
 
             auto title = LexicalPath::title(URL::percent_decode(url.serialize_path()));
-            TRY(dump_screenshot(*test.actual_screenshot, ByteString::formatted("test-dumps/{}.png", title)));
-            TRY(dump_screenshot(*test.expectation_screenshot, ByteString::formatted("test-dumps/{}-ref.png", title)));
+            TRY(dump_screenshot(*test.actual_screenshot, MUST(String::formatted("test-dumps/{}.png", title))));
+            TRY(dump_screenshot(*test.expectation_screenshot, MUST(String::formatted("test-dumps/{}-ref.png", title))));
         }
 
         return TestResult::Fail;
@@ -370,13 +370,13 @@ ErrorOr<void> run_tests(Core::AnonymousBuffer const& theme, Gfx::IntSize window_
     TRY(load_test_config(app.test_root_path));
 
     Vector<Test> tests;
-    auto test_glob = ByteString::formatted("*{}*", app.test_glob);
+    auto test_glob = MUST(String::formatted("*{}*", app.test_glob));
 
-    TRY(collect_dump_tests(tests, ByteString::formatted("{}/Layout", app.test_root_path), "."sv, TestMode::Layout));
-    TRY(collect_dump_tests(tests, ByteString::formatted("{}/Text", app.test_root_path), "."sv, TestMode::Text));
-    TRY(collect_ref_tests(tests, ByteString::formatted("{}/Ref", app.test_root_path)));
+    TRY(collect_dump_tests(tests, MUST(String::formatted("{}/Layout", app.test_root_path)), "."sv, TestMode::Layout));
+    TRY(collect_dump_tests(tests, MUST(String::formatted("{}/Text", app.test_root_path)), "."sv, TestMode::Text));
+    TRY(collect_ref_tests(tests, MUST(String::formatted("{}/Ref", app.test_root_path))));
 #if !defined(AK_OS_MACOS)
-    TRY(collect_ref_tests(tests, ByteString::formatted("{}/Screenshot", app.test_root_path)));
+    TRY(collect_ref_tests(tests, MUST(String::formatted("{}/Screenshot", app.test_root_path))));
 #endif
 
     tests.remove_all_matching([&](auto const& test) {

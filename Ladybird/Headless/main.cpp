@@ -7,7 +7,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/LexicalPath.h>
 #include <AK/Platform.h>
 #include <AK/String.h>
@@ -66,7 +65,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     auto app = Ladybird::Application::create(arguments, "about:newtab"sv);
     TRY(app->launch_services());
 
-    Core::ResourceImplementation::install(make<Core::ResourceImplementationFile>(MUST(String::from_byte_string(app->resources_folder))));
+    Core::ResourceImplementation::install(make<Core::ResourceImplementationFile>(app->resources_folder));
 
     auto theme_path = LexicalPath::join(app->resources_folder, "themes"sv, "Default.ini"sv);
     auto theme = TRY(Gfx::load_system_theme(theme_path.string()));

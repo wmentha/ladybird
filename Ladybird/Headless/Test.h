@@ -7,7 +7,6 @@
 #pragma once
 
 #include <AK/Assertions.h>
-#include <AK/ByteString.h>
 #include <AK/Error.h>
 #include <AK/RefPtr.h>
 #include <AK/String.h>
@@ -54,8 +53,8 @@ static constexpr StringView test_result_to_string(TestResult result)
 struct Test {
     TestMode mode;
 
-    ByteString input_path {};
-    ByteString expectation_path {};
+    String input_path {};
+    String expectation_path {};
 
     UnixDateTime start_time {};
     UnixDateTime end_time {};

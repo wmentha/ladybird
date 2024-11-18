@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Error.h>
 #include <AK/NonnullOwnPtr.h>
 #include <AK/RefPtr.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 #include <LibGfx/Size.h>
 #include <LibImageDecoderClient/Client.h>
@@ -49,15 +49,15 @@ public:
     }
 
     int screenshot_timeout { 1 };
-    ByteString resources_folder;
+    String resources_folder;
     bool dump_failed_ref_tests { false };
     bool dump_layout_tree { false };
     bool dump_text { false };
     bool dump_gc_graph { false };
     bool is_layout_test_mode { false };
     size_t test_concurrency { 1 };
-    ByteString test_root_path;
-    ByteString test_glob;
+    String test_root_path;
+    String test_glob;
     bool test_dry_run { false };
     bool rebaseline { false };
     bool log_slowest_tests { false };
