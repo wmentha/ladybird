@@ -105,7 +105,7 @@ ErrorOr<NonnullRefPtr<Client>> bind_service(void (*bind_method)(int))
 
 static ErrorOr<void> load_content_filters()
 {
-    auto file_or_error = Core::File::open(ByteString::formatted("{}/res/ladybird/default-config/BrowserContentFilters.txt", s_ladybird_resource_root), Core::File::OpenMode::Read);
+    auto file_or_error = Core::File::open(MUST(String::formatted("{}/res/ladybird/default-config/BrowserContentFilters.txt", s_ladybird_resource_root)), Core::File::OpenMode::Read);
     if (file_or_error.is_error())
         return file_or_error.release_error();
 

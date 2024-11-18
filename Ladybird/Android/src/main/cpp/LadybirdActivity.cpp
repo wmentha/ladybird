@@ -6,11 +6,11 @@
 
 #include "ALooperEventLoopImplementation.h"
 #include "JNIHelpers.h"
-#include <AK/ByteString.h>
 #include <AK/Format.h>
 #include <AK/HashMap.h>
 #include <AK/LexicalPath.h>
 #include <AK/OwnPtr.h>
+#include <AK/String.h>
 #include <Ladybird/Utilities.h>
 #include <LibArchive/TarStream.h>
 #include <LibCore/DirIterator.h>
@@ -22,7 +22,7 @@
 #include <LibWebView/Application.h>
 #include <jni.h>
 
-static ErrorOr<void> extract_tar_archive(String archive_file, ByteString output_directory);
+static ErrorOr<void> extract_tar_archive(String archive_file, String output_directory);
 
 JavaVM* global_vm;
 static OwnPtr<WebView::Application> s_application;
@@ -121,29 +121,29 @@ Java_org_serenityos_ladybird_LadybirdActivity_disposeNativeCode(JNIEnv* env, job
     delete &Core::EventLoopManager::the();
 }
 
-ErrorOr<void> extract_tar_archive(String archive_file, ByteString output_directory)
+ErrorOr<void> extract_tar_archive(String archive_file, String output_directory)
 {
     constexpr size_t buffer_size = 4096;
 
     auto file = TRY(Core::InputBufferedFile::create(TRY(Core::File::open(archive_file, Core::File::OpenMode::Read))));
 
-    ByteString old_pwd = TRY(Core::System::getcwd());
+    String old_pwd = TRY(Core::System::getcwd());
 
     TRY(Core::System::chdir(output_directory));
     ScopeGuard go_back = [&old_pwd] { MUST(Core::System::chdir(old_pwd)); };
 
     auto tar_stream = TRY(Archive::TarInputStream::construct(move(file)));
 
-    HashMap<ByteString, ByteString> global_overrides;
-    HashMap<ByteString, ByteString> local_overrides;
+    HashMap<String, String> global_overrides;
+    HashMap<String, String> local_overrides;
 
-    auto get_override = [&](StringView key) -> Optional<ByteString> {
-        Optional<ByteString> maybe_local = local_overrides.get(key);
+    auto get_override = [&](StringView key) -> Optional<String> {
+        Optional<String> maybe_local = local_overrides.get(key);
 
         if (maybe_local.has_value())
             return maybe_local;
 
-        Optional<ByteString> maybe_global = global_overrides.get(key);
+        Optional<String> maybe_global = global_overrides.get(key);
 
         if (maybe_global.has_value())
             return maybe_global;
@@ -195,7 +195,7 @@ ErrorOr<void> extract_tar_archive(String archive_file, ByteString output_directo
                 long_name.append(reinterpret_cast<char*>(slice.data()), slice.size());
             }
 
-            local_overrides.set("path", long_name.to_byte_string());
+            local_overrides.set("path", MUST(long_name.to_string()));
             TRY(tar_stream->advance());
             continue;
         }
@@ -207,9 +207,9 @@ ErrorOr<void> extract_tar_archive(String archive_file, ByteString output_directo
         LexicalPath path = LexicalPath(header.filename());
         if (!header.prefix().is_empty())
             path = path.prepend(header.prefix());
-        ByteString filename = get_override("path"sv).value_or(path.string());
+        String filename = get_override("path"sv).value_or(path.string());
 
-        ByteString absolute_path = TRY(FileSystem::absolute_path(filename));
+        String absolute_path = TRY(FileSystem::absolute_path(filename));
         auto parent_path = LexicalPath(absolute_path).parent();
         auto header_mode = TRY(header.mode());
 
