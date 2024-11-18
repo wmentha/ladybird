@@ -17,9 +17,9 @@
 #include <LibWeb/WebDriver/Capabilities.h>
 #include <WebDriver/Client.h>
 
-static Vector<ByteString> certificates;
+static Vector<String> certificates;
 
-static ErrorOr<pid_t> launch_process(StringView application, ReadonlySpan<ByteString> arguments)
+static ErrorOr<pid_t> launch_process(StringView application, ReadonlySpan<String> arguments)
 {
     auto paths = TRY(get_paths_for_helper_process(application));
 
@@ -33,36 +33,36 @@ static ErrorOr<pid_t> launch_process(StringView application, ReadonlySpan<ByteSt
     return result;
 }
 
-static Vector<ByteString> create_arguments(ByteString const& socket_path, bool force_cpu_painting)
+static Vector<String> create_arguments(String const& socket_path, bool force_cpu_painting)
 {
-    Vector<ByteString> arguments {
-        "--webdriver-content-path"sv,
+    Vector<String> arguments {
+        "--webdriver-content-path"_string,
         socket_path,
     };
 
-    Vector<ByteString> certificate_args;
+    Vector<String> certificate_args;
     for (auto const& certificate : certificates) {
-        certificate_args.append(ByteString::formatted("--certificate={}", certificate));
+        certificate_args.append(MUST(String::formatted("--certificate={}", certificate)));
         arguments.append(certificate_args.last().view().characters_without_null_termination());
     }
 
-    arguments.append("--allow-popups"sv);
-    arguments.append("--force-new-process"sv);
-    arguments.append("--enable-autoplay"sv);
+    arguments.append("--allow-popups"_string);
+    arguments.append("--force-new-process"_string);
+    arguments.append("--enable-autoplay"_string);
     if (force_cpu_painting)
-        arguments.append("--force-cpu-painting"sv);
+        arguments.append("--force-cpu-painting"_string);
 
-    arguments.append("about:blank"sv);
+    arguments.append("about:blank"_string);
     return arguments;
 }
 
-static ErrorOr<pid_t> launch_browser(ByteString const& socket_path, bool force_cpu_painting)
+static ErrorOr<pid_t> launch_browser(String const& socket_path, bool force_cpu_painting)
 {
     auto arguments = create_arguments(socket_path, force_cpu_painting);
     return launch_process("Ladybird"sv, arguments.span());
 }
 
-static ErrorOr<pid_t> launch_headless_browser(ByteString const& socket_path, bool force_cpu_painting)
+static ErrorOr<pid_t> launch_headless_browser(String const& socket_path, bool force_cpu_painting)
 {
     auto arguments = create_arguments(socket_path, force_cpu_painting);
     return launch_process("headless-browser"sv, arguments.span());
@@ -100,7 +100,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
     Web::WebDriver::set_default_interface_mode(headless ? Web::WebDriver::InterfaceMode::Headless : Web::WebDriver::InterfaceMode::Graphical);
 
-    auto webdriver_socket_path = ByteString::formatted("{}/webdriver", TRY(Core::StandardPaths::runtime_directory()));
+    auto webdriver_socket_path = MUST(String::formatted("{}/webdriver", TRY(Core::StandardPaths::runtime_directory())));
     TRY(Core::Directory::create(webdriver_socket_path, Core::Directory::CreateDirectories::Yes));
 
     Core::EventLoop loop;
@@ -120,11 +120,11 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
             return;
         }
 
-        auto launch_browser_callback = [&](ByteString const& socket_path) {
+        auto launch_browser_callback = [&](String const& socket_path) {
             return launch_browser(socket_path, force_cpu_painting);
         };
 
-        auto launch_headless_browser_callback = [&](ByteString const& socket_path) {
+        auto launch_headless_browser_callback = [&](String const& socket_path) {
             return launch_headless_browser(socket_path, force_cpu_painting);
         };
 
