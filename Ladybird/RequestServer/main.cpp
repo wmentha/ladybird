@@ -23,12 +23,12 @@
 #endif
 
 namespace RequestServer {
-extern ByteString g_default_certificate_path;
+extern String g_default_certificate_path;
 }
 
-static ErrorOr<ByteString> find_certificates(StringView serenity_resource_root)
+static ErrorOr<String> find_certificates(StringView serenity_resource_root)
 {
-    auto cert_path = ByteString::formatted("{}/ladybird/cacert.pem", serenity_resource_root);
+    auto cert_path = TRY(String::formatted("{}/ladybird/cacert.pem", serenity_resource_root));
     if (!FileSystem::exists(cert_path))
         return Error::from_string_literal("Don't know how to load certs!");
     return cert_path;
@@ -39,7 +39,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     AK::set_rich_debug_enabled(true);
 
     StringView serenity_resource_root;
-    Vector<ByteString> certificates;
+    Vector<String> certificates;
     StringView mach_server_name;
     bool wait_for_debugger = false;
 
