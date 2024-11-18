@@ -338,7 +338,7 @@ static constexpr CGFloat const WINDOW_HEIGHT = 800;
                          forwardNavigationEnabled:forward_enabled];
 }
 
-- (void)onTitleChange:(ByteString const&)title
+- (void)onTitleChange:(String const&)title
 {
     [[self tabController] onTitleChange:title];
 
