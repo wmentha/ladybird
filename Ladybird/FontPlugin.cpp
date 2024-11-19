@@ -6,7 +6,6 @@
  */
 
 #include "FontPlugin.h"
-#include <AK/ByteString.h>
 #include <AK/String.h>
 #include <AK/TypeCasts.h>
 #include <LibCore/Resource.h>

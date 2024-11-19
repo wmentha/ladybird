@@ -41,14 +41,14 @@ public:
     };
     Function<void(BackingStoresMessage)> on_receive_backing_stores;
 
-    ByteString const& server_port_name() const { return m_server_port_name; }
+    String const& server_port_name() const { return m_server_port_name; }
 
 private:
     void thread_loop();
     ErrorOr<void> allocate_server_port();
 
     NonnullRefPtr<Threading::Thread> m_thread;
-    ByteString const m_server_port_name;
+    String const m_server_port_name;
     Core::MachPort m_server_port_recv_right;
     Core::MachPort m_server_port_send_right;
 

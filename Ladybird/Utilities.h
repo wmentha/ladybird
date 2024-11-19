@@ -7,16 +7,15 @@
 
 #pragma once
 
-#include <AK/ByteString.h>
 #include <AK/Error.h>
 #include <AK/String.h>
 #include <AK/Vector.h>
 
 void platform_init();
 void copy_default_config_files(StringView config_path);
-ErrorOr<ByteString> application_directory();
-ErrorOr<Vector<ByteString>> get_paths_for_helper_process(StringView process_name);
+ErrorOr<String> application_directory();
+ErrorOr<Vector<String>> get_paths_for_helper_process(StringView process_name);
 
-extern ByteString s_ladybird_resource_root;
-Optional<ByteString const&> mach_server_name();
-void set_mach_server_name(ByteString name);
+extern String s_ladybird_resource_root;
+Optional<String const&> mach_server_name();
+void set_mach_server_name(String name);

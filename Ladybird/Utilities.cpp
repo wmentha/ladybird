@@ -25,23 +25,23 @@ constexpr auto libexec_path = STRINGIFY(LADYBIRD_LIBEXECDIR);
 constexpr auto libexec_path = "libexec"sv;
 #endif
 
-ByteString s_ladybird_resource_root;
+String s_ladybird_resource_root;
 
-Optional<ByteString> s_mach_server_name;
+Optional<String> s_mach_server_name;
 
-Optional<ByteString const&> mach_server_name()
+Optional<String const&> mach_server_name()
 {
     if (s_mach_server_name.has_value())
         return *s_mach_server_name;
     return {};
 }
 
-void set_mach_server_name(ByteString name)
+void set_mach_server_name(String name)
 {
     s_mach_server_name = move(name);
 }
 
-ErrorOr<ByteString> application_directory()
+ErrorOr<String> application_directory()
 {
     auto current_executable_path = TRY(Core::System::current_executable_path());
     return LexicalPath::dirname(current_executable_path);
@@ -65,7 +65,7 @@ void platform_init()
         auto home = Core::Environment::get("XDG_CONFIG_HOME"sv)
                         .value_or_lazy_evaluated_optional([]() { return Core::Environment::get("HOME"sv); });
         if (home.has_value()) {
-            auto home_lagom = ByteString::formatted("{}/.lagom", home);
+            auto home_lagom = MUST(String::formatted("{}/.lagom", home));
             if (FileSystem::is_directory(home_lagom))
                 return home_lagom;
         }
@@ -76,7 +76,7 @@ void platform_init()
         return find_prefix(LexicalPath(app_dir)).append("share/Lagom"sv).string();
 #endif
     }();
-    Core::ResourceImplementation::install(make<Core::ResourceImplementationFile>(MUST(String::from_byte_string(s_ladybird_resource_root))));
+    Core::ResourceImplementation::install(make<Core::ResourceImplementationFile>());
 }
 
 void copy_default_config_files(StringView config_path)
@@ -86,7 +86,7 @@ void copy_default_config_files(StringView config_path)
     auto config_resources = MUST(Core::Resource::load_from_uri("resource://ladybird/default-config"sv));
 
     config_resources->for_each_descendant_file([config_path](Core::Resource const& resource) -> IterationDecision {
-        auto file_path = ByteString::formatted("{}/{}", config_path, resource.filename());
+        auto file_path = MUST(String::formatted("{}/{}", config_path, resource.filename()));
 
         if (Core::System::stat(file_path).is_error()) {
             auto file = MUST(Core::File::open(file_path, Core::File::OpenMode::Write));
@@ -97,18 +97,18 @@ void copy_default_config_files(StringView config_path)
     });
 }
 
-ErrorOr<Vector<ByteString>> get_paths_for_helper_process(StringView process_name)
+ErrorOr<Vector<String>> get_paths_for_helper_process(StringView process_name)
 {
     auto application_path = TRY(application_directory());
-    Vector<ByteString> paths;
+    Vector<String> paths;
 
 #if !defined(AK_OS_MACOS)
     auto prefix = find_prefix(LexicalPath(application_path));
     TRY(paths.try_append(LexicalPath::join(prefix.string(), libexec_path, process_name).string()));
     TRY(paths.try_append(LexicalPath::join(prefix.string(), "bin"sv, process_name).string()));
 #endif
-    TRY(paths.try_append(ByteString::formatted("{}/{}", application_path, process_name)));
-    TRY(paths.try_append(ByteString::formatted("./{}", process_name)));
+    TRY(paths.try_append(MUST(String::formatted("{}/{}", application_path, process_name))));
+    TRY(paths.try_append(MUST(String::formatted("./{}", process_name))));
     // NOTE: Add platform-specific paths here
     return paths;
 }
