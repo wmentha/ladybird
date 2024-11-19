@@ -114,7 +114,7 @@ TEST_CASE(bool_option)
 
 TEST_CASE(string_option)
 {
-    ByteString string_option;
+    String string_option;
 
     // short option
     auto parser_result = run_parser({ "app"sv, "-d"sv, "foo"sv }, [&](auto& parser) {
@@ -149,7 +149,7 @@ TEST_CASE(string_option)
 TEST_CASE(positional_string_argument)
 {
     // Single required string argument
-    ByteString name = "";
+    String name = ""_string;
     auto parser_result = run_parser({ "app"sv, "buggie"sv }, [&](auto& parser) {
         parser.add_positional_argument(name, "name", "name", Core::ArgsParser::Required::Yes);
     });
@@ -358,8 +358,8 @@ TEST_CASE(combination_of_bool_and_string_short_options_with_positional_vector_st
     // Expected: all arguments fill as given
     bool bool_opt1 = false;
     bool bool_opt2 = false;
-    ByteString string_opt1;
-    ByteString string_opt2;
+    String string_opt1;
+    String string_opt2;
     Vector<StringView> positionals;
 
     auto parser_result = run_parser({ "app"sv, "-b"sv, "-c"sv, "-d"sv, "foo"sv, "-e"sv, "bar"sv, "one"sv }, [&](auto& parser) {
