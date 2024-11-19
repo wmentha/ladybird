@@ -68,12 +68,12 @@ TEST_CASE(dictionary_use_after_uncompressed_block)
 
 static void run_test(StringView const file_name)
 {
-    ByteString path = ByteString::formatted("brotli-test-files/{}", file_name);
+    String path = MUST(String::formatted("brotli-test-files/{}", file_name));
 
     auto cmp_file = MUST(Core::File::open(path, Core::File::OpenMode::Read));
     auto cmp_data = MUST(cmp_file->read_until_eof());
 
-    ByteString path_compressed = ByteString::formatted("{}.br", path);
+    String path_compressed = MUST(String::formatted("{}.br", path));
 
     auto file = MUST(Core::File::open(path_compressed, Core::File::OpenMode::Read));
     auto brotli_stream = Compress::BrotliDecompressionStream { MaybeOwned<Stream> { *file } };
@@ -134,9 +134,9 @@ TEST_CASE(brotli_single_x)
 
 TEST_CASE(brotli_decompress_zero_one_bin)
 {
-    ByteString path = "brotli-test-files/zero-one.bin";
+    String path = "brotli-test-files/zero-one.bin"_string;
 
-    ByteString path_compressed = ByteString::formatted("{}.br", path);
+    String path_compressed = MUST(String::formatted("{}.br", path));
 
     auto file = MUST(Core::File::open(path_compressed, Core::File::OpenMode::Read));
     auto brotli_stream = Compress::BrotliDecompressionStream { MaybeOwned<Stream> { *file } };
