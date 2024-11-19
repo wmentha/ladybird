@@ -5,11 +5,11 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/Format.h>
 #include <AK/JsonObject.h>
 #include <AK/Result.h>
 #include <AK/ScopeGuard.h>
+#include <AK/String.h>
 #include <AK/Vector.h>
 #include <LibCore/ArgsParser.h>
 #include <LibCore/File.h>
@@ -32,9 +32,9 @@
 #    include <sys/prctl.h>
 #endif
 
-static ByteString s_current_test = "";
+static String s_current_test = ""_string;
 static bool s_parse_only = false;
-static ByteString s_harness_file_directory;
+static String s_harness_file_directory;
 static bool s_automatic_harness_detection_mode = false;
 
 enum class NegativePhase {
@@ -46,9 +46,9 @@ enum class NegativePhase {
 
 struct TestError {
     NegativePhase phase { NegativePhase::ParseOrEarly };
-    ByteString type;
-    ByteString details;
-    ByteString harness_file;
+    String type;
+    String details;
+    String harness_file;
 };
 
 using ScriptOrModuleProgram = Variant<JS::NonnullGCPtr<JS::Script>, JS::NonnullGCPtr<JS::SourceTextModule>>;
@@ -60,8 +60,8 @@ static Result<ScriptOrModuleProgram, TestError> parse_program(JS::Realm& realm, 
     if (script_or_error.is_error()) {
         return TestError {
             NegativePhase::ParseOrEarly,
-            "SyntaxError",
-            script_or_error.error()[0].to_byte_string(),
+            "SyntaxError"_string,
+            script_or_error.error()[0].to_string(),
             ""
         };
     }
@@ -92,39 +92,39 @@ static Result<void, TestError> run_program(InterpreterT& interpreter, ScriptOrMo
 
             auto name = object.get_without_side_effects("name");
             if (!name.is_empty() && !name.is_accessor()) {
-                error.type = name.to_string_without_side_effects().to_byte_string();
+                error.type = name.to_string_without_side_effects();
             } else {
                 auto constructor = object.get_without_side_effects("constructor");
                 if (constructor.is_object()) {
                     name = constructor.as_object().get_without_side_effects("name");
                     if (!name.is_undefined())
-                        error.type = name.to_string_without_side_effects().to_byte_string();
+                        error.type = name.to_string_without_side_effects();
                 }
             }
 
             auto message = object.get_without_side_effects("message");
             if (!message.is_empty() && !message.is_accessor())
-                error.details = message.to_string_without_side_effects().to_byte_string();
+                error.details = message.to_string_without_side_effects();
         }
         if (error.type.is_empty())
-            error.type = error_value.to_string_without_side_effects().to_byte_string();
+            error.type = error_value.to_string_without_side_effects();
         return error;
     }
     return {};
 }
 
-static HashMap<ByteString, ByteString> s_cached_harness_files;
+static HashMap<String, String> s_cached_harness_files;
 
 static Result<StringView, TestError> read_harness_file(StringView harness_file)
 {
     auto cache = s_cached_harness_files.find(harness_file);
     if (cache == s_cached_harness_files.end()) {
-        auto file_or_error = Core::File::open(ByteString::formatted("{}{}", s_harness_file_directory, harness_file), Core::File::OpenMode::Read);
+        auto file_or_error = Core::File::open(MUST(String::formatted("{}{}", s_harness_file_directory, harness_file)), Core::File::OpenMode::Read);
         if (file_or_error.is_error()) {
             return TestError {
                 NegativePhase::Harness,
-                "filesystem",
-                ByteString::formatted("Could not open file: {}", harness_file),
+                "filesystem"_string,
+                MUST(String::formatted("Could not open file: {}", harness_file)),
                 harness_file
             };
         }
@@ -133,14 +133,14 @@ static Result<StringView, TestError> read_harness_file(StringView harness_file)
         if (contents_or_error.is_error()) {
             return TestError {
                 NegativePhase::Harness,
-                "filesystem",
-                ByteString::formatted("Could not read file: {}", harness_file),
+                "filesystem"_string,
+                MUST(String::formatted("Could not read file: {}", harness_file)),
                 harness_file
             };
         }
 
         StringView contents_view = contents_or_error.value();
-        s_cached_harness_files.set(harness_file, contents_view.to_byte_string());
+        s_cached_harness_files.set(harness_file, contents_view.to_string());
         cache = s_cached_harness_files.find(harness_file);
         VERIFY(cache != s_cached_harness_files.end());
     }
@@ -205,8 +205,8 @@ static Result<void, TestError> run_test(StringView source, StringView filepath, 
         if (parser.has_errors()) {
             return TestError {
                 NegativePhase::ParseOrEarly,
-                "SyntaxError",
-                parser.errors()[0].to_byte_string(),
+                "SyntaxError"_string,
+                parser.errors()[0].to_string(),
                 ""
             };
         }
@@ -250,14 +250,14 @@ static Result<void, TestError> run_test(StringView source, StringView filepath, 
     return run_program(vm->bytecode_interpreter(), program_or_error.value());
 }
 
-static Result<TestMetadata, ByteString> extract_metadata(StringView source)
+static Result<TestMetadata, String> extract_metadata(StringView source)
 {
     auto lines = source.lines();
 
     TestMetadata metadata;
 
     bool parsing_negative = false;
-    ByteString failed_message;
+    String failed_message;
 
     auto parse_list = [&](StringView line) {
         auto start = line.find('[');
@@ -268,7 +268,7 @@ static Result<TestMetadata, ByteString> extract_metadata(StringView source)
 
         auto end = line.find_last(']');
         if (!end.has_value() || end.value() <= start.value()) {
-            failed_message = ByteString::formatted("Can't parse list in '{}'", line);
+            failed_message = MUST(String::formatted("Can't parse list in '{}'", line));
             return items;
         }
 
@@ -281,7 +281,7 @@ static Result<TestMetadata, ByteString> extract_metadata(StringView source)
     auto second_word = [&](StringView line) {
         auto separator = line.find(' ');
         if (!separator.has_value() || separator.value() >= (line.length() - 1u)) {
-            failed_message = ByteString::formatted("Can't parse value after space in '{}'", line);
+            failed_message = MUST(String::formatted("Can't parse value after space in '{}'", line));
             return ""sv;
         }
         return line.substring_view(separator.value() + 1);
@@ -335,7 +335,7 @@ static Result<TestMetadata, ByteString> extract_metadata(StringView source)
                     metadata.phase = NegativePhase::Runtime;
                 } else {
                     has_phase = false;
-                    failed_message = ByteString::formatted("Unknown negative phase: {}", phase);
+                    failed_message = MUST(String::formatted("Unknown negative phase: {}", phase));
                     break;
                 }
             } else if (line.starts_with("type:"sv)) {
@@ -392,7 +392,7 @@ static Result<TestMetadata, ByteString> extract_metadata(StringView source)
     }
 
     if (failed_message.is_empty())
-        failed_message = ByteString::formatted("Never reached end of comment '---*/'");
+        failed_message = "Never reached end of comment '---*/'"_string;
 
     return failed_message;
 }
@@ -416,7 +416,7 @@ static bool verify_test(Result<void, TestError>& result, TestMetadata const& met
     }
 
     if (metadata.is_async && output.has("output"sv)) {
-        auto output_messages = output.get_byte_string("output"sv);
+        auto output_messages = output.get_string("output"sv);
         VERIFY(output_messages.has_value());
         if (output_messages->contains("AsyncTestFailure:InternalError: TODO("sv)) {
             output.set("todo_error", true);
@@ -467,7 +467,7 @@ static bool verify_test(Result<void, TestError>& result, TestMetadata const& met
 
     JsonObject expected_error_object;
     expected_error_object.set("phase", phase_to_string(metadata.phase));
-    expected_error_object.set("type", metadata.type.to_byte_string());
+    expected_error_object.set("type", metadata.type.to_string());
 
     expected_error = expected_error_object;
 
@@ -506,7 +506,7 @@ static bool verify_test(Result<void, TestError>& result, TestMetadata const& met
     return error.phase == metadata.phase && error.type == metadata.type;
 }
 
-static bool extract_harness_directory(ByteString const& test_file_path)
+static bool extract_harness_directory(String const& test_file_path)
 {
     auto test_directory_index = test_file_path.find("test/"sv);
     if (!test_directory_index.has_value()) {
@@ -514,7 +514,7 @@ static bool extract_harness_directory(ByteString const& test_file_path)
         return false;
     }
 
-    s_harness_file_directory = ByteString::formatted("{}harness/", test_file_path.substring_view(0, test_directory_index.value()));
+    s_harness_file_directory = MUST(String::formatted("{}harness/", test_file_path.substring_from_byte_offset(0, test_directory_index.value())));
     return true;
 }
 
@@ -532,7 +532,7 @@ static bool g_in_assert = false;
         assert_fail_result.set("assert_fail", true);
         assert_fail_result.set("result", "assert_fail");
         assert_fail_result.set("output", assert_failed_message);
-        outln(saved_stdout_fd, "RESULT {}{}", assert_fail_result.to_byte_string(), '\0');
+        outln(saved_stdout_fd, "RESULT {}{}", assert_fail_result.to_string(), '\0');
         // (Attempt to) Ensure that messages are written before quitting.
         fflush(saved_stdout_fd);
         fflush(stderr);
@@ -557,7 +557,7 @@ extern "C" __attribute__((__noreturn__)) void __assert_fail(char const* assertio
 extern "C" __attribute__((__noreturn__)) void __assert_fail(char const* assertion, char const* file, unsigned int line, char const* function)
 #endif
 {
-    auto full_message = ByteString::formatted("{}:{}: {}: Assertion `{}' failed.", file, line, function, assertion);
+    auto full_message = MUST(String::formatted("{}:{}: {}: Assertion `{}' failed.", file, line, function, assertion));
     handle_failed_assert(full_message.characters());
 }
 #pragma pop_macro("NDEBUG")
@@ -600,7 +600,7 @@ int main(int argc, char** argv)
     if (s_harness_file_directory.is_empty()) {
         s_automatic_harness_detection_mode = true;
     } else if (!s_harness_file_directory.ends_with('/')) {
-        s_harness_file_directory = ByteString::formatted("{}/", s_harness_file_directory);
+        s_harness_file_directory = MUST(String::formatted("{}/", s_harness_file_directory));
     }
 
     if (timeout <= 0) {
@@ -653,10 +653,10 @@ int main(int argc, char** argv)
     auto collect_output = [&] {
         fflush(stdout);
         auto nread = read(stdout_pipe[0], buffer, BUFFER_SIZE);
-        Optional<ByteString> value;
+        Optional<String> value;
 
         if (nread > 0) {
-            value = ByteString { buffer, static_cast<size_t>(nread) };
+            value = String { buffer, static_cast<size_t>(nread) };
             while (nread > 0) {
                 nread = read(stdout_pipe[0], buffer, BUFFER_SIZE);
             }
@@ -709,7 +709,7 @@ int main(int argc, char** argv)
 
         count++;
 
-        ByteString source_with_strict;
+        String source_with_strict;
         static StringView use_strict = "'use strict';\n"sv;
         static size_t strict_length = use_strict.length();
 
@@ -723,17 +723,18 @@ int main(int argc, char** argv)
             StringBuilder builder { contents.size() + strict_length };
             builder.append(use_strict);
             builder.append(contents);
-            source_with_strict = builder.to_byte_string();
+            source_with_strict = builder.to_string();
         }
 
-        StringView with_strict = source_with_strict.view();
-        StringView original_contents = source_with_strict.substring_view(strict_length);
+        StringView with_strict = source_with_strict.bytes_as_string_view();
+        auto original_contents_string = source_with_strict.substring_from_byte_offset(0, strict_length);
+        StringView original_contents = original_contents_string;
 
         JsonObject result_object;
         result_object.set("test", path);
 
         ScopeGuard output_guard = [&] {
-            outln(saved_stdout_fd, "RESULT {}{}", result_object.to_byte_string(), '\0');
+            outln(saved_stdout_fd, "RESULT {}{}", result_object.to_string(), '\0');
             fflush(saved_stdout_fd);
         };
 
