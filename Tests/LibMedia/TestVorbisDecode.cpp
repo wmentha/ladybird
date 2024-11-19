@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <AK/String.h>
 #include <LibMedia/Audio/Loader.h>
 #include <LibTest/TestCase.h>
 
@@ -12,7 +13,7 @@ static void run_test(StringView file_name, int const num_samples, int const chan
     constexpr auto format = "ogg";
     constexpr int bits = 32;
 
-    ByteString in_path = ByteString::formatted("vorbis/{}", file_name);
+    String in_path = MUST(String::formatted("vorbis/{}", file_name));
 
     auto loader = TRY_OR_FAIL(Audio::Loader::create(in_path));
 
