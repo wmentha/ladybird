@@ -13,7 +13,7 @@
 
 TEST_CASE(catch_all)
 {
-    ByteString pattern = "^.*$";
+    String pattern = "^.*$"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -24,7 +24,7 @@ TEST_CASE(catch_all)
 
 TEST_CASE(simple_start)
 {
-    ByteString pattern = "^hello friends";
+    String pattern = "^hello friends"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -37,7 +37,7 @@ TEST_CASE(simple_start)
 
 TEST_CASE(simple_end)
 {
-    ByteString pattern = ".*hello\\.\\.\\. there$";
+    String pattern = ".*hello\\.\\.\\. there$"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -51,7 +51,7 @@ TEST_CASE(simple_end)
 
 TEST_CASE(simple_period)
 {
-    ByteString pattern = "hello.";
+    String pattern = "hello."_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -65,7 +65,7 @@ TEST_CASE(simple_period)
 
 TEST_CASE(simple_period_end)
 {
-    ByteString pattern = "hello.$";
+    String pattern = "hello.$"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED | REG_NOSUB), REG_NOERR);
@@ -79,7 +79,7 @@ TEST_CASE(simple_period_end)
 
 TEST_CASE(simple_escaped)
 {
-    ByteString pattern = "hello\\.";
+    String pattern = "hello\\."_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -91,7 +91,7 @@ TEST_CASE(simple_escaped)
 
 TEST_CASE(simple_period2_end)
 {
-    ByteString pattern = ".*hi... there$";
+    String pattern = ".*hi... there$"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -106,7 +106,7 @@ TEST_CASE(simple_period2_end)
 
 TEST_CASE(simple_plus)
 {
-    ByteString pattern = "a+";
+    String pattern = "a+"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED | REG_NOSUB), REG_NOERR);
@@ -120,7 +120,7 @@ TEST_CASE(simple_plus)
 
 TEST_CASE(simple_questionmark)
 {
-    ByteString pattern = "da?d";
+    String pattern = "da?d"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -137,7 +137,7 @@ TEST_CASE(simple_questionmark)
 
 TEST_CASE(simple_questionmark_matchall)
 {
-    ByteString pattern = "da?d";
+    String pattern = "da?d"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -170,12 +170,12 @@ TEST_CASE(simple_questionmark_matchall)
 
 TEST_CASE(character_class)
 {
-    ByteString pattern = "[[:alpha:]]";
+    String pattern = "[[:alpha:]]"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
 
-    ByteString haystack = "[Window]\nOpacity=255\nAudibleBeep=0\n";
+    String haystack = "[Window]\nOpacity=255\nAudibleBeep=0\n"_string;
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
     EXPECT_EQ(regexec(&regex, haystack.characters(), num_matches, matches, 0), REG_NOMATCH);
     EXPECT_EQ(matches[0].rm_cnt, 0);
@@ -189,12 +189,12 @@ TEST_CASE(character_class)
 
 TEST_CASE(character_class2)
 {
-    ByteString pattern = "[[:alpha:]]*=([[:digit:]]*)|\\[(.*)\\]";
+    String pattern = "[[:alpha:]]*=([[:digit:]]*)|\\[(.*)\\]"_string;
     regex_t regex;
     static constexpr int num_matches { 9 };
     regmatch_t matches[num_matches];
 
-    ByteString haystack = "[Window]\nOpacity=255\nAudibleBeep=0\n";
+    String haystack = "[Window]\nOpacity=255\nAudibleBeep=0\n"_string;
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED | REG_NEWLINE), REG_NOERR);
     EXPECT_EQ(regexec(&regex, haystack.characters(), num_matches, matches, 0), REG_NOERR);
 
@@ -203,8 +203,11 @@ TEST_CASE(character_class2)
     for (int i = 0; i < num_matches; ++i) {
         fprintf(stderr, "Matches[%i].rm_so: %li, .rm_eo: %li .rm_cnt: %li: ", i, matches[i].rm_so, matches[i].rm_eo, matches[i].rm_cnt);
         fprintf(stderr, "haystack length: %lu\n", haystack.length());
-        if (matches[i].rm_so != -1)
-            fprintf(stderr, "%s\n", haystack.substring_view(matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so).to_byte_string().characters());
+        if (matches[i].rm_so != -1) {
+            auto substring = MUST(hastack.substring_from_byte_offset(matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so));
+            auto data = substring.bytes().data();
+            fprintf(stderr, "%s\n", data);
+        }
     }
 #endif
 
@@ -235,7 +238,7 @@ TEST_CASE(character_class2)
 
 TEST_CASE(escaped_char_questionmark)
 {
-    ByteString pattern = "This\\.?And\\.?That";
+    String pattern = "This\\.?And\\.?That"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -249,7 +252,7 @@ TEST_CASE(escaped_char_questionmark)
 
 TEST_CASE(char_qualifier_asterisk)
 {
-    ByteString pattern = "regex*";
+    String pattern = "regex*"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -263,7 +266,7 @@ TEST_CASE(char_qualifier_asterisk)
 
 TEST_CASE(char_utf8)
 {
-    ByteString pattern = "😀";
+    String pattern = "😀"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -277,7 +280,7 @@ TEST_CASE(char_utf8)
 
 TEST_CASE(parens)
 {
-    ByteString pattern = "test(hello)test";
+    String pattern = "test(hello)test"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -297,7 +300,7 @@ TEST_CASE(parens)
 
 TEST_CASE(parser_error_parens)
 {
-    ByteString pattern = "test()test";
+    String pattern = "test()test"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -310,7 +313,7 @@ TEST_CASE(parser_error_parens)
 
 TEST_CASE(parser_error_special_characters_used_at_wrong_place)
 {
-    ByteString pattern;
+    String pattern;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -325,7 +328,7 @@ TEST_CASE(parser_error_special_characters_used_at_wrong_place)
         // First in ere
         b.clear();
         b.append(ch);
-        pattern = b.to_byte_string();
+        pattern = MUST(b.to_string());
         EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), error_code_to_check);
         EXPECT_EQ(regexec(&regex, "test", num_matches, matches, 0), error_code_to_check);
         regfree(&regex);
@@ -334,7 +337,7 @@ TEST_CASE(parser_error_special_characters_used_at_wrong_place)
         b.clear();
         b.append("a|"sv);
         b.append(ch);
-        pattern = b.to_byte_string();
+        pattern = MUST(b.to_string());
         EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), error_code_to_check);
         EXPECT_EQ(regexec(&regex, "test", num_matches, matches, 0), error_code_to_check);
         regfree(&regex);
@@ -343,7 +346,7 @@ TEST_CASE(parser_error_special_characters_used_at_wrong_place)
         b.clear();
         b.append('^');
         b.append(ch);
-        pattern = b.to_byte_string();
+        pattern = MUST(b.to_string());
         EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), error_code_to_check);
         EXPECT_EQ(regexec(&regex, "test", num_matches, matches, 0), error_code_to_check);
         regfree(&regex);
@@ -352,7 +355,7 @@ TEST_CASE(parser_error_special_characters_used_at_wrong_place)
         b.clear();
         b.append('$');
         b.append(ch);
-        pattern = b.to_byte_string();
+        pattern = MUST(b.to_string());
         EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), error_code_to_check);
         EXPECT_EQ(regexec(&regex, "test", num_matches, matches, 0), error_code_to_check);
         regfree(&regex);
@@ -362,7 +365,7 @@ TEST_CASE(parser_error_special_characters_used_at_wrong_place)
         b.append('(');
         b.append(ch);
         b.append(')');
-        pattern = b.to_byte_string();
+        pattern = MUST(b.to_string());
         EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), error_code_to_check);
         EXPECT_EQ(regexec(&regex, "test", num_matches, matches, 0), error_code_to_check);
         regfree(&regex);
@@ -371,7 +374,7 @@ TEST_CASE(parser_error_special_characters_used_at_wrong_place)
 
 TEST_CASE(parser_error_vertical_line_used_at_wrong_place)
 {
-    ByteString pattern;
+    String pattern;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -403,7 +406,7 @@ TEST_CASE(parser_error_vertical_line_used_at_wrong_place)
 
 TEST_CASE(parens_qualifier_questionmark)
 {
-    ByteString pattern = "test(hello)?test";
+    String pattern = "test(hello)?test"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -433,7 +436,7 @@ TEST_CASE(parens_qualifier_questionmark)
 
 TEST_CASE(parens_qualifier_asterisk)
 {
-    ByteString pattern = "test(hello)*test";
+    String pattern = "test(hello)*test"_string;
     regex_t regex;
     static constexpr int num_matches { 6 };
     regmatch_t matches[num_matches];
@@ -479,7 +482,7 @@ TEST_CASE(parens_qualifier_asterisk)
 
 TEST_CASE(parens_qualifier_asterisk_2)
 {
-    ByteString pattern = "test(.*)test";
+    String pattern = "test(.*)test"_string;
     regex_t regex;
     static constexpr int num_matches { 6 };
     regmatch_t matches[num_matches];
@@ -523,7 +526,7 @@ TEST_CASE(parens_qualifier_asterisk_2)
 
 TEST_CASE(mulit_parens_qualifier_too_less_result_values)
 {
-    ByteString pattern = "test(a)?(b)?(c)?test";
+    String pattern = "test(a)?(b)?(c)?test"_string;
     regex_t regex;
     static constexpr int num_matches { 4 };
     regmatch_t matches[num_matches];
@@ -587,7 +590,7 @@ TEST_CASE(mulit_parens_qualifier_too_less_result_values)
 
 TEST_CASE(multi_parens_qualifier_questionmark)
 {
-    ByteString pattern = "test(a)?(b)?(c)?test";
+    String pattern = "test(a)?(b)?(c)?test"_string;
     regex_t regex;
     static constexpr int num_matches { 8 };
     regmatch_t matches[num_matches];
@@ -651,7 +654,7 @@ TEST_CASE(multi_parens_qualifier_questionmark)
 
 TEST_CASE(simple_alternative)
 {
-    ByteString pattern = "test|hello|friends";
+    String pattern = "test|hello|friends"_string;
     regex_t regex;
     static constexpr int num_matches { 1 };
     regmatch_t matches[num_matches];
@@ -678,7 +681,7 @@ TEST_CASE(simple_alternative)
 
 TEST_CASE(alternative_match_groups)
 {
-    ByteString pattern = "test(a)?(b)?|hello ?(dear|my)? friends";
+    String pattern = "test(a)?(b)?|hello ?(dear|my)? friends"_string;
     regex_t regex;
     static constexpr int num_matches { 8 };
     regmatch_t matches[num_matches];
@@ -784,7 +787,7 @@ TEST_CASE(alternative_match_groups)
 
 TEST_CASE(parens_qualifier_exact)
 {
-    ByteString pattern = "(hello){3}";
+    String pattern = "(hello){3}"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -831,7 +834,7 @@ TEST_CASE(parens_qualifier_exact)
 
 TEST_CASE(parens_qualifier_minimum)
 {
-    ByteString pattern = "(hello){3,}";
+    String pattern = "(hello){3,}"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -889,7 +892,7 @@ TEST_CASE(parens_qualifier_minimum)
 
 TEST_CASE(parens_qualifier_maximum)
 {
-    ByteString pattern = "(hello){2,3}";
+    String pattern = "(hello){2,3}"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -946,7 +949,7 @@ TEST_CASE(parens_qualifier_maximum)
 
 TEST_CASE(char_qualifier_min_max)
 {
-    ByteString pattern = "c{3,30}";
+    String pattern = "c{3,30}"_string;
     regex_t regex;
     static constexpr int num_matches { 5 };
     regmatch_t matches[num_matches];
@@ -966,7 +969,7 @@ TEST_CASE(char_qualifier_min_max)
 
 TEST_CASE(simple_bracket_chars)
 {
-    ByteString pattern = "[abc]";
+    String pattern = "[abc]"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -980,7 +983,7 @@ TEST_CASE(simple_bracket_chars)
 
 TEST_CASE(simple_bracket_chars_inverse)
 {
-    ByteString pattern = "[^abc]";
+    String pattern = "[^abc]"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -994,7 +997,7 @@ TEST_CASE(simple_bracket_chars_inverse)
 
 TEST_CASE(simple_bracket_chars_range)
 {
-    ByteString pattern = "[a-d]";
+    String pattern = "[a-d]"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -1008,7 +1011,7 @@ TEST_CASE(simple_bracket_chars_range)
 
 TEST_CASE(simple_bracket_chars_range_inverse)
 {
-    ByteString pattern = "[^a-df-z]";
+    String pattern = "[^a-df-z]"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -1024,7 +1027,7 @@ TEST_CASE(simple_bracket_chars_range_inverse)
 
 TEST_CASE(bracket_character_class_uuid)
 {
-    ByteString pattern = "^([[:xdigit:]]{8})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{12})$";
+    String pattern = "^([[:xdigit:]]{8})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{12})$"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -1036,7 +1039,7 @@ TEST_CASE(bracket_character_class_uuid)
 
 TEST_CASE(simple_bracket_character_class_inverse)
 {
-    ByteString pattern = "[^[:digit:]]";
+    String pattern = "[^[:digit:]]"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -1050,7 +1053,7 @@ TEST_CASE(simple_bracket_character_class_inverse)
 
 TEST_CASE(email_address)
 {
-    ByteString pattern = "^[A-Z0-9a-z._%+-]{1,64}@(?:[A-Za-z0-9-]{1,63}\\.){1,125}[A-Za-z]{2,63}$";
+    String pattern = "^[A-Z0-9a-z._%+-]{1,64}@(?:[A-Za-z0-9-]{1,63}\\.){1,125}[A-Za-z]{2,63}$"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_NOERR);
@@ -1062,7 +1065,7 @@ TEST_CASE(email_address)
 
 TEST_CASE(error_message)
 {
-    ByteString pattern = "^[A-Z0-9[a-z._%+-]{1,64}@[A-Za-z0-9-]{1,63}\\.{1,125}[A-Za-z]{2,63}$";
+    String pattern = "^[A-Z0-9[a-z._%+-]{1,64}@[A-Za-z0-9-]{1,63}\\.{1,125}[A-Za-z]{2,63}$"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED), REG_EBRACK);
@@ -1070,7 +1073,7 @@ TEST_CASE(error_message)
     char buf[1024];
     size_t buflen = 1024;
     auto len = regerror(0, &regex, buf, buflen);
-    ByteString expected = "Error during parsing of regular expression:\n    ^[A-Z0-9[a-z._%+-]{1,64}@[A-Za-z0-9-]{1,63}\\.{1,125}[A-Za-z]{2,63}$\n             ^---- [ ] imbalance.";
+    String expected = "Error during parsing of regular expression:\n    ^[A-Z0-9[a-z._%+-]{1,64}@[A-Za-z0-9-]{1,63}\\.{1,125}[A-Za-z]{2,63}$\n             ^---- [ ] imbalance."_string;
     for (size_t i = 0; i < len; ++i) {
         EXPECT_EQ(buf[i], expected[i]);
     }
@@ -1080,7 +1083,7 @@ TEST_CASE(error_message)
 
 TEST_CASE(simple_ignorecase)
 {
-    ByteString pattern = "^hello friends";
+    String pattern = "^hello friends"_string;
     regex_t regex;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED | REG_NOSUB | REG_ICASE), REG_NOERR);
@@ -1098,8 +1101,8 @@ TEST_CASE(simple_ignorecase)
 
 TEST_CASE(simple_notbol_noteol)
 {
-    ByteString pattern = "^hello friends$";
-    ByteString pattern2 = "hello friends";
+    String pattern = "^hello friends$"_string;
+    String pattern2 = "hello friends"_string;
     regex_t regex, regex2;
 
     EXPECT_EQ(regcomp(&regex, pattern.characters(), REG_EXTENDED | REG_NOSUB | REG_ICASE), REG_NOERR);
