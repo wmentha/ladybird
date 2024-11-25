@@ -312,21 +312,21 @@ TEST_CASE(leading_whitespace)
 {
     URL::URL url { "   https://foo.com/"sv };
     EXPECT(url.is_valid());
-    EXPECT_EQ(url.to_byte_string(), "https://foo.com/");
+    EXPECT_EQ(MUST(url.to_string()), "https://foo.com/"_string);
 }
 
 TEST_CASE(trailing_whitespace)
 {
     URL::URL url { "https://foo.com/   "sv };
     EXPECT(url.is_valid());
-    EXPECT_EQ(url.to_byte_string(), "https://foo.com/");
+    EXPECT_EQ(MUST(url.to_string()), "https://foo.com/"_string);
 }
 
 TEST_CASE(leading_and_trailing_whitespace)
 {
     URL::URL url { "      https://foo.com/   "sv };
     EXPECT(url.is_valid());
-    EXPECT_EQ(url.to_byte_string(), "https://foo.com/");
+    EXPECT_EQ(MUST(url.to_string()), "https://foo.com/"_string);
 }
 
 TEST_CASE(unicode)
@@ -531,7 +531,7 @@ TEST_CASE(ascii_only_url)
         EXPECT(url.is_valid());
         EXPECT_EQ(url.scheme(), "http");
         EXPECT_EQ(MUST(url.serialized_host()), "example.com"sv);
-        EXPECT_EQ(url.to_byte_string(), "http://example.com/INDEX.HTML#FRAGMENT");
+        EXPECT_EQ(MUST(url.to_string()), "http://example.com/INDEX.HTML#FRAGMENT"_string);
     }
 
     {
@@ -540,7 +540,7 @@ TEST_CASE(ascii_only_url)
         EXPECT(url.is_valid());
         EXPECT_EQ(url.scheme(), "http");
         EXPECT_EQ(MUST(url.serialized_host()), "example.com"sv);
-        EXPECT_EQ(url.to_byte_string(), "http://example.com/iNdEx.HtMl#fRaGmEnT");
+        EXPECT_EQ(MUST(url.to_string()), "http://example.com/iNdEx.HtMl#fRaGmEnT"_string);
     }
 }
 
