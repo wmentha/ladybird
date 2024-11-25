@@ -229,7 +229,7 @@ TEST_CASE(regression)
     auto file_size = MUST(file->size());
     auto content = MUST(ByteBuffer::create_uninitialized(file_size));
     MUST(file->read_until_filled(content.bytes()));
-    ByteString file_contents { content.bytes() };
+    String file_contents { content.bytes_as_string_view() };
     auto tokens = run_tokenizer(file_contents);
     u32 hash = hash_tokens(tokens);
     EXPECT_EQ(hash, 3657343287u);
