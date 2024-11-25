@@ -21,7 +21,7 @@ TESTJS_GLOBAL_FUNCTION(read_binary_wasm_file, readBinaryWasmFile)
         return StringView { error_string, strlen(error_string) };
     };
 
-    auto filename = TRY(vm.argument(0).to_byte_string(vm));
+    auto filename = TRY(vm.argument(0).to_string(vm));
     auto file = Core::File::open(filename, Core::File::OpenMode::Read);
     if (file.is_error())
         return vm.throw_completion<JS::TypeError>(error_code_to_string(file.error().code()));
@@ -265,7 +265,7 @@ TESTJS_GLOBAL_FUNCTION(test_simd_vector, testSIMDVector)
                     return false;
                 continue;
             }
-            return vm.throw_completion<JS::TypeError>(ByteString::formatted("Bad SIMD float expectation: {}"sv, string));
+            return vm.throw_completion<JS::TypeError>(MUST(String::formatted("Bad SIMD float expectation: {}", string)));
         }
         u64 expect_value = expect.is_bigint() ? TRY(expect.to_bigint_uint64(vm)) : (u64)TRY(expect.to_index(vm));
         if (got != expect_value)
@@ -283,7 +283,7 @@ void WebAssemblyModule::initialize(JS::Realm& realm)
 
 JS_DEFINE_NATIVE_FUNCTION(WebAssemblyModule::get_export)
 {
-    auto name = TRY(vm.argument(0).to_byte_string(vm));
+    auto name = TRY(vm.argument(0).to_string(vm));
     auto this_value = vm.this_value();
     auto object = TRY(this_value.to_object(vm));
     if (!is<WebAssemblyModule>(*object))
