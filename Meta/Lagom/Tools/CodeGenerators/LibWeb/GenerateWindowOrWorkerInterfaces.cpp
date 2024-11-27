@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/LexicalPath.h>
 #include <AK/SourceGenerator.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <LibCore/ArgsParser.h>
 #include <LibCore/File.h>
@@ -15,11 +15,11 @@
 #include <LibMain/Main.h>
 
 static ErrorOr<void> add_to_interface_sets(IDL::Interface&, Vector<IDL::Interface&>& intrinsics, Vector<IDL::Interface&>& window_exposed, Vector<IDL::Interface&>& dedicated_worker_exposed, Vector<IDL::Interface&>& shared_worker_exposed);
-static ByteString s_error_string;
+static String s_error_string;
 
 struct LegacyConstructor {
-    ByteString name;
-    ByteString constructor_class;
+    String name;
+    String constructor_class;
 };
 
 static void consume_whitespace(GenericLexer& lexer)
@@ -52,7 +52,7 @@ static Optional<LegacyConstructor> const& lookup_legacy_constructor(IDL::Interfa
     consume_whitespace(function_lexer);
 
     auto name = function_lexer.consume_until([](auto ch) { return is_ascii_space(ch) || ch == '('; });
-    auto constructor_class = ByteString::formatted("{}Constructor", name);
+    auto constructor_class = MUST(String::formatted("{}Constructor", name));
 
     s_legacy_constructors.set(interface.name, LegacyConstructor { name, move(constructor_class) });
     return s_legacy_constructors.get(interface.name).value();
@@ -200,7 +200,7 @@ static ErrorOr<void> generate_exposed_interface_header(StringView class_name, St
     StringBuilder builder;
     SourceGenerator generator(builder);
 
-    generator.set("global_object_snake_name", ByteString(class_name).to_snakecase());
+    generator.set("global_object_snake_name", String(class_name).to_snakecase());
     generator.append(R"~~~(
 #pragma once
 
@@ -214,7 +214,7 @@ void add_@global_object_snake_name@_exposed_interfaces(JS::Object&);
 
 )~~~");
 
-    auto generated_header_path = LexicalPath(output_path).append(ByteString::formatted("{}ExposedInterfaces.h", class_name)).string();
+    auto generated_header_path = LexicalPath(output_path).append(MUST(String::formatted("{}ExposedInterfaces.h", class_name))).string();
     auto generated_header_file = TRY(Core::File::open(generated_header_path, Core::File::OpenMode::Write));
     TRY(generated_header_file->write_until_depleted(generator.as_string_view().bytes()));
 
@@ -227,7 +227,7 @@ static ErrorOr<void> generate_exposed_interface_implementation(StringView class_
     SourceGenerator generator(builder);
 
     generator.set("global_object_name", class_name);
-    generator.set("global_object_snake_name", ByteString(class_name).to_snakecase());
+    generator.set("global_object_snake_name", String(class_name).to_snakecase());
 
     generator.append(R"~~~(
 #include <LibJS/Runtime/Object.h>
@@ -265,7 +265,7 @@ void add_@global_object_snake_name@_exposed_interfaces(JS::Object& global)
     static constexpr u8 attr = JS::Attribute::Writable | JS::Attribute::Configurable;
 )~~~");
 
-    auto add_interface = [](SourceGenerator& gen, StringView name, StringView prototype_class, Optional<LegacyConstructor> const& legacy_constructor, Optional<ByteString> const& legacy_alias_name) {
+    auto add_interface = [](SourceGenerator& gen, StringView name, StringView prototype_class, Optional<LegacyConstructor> const& legacy_constructor, Optional<String> const& legacy_alias_name) {
         gen.set("interface_name", name);
         gen.set("prototype_class", prototype_class);
 
@@ -323,7 +323,7 @@ void add_@global_object_snake_name@_exposed_interfaces(JS::Object& global)
 }
 )~~~");
 
-    auto generated_implementation_path = LexicalPath(output_path).append(ByteString::formatted("{}ExposedInterfaces.cpp", class_name)).string();
+    auto generated_implementation_path = LexicalPath(output_path).append(MUST(String::formatted("{}ExposedInterfaces.cpp", class_name))).string();
     auto generated_implementation_file = TRY(Core::File::open(generated_implementation_path, Core::File::OpenMode::Write));
     TRY(generated_implementation_file->write_until_depleted(generator.as_string_view().bytes()));
 
@@ -336,7 +336,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
     StringView output_path;
     StringView base_path;
-    Vector<ByteString> paths;
+    Vector<String> paths;
 
     args_parser.add_option(output_path, "Path to output generated files into", "output-path", 'o', "output-path");
     args_parser.add_option(base_path, "Path to root of IDL file tree", "base-path", 'b', "base-path");
@@ -349,16 +349,16 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     LexicalPath const lexical_base(base_path);
 
     // Read in all IDL files, we must own the storage for all of these for the lifetime of the program
-    Vector<ByteString> file_contents;
-    for (ByteString const& path : paths) {
+    Vector<String> file_contents;
+    for (String const& path : paths) {
         auto file_or_error = Core::File::open(path, Core::File::OpenMode::Read);
         if (file_or_error.is_error()) {
-            s_error_string = ByteString::formatted("Unable to open file {}", path);
+            s_error_string = MUST(String::formatted("Unable to open file {}", path));
             return Error::from_string_view(s_error_string.view());
         }
         auto file = file_or_error.release_value();
         auto string = MUST(file->read_until_eof());
-        file_contents.append(ByteString(ReadonlyBytes(string)));
+        file_contents.append(String(ReadonlyBytes(string)));
     }
     VERIFY(paths.size() == file_contents.size());
 
@@ -374,7 +374,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
         IDL::Parser parser(path, file_contents[i], lexical_base.string());
         auto& interface = parser.parse();
         if (interface.name.is_empty()) {
-            s_error_string = ByteString::formatted("Interface for file {} missing", path);
+            s_error_string = MUST(String::formatted("Interface for file {} missing", path));
             return Error::from_string_view(s_error_string.view());
         }
 
@@ -416,7 +416,7 @@ static ErrorOr<ExposedTo> parse_exposure_set(IDL::Interface& interface)
 
     auto maybe_exposed = interface.extended_attributes.get("Exposed");
     if (!maybe_exposed.has_value()) {
-        s_error_string = ByteString::formatted("Interface {} is missing extended attribute Exposed", interface.name);
+        s_error_string = MUST(String::formatted("Interface {} is missing extended attribute Exposed"_string, interface.name));
         return Error::from_string_view(s_error_string.view());
     }
     auto exposed = maybe_exposed.value().trim_whitespace();
@@ -454,18 +454,18 @@ static ErrorOr<ExposedTo> parse_exposure_set(IDL::Interface& interface)
             } else if (candidate == "AudioWorklet"sv) {
                 whom |= ExposedTo::AudioWorklet;
             } else {
-                s_error_string = ByteString::formatted("Unknown Exposed attribute candidate {} in {} in {}", candidate, exposed, interface.name);
+                s_error_string = MUST(String::formatted("Unknown Exposed attribute candidate {} in {} in {}", candidate, exposed, interface.name));
                 return Error::from_string_view(s_error_string.view());
             }
         }
         if (whom == ExposedTo::Nobody) {
-            s_error_string = ByteString::formatted("Unknown Exposed attribute {} in {}", exposed, interface.name);
+            s_error_string = MUST(String::formatted("Unknown Exposed attribute {} in {}", exposed, interface.name));
             return Error::from_string_view(s_error_string.view());
         }
         return whom;
     }
 
-    s_error_string = ByteString::formatted("Unknown Exposed attribute {} in {}", exposed, interface.name);
+    s_error_string = MUST(String::formatted("Unknown Exposed attribute {} in {}", exposed, interface.name));
     return Error::from_string_view(s_error_string.view());
 }
 

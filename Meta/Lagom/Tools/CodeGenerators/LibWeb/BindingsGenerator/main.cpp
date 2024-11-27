@@ -64,7 +64,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
         builder.append(namespace_);
         builder.append("::"sv);
         builder.append(interface.implemented_name);
-        interface.fully_qualified_name = builder.to_byte_string();
+        interface.fully_qualified_name = MUST(builder.to_string());
     } else {
         interface.fully_qualified_name = interface.implemented_name;
     }

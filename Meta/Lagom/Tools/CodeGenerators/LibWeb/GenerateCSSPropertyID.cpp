@@ -69,7 +69,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     auto properties = json.as_object();
 
     // Check we're in alphabetical order
-    ByteString most_recent_name = "";
+    String most_recent_name = ""_string;
     properties.for_each_member([&](auto& name, auto&) {
         if (name < most_recent_name) {
             warnln("`{}` is in the wrong position in `{}`. Please keep this list alphabetical!", name, properties_json_path);
@@ -91,7 +91,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
 void replace_logical_aliases(JsonObject& properties)
 {
-    AK::HashMap<ByteString, ByteString> logical_aliases;
+    AK::HashMap<String, String> logical_aliases;
     properties.for_each_member([&](auto& name, auto& value) {
         VERIFY(value.is_object());
         auto const& value_as_object = value.as_object();
@@ -142,10 +142,10 @@ enum class PropertyID {
     All,
 )~~~");
 
-    Vector<ByteString> inherited_shorthand_property_ids;
-    Vector<ByteString> inherited_longhand_property_ids;
-    Vector<ByteString> noninherited_shorthand_property_ids;
-    Vector<ByteString> noninherited_longhand_property_ids;
+    Vector<String> inherited_shorthand_property_ids;
+    Vector<String> inherited_longhand_property_ids;
+    Vector<String> noninherited_shorthand_property_ids;
+    Vector<String> noninherited_longhand_property_ids;
 
     properties.for_each_member([&](auto& name, auto& value) {
         VERIFY(value.is_object());
@@ -419,7 +419,7 @@ Optional<PropertyID> property_id_from_camel_case_string(StringView string)
         auto member_generator = generator.fork();
         member_generator.set("name", name);
         member_generator.set("name:camelcase", camel_casify(name));
-        if (auto legacy_alias_for = value.as_object().get_byte_string("legacy-alias-for"sv); legacy_alias_for.has_value()) {
+        if (auto legacy_alias_for = value.as_object().get_string("legacy-alias-for"sv); legacy_alias_for.has_value()) {
             member_generator.set("name:titlecase", title_casify(legacy_alias_for.value()));
         } else {
             member_generator.set("name:titlecase", title_casify(name));
@@ -445,7 +445,7 @@ Optional<PropertyID> property_id_from_string(StringView string)
 
         auto member_generator = generator.fork();
         member_generator.set("name", name);
-        if (auto legacy_alias_for = value.as_object().get_byte_string("legacy-alias-for"sv); legacy_alias_for.has_value()) {
+        if (auto legacy_alias_for = value.as_object().get_string("legacy-alias-for"sv); legacy_alias_for.has_value()) {
             member_generator.set("name:titlecase", title_casify(legacy_alias_for.value()));
         } else {
             member_generator.set("name:titlecase", title_casify(name));
@@ -548,7 +548,7 @@ AnimationType animation_type_from_longhand_property(PropertyID property_id)
             VERIFY_NOT_REACHED();
         }
 
-        auto animation_type = value.as_object().get_byte_string("animation-type"sv).value();
+        auto animation_type = value.as_object().get_string("animation-type"sv).value();
         member_generator.set("value", title_casify(animation_type));
         member_generator.append(R"~~~(
     case PropertyID::@name:titlecase@:
@@ -676,7 +676,7 @@ NonnullRefPtr<CSSStyleValue> property_initial_value(JS::Realm& context_realm, Pr
             dbgln("No initial value specified for property '{}'", name);
             VERIFY_NOT_REACHED();
         }
-        auto initial_value = object.get_byte_string("initial"sv);
+        auto initial_value = object.get_string("initial"sv);
         VERIFY(initial_value.has_value());
         auto& initial_value_string = initial_value.value();
 
@@ -916,7 +916,7 @@ Optional<ValueType> property_resolves_percentages_relative_to(PropertyID propert
         if (is_legacy_alias(value.as_object()))
             return;
 
-        if (auto resolved_type = value.as_object().get_byte_string("percentages-resolve-to"sv); resolved_type.has_value()) {
+        if (auto resolved_type = value.as_object().get_string("percentages-resolve-to"sv); resolved_type.has_value()) {
             auto property_generator = generator.fork();
             property_generator.set("name:titlecase", title_casify(name));
             property_generator.set("resolved_type:titlecase", title_casify(resolved_type.value()));
@@ -1023,7 +1023,7 @@ Vector<PropertyID> longhands_for_shorthand(PropertyID property_id)
                 builder.appendff("PropertyID::{}", title_casify(longhand.as_string()));
                 return IterationDecision::Continue;
             });
-            property_generator.set("longhands", builder.to_byte_string());
+            property_generator.set("longhands", builder.to_string());
             property_generator.append(R"~~~(
         case PropertyID::@name:titlecase@:
                 return { @longhands@ };
@@ -1052,7 +1052,7 @@ bool is_animatable_property(JsonObject& properties, StringView property_name)
     auto property = properties.get_object(property_name);
     VERIFY(property.has_value());
 
-    if (auto animation_type = property.value().get_byte_string("animation-type"sv); animation_type.has_value()) {
+    if (auto animation_type = property.value().get_string("animation-type"sv); animation_type.has_value()) {
         return animation_type != "none";
     }
 

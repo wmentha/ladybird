@@ -18,12 +18,12 @@
 
 namespace {
 struct Parameter {
-    Vector<ByteString> attributes;
-    ByteString type;
-    ByteString name;
+    Vector<String> attributes;
+    String type;
+    String name;
 };
 
-static ByteString pascal_case(ByteString const& identifier)
+static String pascal_case(String const& identifier)
 {
     StringBuilder builder;
     bool was_new_word = true;
@@ -38,60 +38,95 @@ static ByteString pascal_case(ByteString const& identifier)
         } else
             builder.append(ch);
     }
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
 struct Message {
-    ByteString name;
+    String name;
     bool is_synchronous { false };
     Vector<Parameter> inputs;
     Vector<Parameter> outputs;
 
-    ByteString response_name() const
+    String response_name() const
     {
         StringBuilder builder;
         builder.append(pascal_case(name));
-        builder.append("Response"sv);
-        return builder.to_byte_string();
+        builder.append("Response"_string);
+        return MUST(builder.to_string());
     }
 };
 
 struct Endpoint {
-    Vector<ByteString> includes;
-    ByteString name;
+    Vector<String> includes;
+    String name;
     u32 magic;
     Vector<Message> messages;
 };
 
-static bool is_primitive_type(ByteString const& type)
+static bool is_primitive_type(String const& type)
 {
-    return type.is_one_of("u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "size_t", "bool", "double", "float", "int", "unsigned", "unsigned int");
+    return type.is_one_of(
+        "u8"_string,
+        "i8"_string,
+        "u16"_string,
+        "i16"_string,
+        "u32"_string,
+        "i32"_string,
+        "u64"_string,
+        "i64"_string,
+        "size_t"_string,
+        "bool"_string,
+        "double"_string,
+        "float"_string,
+        "int"_string,
+        "unsigned"_string,
+        "unsigned int"_string
+    );
 }
 
-static bool is_simple_type(ByteString const& type)
+static bool is_simple_type(String const& type)
 {
     // Small types that it makes sense just to pass by value.
-    return type.is_one_of("AK::CaseSensitivity", "AK::Duration", "Gfx::Color", "Web::DevicePixels", "Gfx::IntPoint", "Gfx::FloatPoint", "Web::DevicePixelPoint", "Gfx::IntSize", "Gfx::FloatSize", "Web::DevicePixelSize", "Web::DevicePixelRect", "Core::File::OpenMode", "Web::Cookie::Source", "Web::EventResult", "Web::HTML::AllowMultipleFiles", "Web::HTML::AudioPlayState", "Web::HTML::HistoryHandlingBehavior", "WebView::PageInfoType");
+    return type.is_one_of(
+        "AK::CaseSensitivity"_string,
+        "AK::Duration"_string,
+        "Gfx::Color"_string,
+        "Web::DevicePixels"_string,
+        "Gfx::IntPoint"_string,
+        "Gfx::FloatPoint"_string,
+        "Web::DevicePixelPoint"_string,
+        "Gfx::IntSize"_string,
+        "Gfx::FloatSize"_string,
+        "Web::DevicePixelSize"_string,
+        "Web::DevicePixelRect"_string,
+        "Core::File::OpenMode"_string,
+        "Web::Cookie::Source"_string,
+        "Web::EventResult"_string,
+        "Web::HTML::AllowMultipleFiles"_string,
+        "Web::HTML::AudioPlayState"_string,
+        "Web::HTML::HistoryHandlingBehavior"_string,
+        "WebView::PageInfoType"_string
+    );
 }
 
-static bool is_primitive_or_simple_type(ByteString const& type)
+static bool is_primitive_or_simple_type(String const& type)
 {
     return is_primitive_type(type) || is_simple_type(type);
 }
 
-static ByteString message_name(ByteString const& endpoint, ByteString const& message, bool is_response)
+static String message_name(String const& endpoint, String const& message, bool is_response)
 {
     StringBuilder builder;
-    builder.append("Messages::"sv);
+    builder.append("Messages::"_string);
     builder.append(endpoint);
-    builder.append("::"sv);
+    builder.append("::"_string);
     builder.append(pascal_case(message));
     if (is_response)
-        builder.append("Response"sv);
-    return builder.to_byte_string();
+        builder.append("Response"_string);
+    return MUST(builder.to_string());
 }
 
-Vector<Endpoint> parse(ByteBuffer const& file_contents)
+Vector<Endpoint> parse(String const& file_contents)
 {
     GenericLexer lexer(file_contents);
 
@@ -111,7 +146,7 @@ Vector<Endpoint> parse(ByteBuffer const& file_contents)
     };
 
     auto parse_parameter_type = [&]() {
-        ByteString parameter_type = lexer.consume_until([](char ch) { return ch == '<' || isspace(ch); });
+        String parameter_type = lexer.consume_until([](char ch) { return ch == '<' || isspace(ch); });
         if (lexer.peek() == '<') {
             lexer.consume();
 
@@ -135,7 +170,7 @@ Vector<Endpoint> parse(ByteBuffer const& file_contents)
                 builder.append(lexer.consume());
             }
 
-            parameter_type = builder.to_byte_string();
+            parameter_type = MUST(builder.to_string());
         }
 
         return parameter_type;
@@ -237,7 +272,7 @@ Vector<Endpoint> parse(ByteBuffer const& file_contents)
     };
 
     auto parse_include = [&] {
-        ByteString include;
+        String include;
         consume_whitespace();
         include = lexer.consume_while([](char ch) { return ch != '\n'; });
         consume_whitespace();
@@ -263,7 +298,7 @@ Vector<Endpoint> parse(ByteBuffer const& file_contents)
         lexer.consume_specific("endpoint"sv);
         consume_whitespace();
         endpoints.last().name = lexer.consume_while([](char ch) { return !isspace(ch); });
-        endpoints.last().magic = Traits<ByteString>::hash(endpoints.last().name);
+        endpoints.last().magic = Traits<String>::hash(endpoints.last().name);
         consume_whitespace();
         assert_specific('{');
         parse_messages();
@@ -277,22 +312,22 @@ Vector<Endpoint> parse(ByteBuffer const& file_contents)
     return endpoints;
 }
 
-HashMap<ByteString, int> build_message_ids_for_endpoint(SourceGenerator generator, Endpoint const& endpoint)
+HashMap<String, int> build_message_ids_for_endpoint(SourceGenerator generator, Endpoint const& endpoint)
 {
-    HashMap<ByteString, int> message_ids;
+    HashMap<String, int> message_ids;
 
     generator.appendln("\nenum class MessageID : i32 {");
     for (auto const& message : endpoint.messages) {
 
         message_ids.set(message.name, message_ids.size() + 1);
         generator.set("message.pascal_name", pascal_case(message.name));
-        generator.set("message.id", ByteString::number(message_ids.size()));
+        generator.set("message.id", String::number(message_ids.size()));
 
         generator.appendln("    @message.pascal_name@ = @message.id@,");
         if (message.is_synchronous) {
             message_ids.set(message.response_name(), message_ids.size() + 1);
             generator.set("message.pascal_name", pascal_case(message.response_name()));
-            generator.set("message.id", ByteString::number(message_ids.size()));
+            generator.set("message.id", String::number(message_ids.size()));
 
             generator.appendln("    @message.pascal_name@ = @message.id@,");
         }
@@ -301,14 +336,14 @@ HashMap<ByteString, int> build_message_ids_for_endpoint(SourceGenerator generato
     return message_ids;
 }
 
-ByteString constructor_for_message(ByteString const& name, Vector<Parameter> const& parameters)
+String constructor_for_message(String const& name, Vector<Parameter> const& parameters)
 {
     StringBuilder builder;
     builder.append(name);
 
     if (parameters.is_empty()) {
         builder.append("() {}"sv);
-        return builder.to_byte_string();
+        return MUST(builder.to_string());
     }
     builder.append('(');
     for (size_t i = 0; i < parameters.size(); ++i) {
@@ -325,10 +360,10 @@ ByteString constructor_for_message(ByteString const& name, Vector<Parameter> con
             builder.append(", "sv);
     }
     builder.append(" {}"sv);
-    return builder.to_byte_string();
+    return MUST(builder.to_string());
 }
 
-void do_message(SourceGenerator message_generator, ByteString const& name, Vector<Parameter> const& parameters, ByteString const& response_type = {})
+void do_message(SourceGenerator message_generator, String const& name, Vector<Parameter> const& parameters, String const& response_type = {})
 {
     auto pascal_name = pascal_case(name);
     message_generator.set("message.name", name);
@@ -406,7 +441,7 @@ public:)~~~");
             builder.append(", "sv);
     }
 
-    message_generator.set("message.constructor_call_parameters", builder.to_byte_string());
+    message_generator.set("message.constructor_call_parameters", MUST(builder.to_string()));
     message_generator.appendln(R"~~~(
         return make<@message.pascal_name@>(@message.constructor_call_parameters@);
     })~~~");
@@ -461,17 +496,17 @@ private:
 
 void do_message_for_proxy(SourceGenerator message_generator, Endpoint const& endpoint, Message const& message)
 {
-    auto do_implement_proxy = [&](ByteString const& name, Vector<Parameter> const& parameters, bool is_synchronous, bool is_try) {
-        ByteString return_type = "void";
+    auto do_implement_proxy = [&](String const& name, Vector<Parameter> const& parameters, bool is_synchronous, bool is_try) {
+        String return_type = "void"_string;
         if (is_synchronous) {
             if (message.outputs.size() == 1)
                 return_type = message.outputs[0].type;
             else if (!message.outputs.is_empty())
                 return_type = message_name(endpoint.name, message.name, true);
         }
-        ByteString inner_return_type = return_type;
+        String inner_return_type = return_type;
         if (is_try)
-            return_type = ByteString::formatted("IPC::IPCErrorOr<{}>", return_type);
+            return_type = MUST(String::formatted("IPC::IPCErrorOr<{}>", return_type));
 
         message_generator.set("message.name", message.name);
         message_generator.set("message.pascal_name", pascal_case(message.name));
@@ -572,14 +607,14 @@ void do_message_for_proxy(SourceGenerator message_generator, Endpoint const& end
 void build_endpoint(SourceGenerator generator, Endpoint const& endpoint)
 {
     generator.set("endpoint.name", endpoint.name);
-    generator.set("endpoint.magic", ByteString::number(endpoint.magic));
+    generator.set("endpoint.magic", String::number(endpoint.magic));
 
     generator.appendln("\nnamespace Messages::@endpoint.name@ {");
 
-    HashMap<ByteString, int> message_ids = build_message_ids_for_endpoint(generator.fork(), endpoint);
+    HashMap<String, int> message_ids = build_message_ids_for_endpoint(generator.fork(), endpoint);
 
     for (auto const& message : endpoint.messages) {
-        ByteString response_name;
+        String response_name;
         if (message.is_synchronous) {
             response_name = message.response_name();
             do_message(generator.fork(), response_name, message.outputs);
@@ -642,7 +677,7 @@ public:
         switch (message_id) {)~~~");
 
     for (auto const& message : endpoint.messages) {
-        auto do_decode_message = [&](ByteString const& name) {
+        auto do_decode_message = [&](String const& name) {
             auto message_generator = generator.fork();
 
             message_generator.set("message.name", name);
@@ -680,13 +715,13 @@ public:
     virtual ~@endpoint.name@Stub() override { }
 
     virtual u32 magic() const override { return @endpoint.magic@; }
-    virtual ByteString name() const override { return "@endpoint.name@"; }
+    virtual String name() const override { return "@endpoint.name@"; }
 
     virtual ErrorOr<OwnPtr<IPC::MessageBuffer>> handle(const IPC::Message& message) override
     {
         switch (message.message_id()) {)~~~");
     for (auto const& message : endpoint.messages) {
-        auto do_handle_message = [&](ByteString const& name, Vector<Parameter> const& parameters, bool returns_something) {
+        auto do_handle_message = [&](String const& name, Vector<Parameter> const& parameters, bool returns_something) {
             auto message_generator = generator.fork();
 
             StringBuilder argument_generator;
@@ -702,7 +737,7 @@ public:
             message_generator.set("message.pascal_name", pascal_case(name));
             message_generator.set("message.response_type", pascal_case(message.response_name()));
             message_generator.set("handler_name", name);
-            message_generator.set("arguments", argument_generator.to_byte_string());
+            message_generator.set("arguments", MUST(argument_generator.to_string()));
             message_generator.appendln(R"~~~(
         case (int)Messages::@endpoint.name@::MessageID::@message.pascal_name@: {)~~~");
             if (returns_something) {
@@ -740,8 +775,8 @@ public:
     for (auto const& message : endpoint.messages) {
         auto message_generator = generator.fork();
 
-        auto do_handle_message_decl = [&](ByteString const& name, Vector<Parameter> const& parameters, bool is_response) {
-            ByteString return_type = "void";
+        auto do_handle_message_decl = [&](String const& name, Vector<Parameter> const& parameters, bool is_response) {
+            String return_type = "void"_string;
             if (message.is_synchronous && !message.outputs.is_empty() && !is_response)
                 return_type = message_name(endpoint.name, message.name, true);
             message_generator.set("message.complex_return_type", return_type);
@@ -750,7 +785,7 @@ public:
             message_generator.appendln(R"~~~(
     virtual @message.complex_return_type@ @handler_name@()~~~");
 
-            auto make_argument_type = [](ByteString const& type) {
+            auto make_argument_type = [](String const& type) {
                 StringBuilder builder;
 
                 bool const_ref = !is_primitive_or_simple_type(type);
@@ -759,7 +794,7 @@ public:
                 if (const_ref)
                     builder.append(" const&"sv);
 
-                return builder.to_byte_string();
+                return MUST(builder.to_string());
             };
 
             for (size_t i = 0; i < parameters.size(); ++i) {

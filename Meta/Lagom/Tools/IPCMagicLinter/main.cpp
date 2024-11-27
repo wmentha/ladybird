@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteString.h>
 #include <AK/HashMap.h>
+#include <AK/String.h>
 #include <AK/StringView.h>
 #include <AK/Vector.h>
 #include <LibCore/File.h>
@@ -23,7 +23,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
     }
 
     // Read files, compute their hashes, ignore collisions for now.
-    HashMap<u32, Vector<ByteString>> inverse_hashes;
+    HashMap<u32, Vector<String>> inverse_hashes;
     bool had_errors = false;
     for (auto filename : arguments.strings.slice(1)) {
 
@@ -42,7 +42,7 @@ ErrorOr<int> serenity_main(Main::Arguments arguments)
 
         auto file = file_or_error.release_value();
 
-        ByteString endpoint_name;
+        String endpoint_name;
 
         auto const read_lines = [&]() -> ErrorOr<void> {
             while (TRY(file->can_read_line())) {
